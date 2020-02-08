@@ -1,0 +1,11 @@
+{
+    "entrypoint": "index.html",
+    "shell": "bandlist.js",
+    "sources": [
+        "*.js"
+    ],
+    "extraDependencies": [
+        "__/**"
+    ],
+    "npm": true
+}
