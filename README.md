@@ -67,3 +67,27 @@ To upload:
 ```
 $ firebase deploy
 ```
+
+## Database schema
+
+* Collection *bands*
+    * Document id=short string
+        * Field *display_name*: Human-readable name of the band
+        * Field *acl*: Array of uid of users that can see the band
+    * Collection *events*
+        * Document id=random
+            * Field *type*: The type of event, a string from a small number of common types
+            * Field *location*: Venum name or address (string)
+            * Field *description*: (optional) Description of the event.
+            * Field *start*: Timestamp when the event starts
+            * Field *stop*: (optional) timestamp when the event ends
+        * Collection *participants*
+            * Document id=user id
+                * Field *attending*: yes/no/maybe/replacement
+    * Collection *users*
+        * Document id=user id
+            * Field *admin*: boolean true if user can manage band config
+            * Field *display_name*: Name to use for the user in context of this band
+* Collection *admins*: The site admins
+    * Document id=uid
+        * _No fields_
