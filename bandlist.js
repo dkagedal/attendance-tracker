@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit-element';
 import { repeat } from 'lit-html/directives/repeat';
 import { ifDefined } from 'lit-html/directives/if-defined';
+import '@material/mwc-icon';
 
 const timestampProperty = { 
   type: Object,  
@@ -9,6 +10,15 @@ const timestampProperty = {
   }
 };
 
+const shortDate = new Intl.DateTimeFormat(undefined, {
+  'year': 'numeric', 'month': '2-digit', 'day': '2-digit'
+});
+
+function isoDate(millis) {
+  let date = new Date(millis);
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
 const db = firebase.firestore();
 
 class BandEvent extends LitElement {
@@ -16,6 +26,7 @@ class BandEvent extends LitElement {
   static get properties() {
 
     return {
+      edit: { type: Boolean },
       eventref: { type: String }, // "bands/abc/events/123"
       type: { type: String },
       location: { type: String },
@@ -28,6 +39,7 @@ class BandEvent extends LitElement {
 
   constructor() {
     super();
+    this.edit = false
     this.eventref = ""
     this.type = ""
     this.location = ""
@@ -99,33 +111,91 @@ class BandEvent extends LitElement {
         vertical-align: top;
         padding: 5px 10px;
       }
+      div.buttons {
+        flex: 0 0 24px;
+        text-align: right;
+        padding: 5px 10px;
+        --mdc-icon-size: 18px;
+      }
       p { margin: 2px }
       .location { font-weight: bold }
       p.time { color: #888888 }
       ul { list-style: none; padding-inline-start: 0; margin: 0; }
       li.participant { border: none; }
+      div.edit-form {
+        padding: 20px;
+      }
+      label { display: inline-block; width: 6em; }
+      input[type=text] {
+        border: 1px solid #4a7cf1;
+        border-radius: 3px;
+        padding: 2px;
+        margin: 2px;
+        width: 20em;
+      }
+      input[type=date] {
+        border: 1px solid #4a7cf1;
+        border-radius: 3px;
+        padding: 2px;
+        margin: 2px;
+      }
+      button {
+        font: inherit;
+        background: #4a7cf1;
+        color: white;
+        padding: 5px 20px;
+        margin-top: 10px;
+        border-radius: 4px;
+      }
     `;
   }
 
-  render(){
+  render() {
     return html`<div class='event'>
+        ${this.edit ? this.renderEdit() : this.renderPresent()}
+      </div>`;
+  }
+
+  renderPresent() {
+    return html`
       <div class='time'>
-      <p class='date'>${this.formatDate(this.start)}</p>
+        <p class='date'>${this.formatDate(this.start)}</p>
       </div>
       <div class='info'>
-      <p class='summary'>
-        <span class='type'>${this.type}</span>
-        <span class='location'>${this.location}</span>
-      </p>
-      ${this.description.length
-        ? html`<p>${this.description}</p>`
-        : html``}
-      ${this.participants.length
-        ? html`<ul>${repeat(this.participants, p => p.id, 
-                            (p, index) => html`<li>${p.id} ${p.data().attending}</li>`)}</ul>`
-        : html``}
+        <p class='summary'>
+          <span class='type'>${this.type}</span>
+          <span class='location'>${this.location}</span>
+        </p>
+        ${this.description.length
+          ? html`<p>${this.description}</p>`
+          : html``}
+        ${this.participants.length
+          ? html`<ul>${repeat(this.participants, p => p.id, 
+                              (p, index) => html`<li>${p.id} ${p.data().attending}</li>`)}</ul>`
+          : html``}
       </div>
+      <div class='buttons'>
+        <mwc-icon @click=${e => this.openEdit()}>edit</mwc-icon>
       </div>`;
+  }
+
+  renderEdit(){
+    return html`<div class="edit-form">
+      <label for="type">Typ:</label><input type="text" id="type" name="type" value="${this.type}"><br>
+      <label for="location">Plats:</label><input type="text" id="location" name="location" value="${this.location}"><br>
+      <label for="desc">Beskrivning:</label><input type="text" id="desc" name="desc" value="${this.description}"><br>
+      <label for="start">Datum:</label><input type="date" id="start" name="start" value="${shortDate.format(new Date(this.start))}"><br>
+      <button type="button" @click=${e => this.save()}>Spara</button>
+      </div>`;
+  }
+
+  openEdit() {
+    this.edit = true;
+  }
+
+  save() {
+    console.log("Saving, promise");
+    this.edit = false;
   }
 }
 
@@ -134,6 +204,7 @@ class BandEditEvent extends LitElement {
   static get properties() {
     return {
       bandref: { type: String }, // "bands/abc"
+      eventref: { type: String }, // "bands/abc/events/def"
       visible: { type: Boolean },
     }
   }
@@ -141,18 +212,13 @@ class BandEditEvent extends LitElement {
   constructor() {
     super();
     this.bandref = "";
+    this.eventref = "";
     this.visible = false;
   }
 
 
   static get styles() {
     return css`
-      .toggle {
-        font-size: 12px;
-        font-weight: 600;
-        margin: 0;
-        color: #4a7cf1;
-      }
       div.edit-form {
         border: 1px solid #cccccc;
         padding: 20px;
@@ -183,19 +249,13 @@ class BandEditEvent extends LitElement {
   }
 
   render(){
-    let form = html`<div class="edit-form">
+    return html`<div class="edit-form">
       <label for="type">Typ:</label><input type="text" id="type" name="type"><br>
       <label for="location">Plats:</label><input type="text" id="location" name="location"><br>
       <label for="desc">Beskrivning:</label><input type="text" id="desc" name="desc"><br>
       <label for="start">Datum:</label><input type="date" id="start" name="start"><br>
       <button type="button" @click=${this}>Lägg till</button>
       </div>`;
-    return html`<p class="toggle" @click=${e => this.toggle()}>Lägg till</p>${this.visible ? form : html``}`;
-  }
-
-  toggle() {
-    console.log('Toggle visibility: %s -> %s', this.visible, !this.visible);
-    this.visible = !this.visible;
   }
 
   handleEvent(event) {
@@ -224,6 +284,7 @@ class BandSchedule extends LitElement {
       events: { type: Array },
       emptymsg: { type: String },
       visible: { type: Boolean },
+      adding: { type: Boolean },
     }
   }
 
@@ -234,6 +295,7 @@ class BandSchedule extends LitElement {
     this.events = [];
     this.emptymsg = "...";
     this.visible = true;
+    this.adding = false;
   }
 
   attributeChangedCallback(name, oldval, newval) {
@@ -274,6 +336,12 @@ class BandSchedule extends LitElement {
           padding: 16px 16px;
         }
       }
+      .toggle {
+        font-size: 12px;
+        font-weight: 600;
+        margin: 0;
+        color: #4a7cf1;
+      }
     `;
   }
 
@@ -297,10 +365,16 @@ class BandSchedule extends LitElement {
               stop="${ifDefined(formatTimestamp(e.data().stop))}"
             ></band-event>`)}
           ${this.events.length ? html`` : html`<p>${this.emptymsg}</p>`}
-          <band-edit-event bandref="${this.bandref}"></band-edit-event>
+          ${this.adding ? html`<band-edit-event bandref="${this.bandref}"></band-edit-event>` 
+                        : html`<p class="toggle" @click=${e => this.toggleAdd()}>+ Lägg till</p>`}
         </div>
     </div>
     `;
+  }
+
+  toggleAdd() {
+    console.log('Toggle add: %s -> %s', this.adding, !this.adding);
+    this.adding = !this.adding;
   }
 
   handleEvent(event) {
@@ -334,7 +408,7 @@ class BandList extends LitElement {
     });
   }
 
-  render(){
+  render() {
     return html`
       ${this.bands.map(band => html`<band-schedule bandref="bands/${band.id}" .dbDoc=${band.data()} name="${band.data().display_name}"></band-schedule>
         `)}
