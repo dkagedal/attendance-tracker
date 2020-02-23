@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit-element';
 import { repeat } from 'lit-html/directives/repeat';
 import { ifDefined } from 'lit-html/directives/if-defined';
 import '@material/mwc-icon';
+import '@material/mwc-button';
 
 const timestampProperty = { 
   type: Object,  
@@ -34,6 +35,7 @@ class BandEvent extends LitElement {
       start: timestampProperty,
       stop: timestampProperty,
       participants: { type: Array },
+      myresponse: { type: String },
     }
   }
 
@@ -47,6 +49,7 @@ class BandEvent extends LitElement {
     this.start = null
     this.stop = null
     this.participants = []
+    this.myresponse = undefined // means unknown, not loaded
   }
 
   attributeChangedCallback(name, oldval, newval) {
@@ -56,8 +59,17 @@ class BandEvent extends LitElement {
       let ref = `${newval}/participants`;
       console.log('Fetching ', ref)
       db.collection(ref).onSnapshot((querySnapshot) => {
-        console.log('got participants snapshot ', querySnapshot.docs.map(p => p.data()));
+        // console.log('got participants snapshot ', querySnapshot.docs.map(p => p.data()));
         this.participants = querySnapshot.docs;
+        let user = firebase.auth().currentUser;
+        var myresponse = ''
+        for (let i = 0; i < this.participants.length; i++) {
+          let p = this.participants[i];
+          if (p.id == user.uid) {
+            myresponse = p.data().attending || '';
+          }
+        }
+        this.myresponse = myresponse;
       });
     }
   }
@@ -151,13 +163,12 @@ class BandEvent extends LitElement {
   }
 
   render() {
-    return html`<div class='event'>
-        ${this.edit ? this.renderEdit() : this.renderPresent()}
-      </div>`;
+    return html`${this.edit ? this.renderEdit() : this.renderPresent()}`;
   }
 
   renderPresent() {
     return html`
+      <div class='event'>
       <div class='time'>
         <p class='date'>${this.formatDate(this.start)}</p>
       </div>
@@ -169,14 +180,14 @@ class BandEvent extends LitElement {
         ${this.description.length
           ? html`<p>${this.description}</p>`
           : html``}
-        ${this.participants.length
-          ? html`<ul>${repeat(this.participants, p => p.id, 
-                              (p, index) => html`<li>${p.id} ${p.data().attending}</li>`)}</ul>`
-          : html``}
       </div>
       <div class='buttons'>
         <mwc-icon @click=${e => this.openEdit()}>edit</mwc-icon>
-      </div>`;
+      </div>
+      </div>
+      ${this.myresponse == ''
+        ? html`<p>Kommer: <span>Ja</span> <span>Nej</span> <span>Kanske</span> <span>Vik</span></p>`
+        : ''}`;
   }
 
   renderEdit(){
@@ -185,7 +196,7 @@ class BandEvent extends LitElement {
       <label for="location">Plats:</label><input type="text" id="location" name="location" value="${this.location}"><br>
       <label for="desc">Beskrivning:</label><input type="text" id="desc" name="desc" value="${this.description}"><br>
       <label for="start">Datum:</label><input type="date" id="start" name="start" value="${shortDate.format(new Date(this.start))}"><br>
-      <button type="button" @click=${e => this.save()}>Spara</button>
+      <mwc-button dense raised @click=${e => this.save()} label="Spara"></mwc-button>
       </div>`;
   }
 
@@ -254,7 +265,7 @@ class BandEditEvent extends LitElement {
       <label for="location">Plats:</label><input type="text" id="location" name="location"><br>
       <label for="desc">Beskrivning:</label><input type="text" id="desc" name="desc"><br>
       <label for="start">Datum:</label><input type="date" id="start" name="start"><br>
-      <button type="button" @click=${this}>Lägg till</button>
+      <mwc-button dense raised type="button" @click=${this}>Lägg till</mwc-button>
       </div>`;
   }
 
@@ -279,7 +290,6 @@ class BandEditEvent extends LitElement {
 class BandSchedule extends LitElement {
   static get properties() {
     return {
-      dbDoc: { type: Object },
       bandref: { type: String }, // "bands/abc"
       events: { type: Array },
       emptymsg: { type: String },
@@ -290,7 +300,6 @@ class BandSchedule extends LitElement {
 
   constructor() {
     super();
-    this.dbDoc = null;
     this.bandref = "";
     this.events = [];
     this.emptymsg = "...";
@@ -299,7 +308,7 @@ class BandSchedule extends LitElement {
   }
 
   attributeChangedCallback(name, oldval, newval) {
-    // console.log('attribute change: ', name, newval);
+    console.log('attribute change: ', name, newval);
     super.attributeChangedCallback(name, oldval, newval);
     if (name == 'bandref') {
       let ref = `${newval}/events`;
@@ -310,6 +319,9 @@ class BandSchedule extends LitElement {
         this.emptymsg = "Inget planerat";
       });
     }
+  }
+
+  setBand(bandref) {
   }
 
   static get styles() {
@@ -354,7 +366,6 @@ class BandSchedule extends LitElement {
     }
     let elt = this;
     return html`<div class='schedule'>
-      <h1 @click=${this}>${this.dbDoc.display_name}</h1>
       <div class="eventlist ${this.visible ? "" : "hidden"}">
           ${repeat(this.events, (e) => e.id, 
             (e, index) => html`<band-event eventref="${this.bandref}/events/${e.id}"
@@ -366,7 +377,7 @@ class BandSchedule extends LitElement {
             ></band-event>`)}
           ${this.events.length ? html`` : html`<p>${this.emptymsg}</p>`}
           ${this.adding ? html`<band-edit-event bandref="${this.bandref}"></band-edit-event>` 
-                        : html`<p class="toggle" @click=${e => this.toggleAdd()}>+ Lägg till</p>`}
+                        : html`<mwc-button dense raised icon="add" @click=${e => this.toggleAdd()} label="Lägg till"></mwc-button>`}
         </div>
     </div>
     `;
@@ -383,40 +394,6 @@ class BandSchedule extends LitElement {
   }
 }
 
-class BandList extends LitElement {
-
-  static get properties() {
-    return {
-      bands : { type: Array, attribute: false } 
-    }
-  }
-
-  constructor() {
-    super();
-    this.bands = [];
-    this.xyz = 123
-    firebase.auth().onAuthStateChanged((user) => {
-      if (user) {
-        let query = db.collection("bands")
-          .where("acl", "array-contains", user.uid);
-        query.get().then((querySnapshot) => {
-          this.bands = querySnapshot.docs;
-        });
-      } else {
-        this.bands = [];
-      }
-    });
-  }
-
-  render() {
-    return html`
-      ${this.bands.map(band => html`<band-schedule bandref="bands/${band.id}" .dbDoc=${band.data()} name="${band.data().display_name}"></band-schedule>
-        `)}
-    `;
-  }
-}
-
 customElements.define('band-event', BandEvent);
 customElements.define('band-edit-event', BandEditEvent);
 customElements.define('band-schedule', BandSchedule);
-customElements.define('band-list', BandList);

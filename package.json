@@ -5,6 +5,7 @@
     "lit-element": "^2.2.1"
   },
   "dependencies": {
+    "@material/mwc-button": "^0.13.0",
     "@material/mwc-icon": "^0.13.0"
   }
 }
