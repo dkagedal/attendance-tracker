@@ -6,6 +6,8 @@
   },
   "dependencies": {
     "@material/mwc-button": "^0.13.0",
-    "@material/mwc-icon": "^0.13.0"
+    "@material/mwc-fab": "^0.13.0",
+    "@material/mwc-icon": "^0.13.0",
+    "@material/mwc-list": "^0.13.0"
   }
 }

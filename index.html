@@ -14,19 +14,22 @@
     <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
 
     <style media="screen">
-      body { background: #ECEFF1; color: rgba(0,0,0,0.87); font-family: Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+      body { background: white; color: rgba(0,0,0,0.87);
+             font-family: Roboto, Helvetica, Arial, sans-serif;
+             margin: 0; padding: 0; }
       #username { margin: 5px 5px; font-size: 12px; }
-      #load { color: rgba(0,0,0,0.4); text-align: center; font-size: 13px; }
+      #main { margin: 10px 10px; }
       @media (max-width: 600px) {
-        body { margin-top: 0; }
       }
     </style>
     <script type="module" src="./index.js"></script>
   </head>
   <body>
     <p id="username"></p>
-    <band-selector id="selector" style="display: none"></band-selector>
-    <band-schedule id="band" style="display: none"></band-schedule>
-    <div id="firebaseui-auth-container" style="display: none;"></div>
+    <div id="main">
+      <band-selector id="selector" style="display: none"></band-selector>
+      <band-schedule id="band" style="display: none"></band-schedule>
+      <div id="firebaseui-auth-container" style="display: none;"></div>
+    </div>
   </body>
 </html>

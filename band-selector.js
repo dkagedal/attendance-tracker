@@ -4,7 +4,6 @@ class BandSelector extends LitElement {
   static get properties() {
     return {
       current: { type: String },
-      currentName: { type: String },
       bands: { type: Array },
     }
   }
@@ -12,7 +11,6 @@ class BandSelector extends LitElement {
   constructor() {
     super();
     this.current = "";
-    this.currentName = "";
     this.bands = [];
   }
 
@@ -20,20 +18,25 @@ class BandSelector extends LitElement {
     this.bands = bands;
     if (bands.length == 0) {
       this.current = "";
-      this.currentName = "";
     } else if (this.current == "") {
       this.current = bands[0].id;
-      this.currentName = bands[0].data().display_name;
     } else {
-      for (var i = 0; i > bands.length; i++) {
+      for (var i = 0; i < bands.length; i++) {
         if (bands[i].id == this.current) {
-          this.currentName = bands[i].data().display_name;
           return;
         }
       }
       this.current = bands[0].id;
-      this.currentName = bands[0].data().display_name;
     }
+  }
+
+  currentName() {
+    for (var i = 0; i < this.bands.length; i++) {
+      if (this.bands[i].id == this.current) {
+        return this.bands[i].data().display_name;
+      }
+    }
+    return "";
   }
 
   currentRef() {
@@ -43,8 +46,14 @@ class BandSelector extends LitElement {
     return "bands/" + this.current;
   }
 
+  static get styles() {
+    return css`
+      h1 {
+        margin: 0; font-size: 20px; font-weight: bold; padding-bottom: 8px;
+      }`
+  }
   render() {
-    return html`<h1>${this.currentName}</h1>`;
+    return html`<h1>${this.currentName()}</h1>`;
   }
 }
 

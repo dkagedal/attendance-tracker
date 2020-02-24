@@ -1,5 +1,5 @@
-import "./bandlist.js";
 import "./band-selector.js";
+import "./band-schedule.js";
 
 var bands;
 
@@ -14,7 +14,7 @@ firebase.auth().onAuthStateChanged(function(user) {
     schedule.style.display = 'block';
     query.get().then((querySnapshot) => {
       selector.setBands(querySnapshot.docs);
-      console.log("Current band band:", selector.current);
+      console.log("Current band:", selector.current), selector.currentName();
       schedule.setAttribute('bandref', selector.currentRef());
     });
     document.getElementById("firebaseui-auth-container").style.display = 'none'
