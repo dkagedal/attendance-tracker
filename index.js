@@ -2,11 +2,12 @@ import "./band-selector.js";
 import "./band-schedule.js";
 import "./event-page.js";
 
-var bands;
+var ands;
 
 function openEvent(e) {
   console.log("Selected event", e.detail);
   let editpage = document.getElementById("editpage");
+  editpage.setAttribute('eventref', e.detail.eventref);
   editpage.expandFrom(e.detail.item.offsetTop, e.detail.item.offsetHeight);
 }
 

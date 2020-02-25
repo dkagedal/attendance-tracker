@@ -10,6 +10,7 @@
     "@material/mwc-icon": "^0.13.0",
     "@material/mwc-icon-button": "^0.13.0",
     "@material/mwc-linear-progress": "^0.13.0",
-    "@material/mwc-list": "^0.13.0"
+    "@material/mwc-list": "^0.13.0",
+    "@material/mwc-textfield": "^0.13.0"
   }
 }

@@ -53,7 +53,7 @@ class BandSchedule extends LitElement {
       });
     }
   }
-
+  
   setBand(bandref) {
   }
 
@@ -132,7 +132,8 @@ class BandSchedule extends LitElement {
     let event = new CustomEvent("select-event", {
       detail: {
         index: listEvent.detail.index, 
-        item: listEvent.target.children[listEvent.detail.index]
+        item: listEvent.target.children[listEvent.detail.index],
+        eventref: this.bandref + "/events/" + this.events[listEvent.detail.index].id,
       }
     });
     this.dispatchEvent(event);

@@ -5,6 +5,7 @@ import { ifDefined } from 'lit-html/directives/if-defined';
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
 import '@material/mwc-button';
+import '@material/mwc-textfield';
 
 const timestampProperty = { 
   type: Object,  
@@ -28,9 +29,10 @@ class EventPage extends LitElement {
     return {
       bandref: { type: String }, // "bands/abc"
       eventref: { type: String }, // "bands/abc/events/def"
-      itemTop: { type: String },
-      itemHeight: { type: String },
-      state: { type: String }, // "hidden", "small", "expanded"
+      itemTop: { type: Number, reflect: true },
+      itemHeight: { type: Number, reflect: true },
+      state: { type: String, reflect: true }, // "hidden", "small", "expanded"
+      event: { type: Object },
     }
   }
 
@@ -41,8 +43,19 @@ class EventPage extends LitElement {
     this.itemTop = 0;
     this.itemHeight = 0;
     this.state = "hidden";
+    this.event = null;
   }
 
+  attributeChangedCallback(name, oldval, newval) {
+    super.attributeChangedCallback(name, oldval, newval);
+    if (name == 'eventref') {
+      console.log('Fetching ', newval)
+      firebase.firestore().doc(newval).onSnapshot((snapshot) => {
+        this.event = snapshot.data();
+        console.log('got event snapshot ', this.event);
+      });
+    }
+  }
 
   static get styles() {
     return css`
@@ -57,65 +70,52 @@ class EventPage extends LitElement {
       }
       .shrink {
         opacity: 0;
-        transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+        transition:
+          all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
       }
       .expand {
         background: white; opacity: 100%;
         top: 0; height: 100%;
-        transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+        transition:
+          opacity 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
+          top 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) 0.5s,
+          height 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) 0.5s;
       }
       div.edit-form {
-        border: 1px solid #cccccc;
         padding: 20px;
-      }
-      label { display: inline-block; width: 6em; }
-      input[type=text] {
-        border: 1px solid #4a7cf1;
-        border-radius: 3px;
-        padding: 2px;
-        margin: 2px;
-        width: 20em;
-      }
-      input[type=date] {
-        border: 1px solid #4a7cf1;
-        border-radius: 3px;
-        padding: 2px;
-        margin: 2px;
-      }
-      button {
-        font: inherit;
-        background: #4a7cf1;
-        color: white;
-        padding: 5px 20px;
-        margin-top: 10px;
-        border-radius: 4px;
       }
     `;
   }
 
   render(){
     let form = html`<div class="edit-form">
-      <label for="type">Typ:</label><input type="text" id="type" name="type"><br>
-      <label for="location">Plats:</label><input type="text" id="location" name="location"><br>
-      <label for="desc">Beskrivning:</label><input type="text" id="desc" name="desc"><br>
-      <label for="start">Datum:</label><input type="date" id="start" name="start"><br>
+      <mwc-textfield label="Typ" id="type" required 
+        value="${this.event ? this.event.type : ''}"></mwc-textfield>
+      <mwc-textfield label="Plats" id="location"
+        value="${this.event ? this.event.location : ''}"></mwc-textfield>
+      <mwc-textfield label="Beskrivning" id="desc"
+        ?value="${ifDefined(this.event ? this.event.description : undefined)}"></mwc-textfield>
+      <mwc-textfield label="Datum" id="start" type="date"
+        value="${ifDefined(this.event ? shortDate.format(this.event.start.toDate()) : undefined)}"></mwc-textfield>
       <mwc-button dense raised type="button" @click=${this}>Lägg till</mwc-button>
       </div>`;
     let classes = { hidden: this.state == "hidden", 
                     shrink: this.state == "small", 
                     expand: this.state == "expanded" };
     return html`<div id="top" class=${classMap(classes)}
-          style="${this.state == "small" ? `top: ${this.itemTop}px; height: ${this.itemHeight}px;` : ''}">
+          style="${this.state != "expanded" ? `top: ${this.itemTop}px; height: ${this.itemHeight}px;` : ''}">
         <mwc-icon-button icon="close" @click=${e => this.close()}></mwc-icon-button>
         ${form}
       </div>`;
   }
 
   async expandFrom(top, height) {
-    this.state = "hidden"
+    this.state = "hidden";
     this.itemTop = top;
     this.itemHeight = height;
-    await this.updateComplete;
+    console.log("Requesting update");
+    await this.requestUpdate();
+    console.log("Updated?");
     this.state = "expanded";
   }
 
