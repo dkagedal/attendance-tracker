@@ -1,9 +1,10 @@
-import { LitElement, html, css } from 'lit-element';
+import { LitElement, html, css, query } from 'lit-element';
 import { repeat } from 'lit-html/directives/repeat';
 import { ifDefined } from 'lit-html/directives/if-defined';
 import '@material/mwc-fab';
 import '@material/mwc-icon';
 import '@material/mwc-button';
+import '@material/mwc-linear-progress';
 import '@material/mwc-list/mwc-list';
 import '@material/mwc-list/mwc-list-item';
 import './band-event.js';
@@ -26,7 +27,7 @@ class BandSchedule extends LitElement {
     return {
       bandref: { type: String }, // "bands/abc"
       events: { type: Array },
-      emptymsg: { type: String },
+      loaded: { type: Boolean },
       adding: { type: Boolean },
     }
   }
@@ -35,7 +36,7 @@ class BandSchedule extends LitElement {
     super();
     this.bandref = "";
     this.events = [];
-    this.emptymsg = "...";
+    this.loaded = false;
     this.adding = false;
   }
 
@@ -48,7 +49,7 @@ class BandSchedule extends LitElement {
       firebase.firestore().collection(ref).orderBy('start').onSnapshot((querySnapshot) => {
         console.log('got snapshot ', querySnapshot.docs.map(e => e.data()));
         this.events = querySnapshot.docs.map((event) => event);
-        this.emptymsg = "Inget planerat";
+        this.loaded = true;
       });
     }
   }
@@ -90,7 +91,8 @@ class BandSchedule extends LitElement {
 
     let elt = this;
     return html`
-      <mwc-list @selected=${event => { console.log("Selected", event.detail); }}>
+      <mwc-linear-progress indeterminate ?closed=${this.loaded}></mwc-linear-progress>
+      <mwc-list @selected=${event => { this.selected(event) }}>
           ${repeat(this.events, (e) => e.id, 
             (e, index) => html`<mwc-list-item graphic="icon" twoline>
               <mwc-icon slot="graphic">event</mwc-icon>
@@ -104,7 +106,7 @@ class BandSchedule extends LitElement {
                 ${e.data().description ? html` · <span class="description">${e.data().description}</span>` : ''} 
              </span>
             </mwc-list-item>`)}
-          ${this.events.length ? html`` : html`<p>${this.emptymsg}</p>`}
+          ${this.loade && this.events.length == 0 ? html`<mwc-list-item noninteractive>Inget planerat</mwc-list-item>` : ''}
           ${this.adding ? html`<band-edit-event bandref="${this.bandref}"></band-edit-event>` 
                         : ''}
       </mwc-list>
@@ -123,6 +125,17 @@ class BandSchedule extends LitElement {
   toggleAdd() {
     console.log('Toggle add: %s -> %s', this.adding, !this.adding);
     this.adding = !this.adding;
+  }
+
+  selected(listEvent) {
+    console.log("Selected", listEvent);
+    let event = new CustomEvent("select-event", {
+      detail: {
+        index: listEvent.detail.index, 
+        item: listEvent.target.children[listEvent.detail.index]
+      }
+    });
+    this.dispatchEvent(event);
   }
 }
 

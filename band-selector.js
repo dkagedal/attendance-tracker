@@ -49,7 +49,8 @@ class BandSelector extends LitElement {
   static get styles() {
     return css`
       h1 {
-        margin: 0; font-size: 20px; font-weight: bold; padding-bottom: 8px;
+        margin: 0; font-size: 24px; font-weight: bold; 
+        padding: 8px 16px 8px 16px;
       }`
   }
   render() {

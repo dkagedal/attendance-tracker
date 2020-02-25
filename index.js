@@ -1,7 +1,14 @@
 import "./band-selector.js";
 import "./band-schedule.js";
+import "./event-page.js";
 
 var bands;
+
+function openEvent(e) {
+  console.log("Selected event", e.detail);
+  let editpage = document.getElementById("editpage");
+  editpage.expandFrom(e.detail.item.offsetTop, e.detail.item.offsetHeight);
+}
 
 firebase.auth().onAuthStateChanged(function(user) {
   if (user) {
@@ -10,6 +17,7 @@ firebase.auth().onAuthStateChanged(function(user) {
         .where("acl", "array-contains", user.uid);
     let selector = document.getElementById("selector");
     let schedule = document.getElementById("band");
+    schedule.addEventListener('select-event', e => { openEvent(e) });
     selector.style.display = 'block';
     schedule.style.display = 'block';
     query.get().then((querySnapshot) => {
