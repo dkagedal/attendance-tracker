@@ -8,12 +8,13 @@ import '@material/mwc-button';
 import '@material/mwc-textfield';
 import './time-range.js';
 
-const timestampProperty = { 
-  type: Object,  
-  converter: (value, type) => {
-    return Date.parse(value);
-  }
-};
+const attendances = {
+  "yes": "Ja",
+  "no": "Nej",
+  "maybe": "Kanske",
+  "sub": "Vikarie",
+  "unknown": "Inte svarat",
+}
 
 class EventPage extends LitElement {
 
@@ -26,6 +27,7 @@ class EventPage extends LitElement {
       itemHeight: { type: Number, reflect: true },
       state: { type: String, reflect: true }, // "hidden", "small", "expanded"
       event: { type: Object },
+      myResponse: { type: String },
     }
   }
 
@@ -38,6 +40,7 @@ class EventPage extends LitElement {
     this.itemHeight = 0;
     this.state = "hidden";
     this.event = {};
+    this.myResponse = null;
   }
 
   clear() {
@@ -45,6 +48,7 @@ class EventPage extends LitElement {
     this.eventref = null;
     this.event = {};
     this.edit = false;
+    this.myResponse = null;
   }
 
   prepareAdd(bandref) {
@@ -69,8 +73,9 @@ class EventPage extends LitElement {
   loadEvent(eventref) {
     this.clear();
     this.eventref = eventref;
-    console.log('Fetching ', eventref)
-    return firebase.firestore().doc(eventref).get().then(doc => {
+
+    console.log('Fetching event', eventref)
+    firebase.firestore().doc(eventref).get().then(doc => {
       if (doc.exists) {
         this.event = doc.data();
         var convstart = this.joinDateTime(this.event.startdate, this.event.starttime);
@@ -90,6 +95,18 @@ class EventPage extends LitElement {
         console.log('event', eventref, 'did not exist');
       }
     });
+
+    let user = firebase.auth().currentUser;
+    let meref = eventref + "/participants/" + user.uid;
+    console.log("Fetching my participant", meref);
+    firebase.firestore().doc(meref).onSnapshot(doc => {
+      console.log("Got my participant", doc);
+      let attending = "unknown";
+      if (doc.exists) {
+        attending = doc.data().attending || "unknown";
+      }
+      this.myResponse = attending;
+    });
   }
 
   static get styles() {
@@ -106,17 +123,17 @@ class EventPage extends LitElement {
       .shrink {
         opacity: 0;
         transition:
-          opacity 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) 0.5s,
-          top 0.4s cubic-bezier(0.4, 0.0, 0.2, 1),
-          height 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
+          opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s,
+          top 0.2s cubic-bezier(0.4, 0.0, 0.2, 1),
+          height 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
       }
       .expand {
         background: white; opacity: 100%;
         top: 0; height: 100%;
         transition:
-          opacity 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
-          top 0.4s cubic-bezier(0.4, 0.0, 0.2, 1) 0.6s,
-          height 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) 0.5s;
+          opacity 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+          top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s,
+          height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s;
       }
       .buttons {
         padding: 10px;
@@ -142,6 +159,9 @@ class EventPage extends LitElement {
       .heading {
         font-weight: 600;
         margin-top: 16px;
+      }
+      .response {
+        padding: 20px 50px;
       }
     `;
   }
@@ -195,7 +215,22 @@ class EventPage extends LitElement {
         <div class="info">
           ${this.edit ? this.renderForm() : this.renderDisplay()}
         </div>
+        <div class="response">
+          <mwc-button dense @click=${e => this.respond("yes")} id="yes" label="Ja" ?outlined=${this.myResponse == 'yes'}></mwc-button>
+          <mwc-button dense @click=${e => this.respond("no")} id="no" label="Nej" ?outlined=${this.myResponse == 'no'}></mwc-button>
+          <mwc-button dense @click=${e => this.respond("maybe")} id="maybe" label="Kanske" ?outlined=${this.myResponse == 'maybe'}></mwc-button>
+          <mwc-button dense @click=${e => this.respond("sub")} id="sub" label="Vikarie" ?outlined=${this.myResponse == 'sub'}></mwc-button>
+        </div>
       </div>`;
+  }
+
+  respond(response) {
+    console.log("Responding", response);
+    let user = firebase.auth().currentUser;
+    let meref = this.eventref + "/participants/" + user.uid;
+    firebase.firestore().doc(meref).set({
+      attending: response
+    }, { merge: true })
   }
 
   async expandFrom(top, height) {
