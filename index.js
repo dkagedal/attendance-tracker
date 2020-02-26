@@ -12,15 +12,14 @@ function selector() {
 function openEvent(e) {
   console.log("Selected event", e.detail);
   let editpage = document.getElementById("editpage");
-  editpage.setAttribute('eventref', e.detail.eventref);
+  editpage.loadEvent(e.detail.eventref);
   editpage.expandFrom(e.detail.item.offsetTop, e.detail.item.offsetHeight);
 }
 
 function addEvent(e) {
   console.log("Add event", e);
   let editpage = document.getElementById("editpage");
-  editpage.bandref = selector().currentRef();
-  editpage.eventref = null;
+  editpage.prepareAdd(selector().currentRef());
   editpage.expandFrom(0, 10);
 }
 

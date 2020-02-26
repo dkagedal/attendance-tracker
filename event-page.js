@@ -26,8 +26,9 @@ class EventPage extends LitElement {
 
   static get properties() {
     return {
-      bandref: { type: String }, // "bands/abc"
-      eventref: { type: String }, // "bands/abc/events/def"
+      bandref: { type: String, reflect: true }, // "bands/abc"
+      eventref: { type: String, reflect: true }, // "bands/abc/events/def"
+      edit: { type: Boolean, reflect: true },
       itemTop: { type: Number, reflect: true },
       itemHeight: { type: Number, reflect: true },
       state: { type: String, reflect: true }, // "hidden", "small", "expanded"
@@ -37,26 +38,51 @@ class EventPage extends LitElement {
 
   constructor() {
     super();
-    this.bandref = "";
-    this.eventref = "";
+    this.bandref = null;
+    this.eventref = null;
+    this.edit = false;
     this.itemTop = 0;
     this.itemHeight = 0;
     this.state = "hidden";
     this.event = null;
   }
 
+  clear() {
+    this.bandref = null;
+    this.eventref = null;
+    this.event = null;
+    this.edit = false;
+  }
+
+  prepareAdd(bandref) {
+    this.clear();
+    this.bandref = bandref;
+    this.edit = true;
+  }
+
+  loadEvent(eventref) {
+    this.clear();
+    this.eventref = eventref;
+    console.log('Fetching ', eventref)
+    return firebase.firestore().doc(eventref).get().then(doc => {
+      if (doc.exists) {
+        this.event = doc.data();
+        console.log('Got event snapshot ', this.event);
+      } else {
+        console.log('event', eventref, 'did not exist');
+      }
+    });
+  }
+
   attributeChangedCallback(name, oldval, newval) {
     super.attributeChangedCallback(name, oldval, newval);
+    if (name == 'bandref') {
+      this.event = null;
+    }
     if (name == 'eventref') {
-      console.log('Fetching ', newval)
-      firebase.firestore().doc(newval).get().then(doc => {
-        if (doc.exists) {
-          this.event = doc.data();
-          console.log('got event snapshot ', this.event);
-        } else {
-          console.log('event', newval, 'did not exist');
-        }
-      });
+      this.event = null;
+      if (newval) {
+      }
     }
   }
 
@@ -86,8 +112,16 @@ class EventPage extends LitElement {
           top 0.4s cubic-bezier(0.4, 0.0, 0.2, 1) 0.6s,
           height 0.5s cubic-bezier(0.4, 0.0, 0.2, 1) 0.5s;
       }
+      .buttons {
+        padding: 10px;
+        display: flex;
+      }
+      .info {
+        padding: 10px;
+        height: 600px;
+        overflow: hidden;
+      }
       div.edit-form {
-        padding: 20px;
       }
       mwc-textfield {
         margin-bottom: 10px;
@@ -99,17 +133,17 @@ class EventPage extends LitElement {
   }
 
   render(){
-    let form = html`<div class="edit-form">
-      <mwc-textfield label="Typ" id="type" type="text" required 
+    let form = html`<div class="edit-form" style="display: ${this.edit ? 'block' : 'none'}">
+      <mwc-textfield label="Typ" id="type" type="text" 
         value="${this.event ? this.event.type : ''}"></mwc-textfield>
       <mwc-textfield label="Plats" id="location" type="text"
         value="${this.event ? this.event.location : ''}"></mwc-textfield>
       <mwc-textfield label="Beskrivning" id="desc" type="text"
-        ?value="${ifDefined(this.event ? this.event.description : undefined)}"></mwc-textfield>
+        value="${this.event ? this.event.description : ''}"></mwc-textfield>
       <mwc-textfield label="Datum" id="startdate" type="date"
-        value="${ifDefined(this.event ? shortDate.format(this.event.start.toDate()) : undefined)}"></mwc-textfield>
+        value="${this.event ? shortDate.format(this.event.start.toDate()) : ''}"></mwc-textfield>
       <mwc-textfield label="Tid" id="starttime" type="time"
-        value="${ifDefined(this.event ? shortTime.format(this.event.start.toDate()) : undefined)}"></mwc-textfield>
+        value="${this.event ? shortTime.format(this.event.start.toDate()) : ''}"></mwc-textfield>
       <br>
       <mwc-button raised type="button" @click=${e => this.save()}>Spara</mwc-button>
       </div>`;
@@ -118,8 +152,15 @@ class EventPage extends LitElement {
                     expand: this.state == "expanded" };
     return html`<div id="top" class=${classMap(classes)}
           style="${this.state != "expanded" ? `top: ${this.itemTop}px; height: ${this.itemHeight}px;` : ''}">
-        <mwc-icon-button icon="close" @click=${e => this.close()}></mwc-icon-button>
+        <div class="buttons">
+          <mwc-icon-button icon="close" @click=${e => this.close()}></mwc-icon-button>
+          <span style="flex: 1"> </span>
+          ${this.eventref ? html`<mwc-icon-button icon="edit" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}
+        </div>
+        <div class="info">
+        ${this.event ? this.event.type + " " + this.event.location : ''}
         ${form}
+        </div>
       </div>`;
   }
 
@@ -141,14 +182,20 @@ class EventPage extends LitElement {
   }
 
   save(event) {
-    let start = new Date(Date.parse(this.shadowRoot.getElementById('startdate').value + 'T' + this.shadowRoot.getElementById('starttime').value));
-    console.log("start", start);
     let doc = {
       type: this.shadowRoot.getElementById('type').value,
       location: this.shadowRoot.getElementById('location').value,
       description: this.shadowRoot.getElementById('desc').value,
-      start: firebase.firestore.Timestamp.fromDate(start),
     };
+    let startdate = this.shadowRoot.getElementById('startdate').value;
+    let starttime = this.shadowRoot.getElementById('starttime').value;
+    if (startdate) {
+      if (starttime) {
+        doc.start = firebase.firestore.Timestamp.fromDate(new Date(Date.parse(`${startdate}T${starttime}`)));
+      }
+      doc.start = firebase.firestore.Timestamp.fromDate(new Date(Date.parse(startdate)));
+    }
+    console.log("doc", doc);
     var promise;
     if (this.eventref) {
       console.log("Updating", this.eventref);
