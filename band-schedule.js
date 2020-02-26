@@ -8,6 +8,7 @@ import '@material/mwc-list/mwc-list';
 import '@material/mwc-list/mwc-list-item';
 import './band-event.js';
 import './band-edit-event.js';
+import './time-range.js';
 
 const dateFmt = new Intl.DateTimeFormat('sv-SE', {
       timeZone: 'Europe/Stockholm',
@@ -58,8 +59,8 @@ class BandSchedule extends LitElement {
 
   static get styles() {
     return css`
-      .date { display: inline-block; width: 2.2em; }
       .type { font-weight: 600; }
+      time-range { color: rgba(0,0,0,0.7); }
       @media (max-width: 600px) {
         div.schedule {
           padding: 16px 16px;
@@ -75,14 +76,6 @@ class BandSchedule extends LitElement {
   }
 
   render() {
-    let formatDate = (ts) => {
-      console.log("formatDate", ts)
-      if (ts === undefined || ts == null) {
-        return undefined;
-      }
-      return dateFmt.format(ts.toDate());
-    }
-
     let elt = this;
     return html`
       <mwc-linear-progress indeterminate ?closed=${this.loaded}></mwc-linear-progress>
@@ -91,9 +84,9 @@ class BandSchedule extends LitElement {
             (e, index) => html`<mwc-list-item graphic="icon" twoline>
               <mwc-icon slot="graphic">event</mwc-icon>
               <span>
-                <span class="date">${formatDate(e.data().start)}</span>
                 <span class="type">${e.data().type}</span>
-                ${this.renderTime(e.data())}
+                <time-range start=${ifDefined(e.data().start)}
+                            stop=${ifDefined(e.data().stop)}></time-range>
               </span>
               <span slot="secondary">
                 <span class="location">${e.data().location}</span>
@@ -108,10 +101,8 @@ class BandSchedule extends LitElement {
   }
 
   renderTime(event) {
-    let start = event.start.toDate();
-    let stop = event.stop ? event.stop.toDate() : null;
-    return html`${start.getUTCHours() > 0
-      ? html`<span class="time">${timeFmt.format(start)}${stop ? html`-${timeFmt.format(stop)}` : ''}</span>`
+    return html`${event.starttime
+      ? html`<span class="time">${event.starttime}${event.stoptime ? html`-${event.stoptime}` : ''}</span>`
       : ''}`
   }
 

@@ -6,6 +6,7 @@ import '@material/mwc-icon';
 import '@material/mwc-icon-button';
 import '@material/mwc-button';
 import '@material/mwc-textfield';
+import './time-range.js';
 
 const timestampProperty = { 
   type: Object,  
@@ -13,14 +14,6 @@ const timestampProperty = {
     return Date.parse(value);
   }
 };
-
-const shortDate = new Intl.DateTimeFormat('sv-SE', {
-  'year': 'numeric', 'month': '2-digit', 'day': '2-digit'
-});
-
-const shortTime = new Intl.DateTimeFormat('sv-SE', {
-  'hour': '2-digit', 'minute': '2-digit'
-});
 
 class EventPage extends LitElement {
 
@@ -44,13 +37,13 @@ class EventPage extends LitElement {
     this.itemTop = 0;
     this.itemHeight = 0;
     this.state = "hidden";
-    this.event = null;
+    this.event = {};
   }
 
   clear() {
     this.bandref = null;
     this.eventref = null;
-    this.event = null;
+    this.event = {};
     this.edit = false;
   }
 
@@ -60,6 +53,19 @@ class EventPage extends LitElement {
     this.edit = true;
   }
 
+  joinDateTime(date, time) {
+    console.log("joining", date, time)
+    if (date) {
+      if (time) {
+        return `${date}T${time}`;
+      } else {
+        return date;
+      }
+    } else {
+      return undefined;
+    }
+  }
+
   loadEvent(eventref) {
     this.clear();
     this.eventref = eventref;
@@ -67,23 +73,23 @@ class EventPage extends LitElement {
     return firebase.firestore().doc(eventref).get().then(doc => {
       if (doc.exists) {
         this.event = doc.data();
+        var convstart = this.joinDateTime(this.event.startdate, this.event.starttime);
+        if (convstart) {
+          this.event.start = convstart
+          delete this.event.startdate;
+          delete this.event.starttime;
+        }
+        var convstop = this.joinDateTime(this.event.stopdate, this.event.stoptime);
+        if (convstop) {
+          this.event.stop = convstop
+          delete this.event.stopdate;
+          delete this.event.stoptime;
+        }
         console.log('Got event snapshot ', this.event);
       } else {
         console.log('event', eventref, 'did not exist');
       }
     });
-  }
-
-  attributeChangedCallback(name, oldval, newval) {
-    super.attributeChangedCallback(name, oldval, newval);
-    if (name == 'bandref') {
-      this.event = null;
-    }
-    if (name == 'eventref') {
-      this.event = null;
-      if (newval) {
-      }
-    }
   }
 
   static get styles() {
@@ -117,9 +123,7 @@ class EventPage extends LitElement {
         display: flex;
       }
       .info {
-        padding: 10px;
-        height: 600px;
-        overflow: hidden;
+        padding: 0 20px;
       }
       div.edit-form {
       }
@@ -129,11 +133,25 @@ class EventPage extends LitElement {
       mwc-textfield[type=text] {
         width: 100%;
       }
+      .display {
+        margin: 0 40px;
+      }
+      p {
+        margin: 4px 0;
+      }
+      .heading {
+        font-weight: 600;
+        margin-top: 16px;
+      }
     `;
   }
 
-  render(){
-    let form = html`<div class="edit-form" style="display: ${this.edit ? 'block' : 'none'}">
+  renderForm() {
+    let startdate = this.event.start ? this.event.start.split('T')[0] : undefined;
+    let starttime = this.event.start ? this.event.start.split('T')[1] : undefined;
+    let stopdate = this.event.stop ? this.event.stop.split('T')[0] : undefined;
+    let stoptime = this.event.stop ? this.event.stop.split('T')[1] : undefined;
+    return html`<div class="edit-form">
       <mwc-textfield label="Typ" id="type" type="text" 
         value="${this.event ? this.event.type : ''}"></mwc-textfield>
       <mwc-textfield label="Plats" id="location" type="text"
@@ -141,12 +159,29 @@ class EventPage extends LitElement {
       <mwc-textfield label="Beskrivning" id="desc" type="text"
         value="${this.event ? this.event.description : ''}"></mwc-textfield>
       <mwc-textfield label="Datum" id="startdate" type="date"
-        value="${this.event ? shortDate.format(this.event.start.toDate()) : ''}"></mwc-textfield>
+        value="${ifDefined(startdate)}"></mwc-textfield>
       <mwc-textfield label="Tid" id="starttime" type="time"
-        value="${this.event ? shortTime.format(this.event.start.toDate()) : ''}"></mwc-textfield>
+        value="${ifDefined(starttime)}"></mwc-textfield>
+      <mwc-textfield label="Datum" id="stopdate" type="date"
+        value="${ifDefined(stopdate)}"></mwc-textfield>
+      <mwc-textfield label="Tid" id="stoptime" type="time"
+        value="${ifDefined(stoptime)}"></mwc-textfield>
       <br>
       <mwc-button raised type="button" @click=${e => this.save()}>Spara</mwc-button>
       </div>`;
+  }
+
+  renderDisplay() {
+    return html`<div class="display">
+        <time-range start=${ifDefined(this.event.start)}
+                    stop=${ifDefined(this.event.stop)}></time-range>
+        <p class="heading">${this.event.type}</p>
+        <p>${this.event.location}</p>
+        <p>${this.event.description}</p>
+      </div>`;
+  }
+
+  render() {
     let classes = { hidden: this.state == "hidden", 
                     shrink: this.state == "small", 
                     expand: this.state == "expanded" };
@@ -158,8 +193,7 @@ class EventPage extends LitElement {
           ${this.eventref ? html`<mwc-icon-button icon="edit" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}
         </div>
         <div class="info">
-        ${this.event ? this.event.type + " " + this.event.location : ''}
-        ${form}
+          ${this.edit ? this.renderForm() : this.renderDisplay()}
         </div>
       </div>`;
   }
@@ -181,20 +215,18 @@ class EventPage extends LitElement {
     this.state = "small";
   }
 
-  save(event) {
+  save() {
     let doc = {
       type: this.shadowRoot.getElementById('type').value,
       location: this.shadowRoot.getElementById('location').value,
       description: this.shadowRoot.getElementById('desc').value,
     };
-    let startdate = this.shadowRoot.getElementById('startdate').value;
-    let starttime = this.shadowRoot.getElementById('starttime').value;
-    if (startdate) {
-      if (starttime) {
-        doc.start = firebase.firestore.Timestamp.fromDate(new Date(Date.parse(`${startdate}T${starttime}`)));
-      }
-      doc.start = firebase.firestore.Timestamp.fromDate(new Date(Date.parse(startdate)));
-    }
+    let start = this.joinDateTime(this.shadowRoot.getElementById('startdate').value,
+                                  this.shadowRoot.getElementById('starttime').value);
+    let stop = this.joinDateTime(this.shadowRoot.getElementById('stopdate').value,
+                                 this.shadowRoot.getElementById('stoptime').value);
+    if (start) { doc.start = start; }
+    if (stop) { doc.stop = stop; }
     console.log("doc", doc);
     var promise;
     if (this.eventref) {
