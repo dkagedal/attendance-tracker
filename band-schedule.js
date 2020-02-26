@@ -1,7 +1,6 @@
 import { LitElement, html, css, query } from 'lit-element';
 import { repeat } from 'lit-html/directives/repeat';
 import { ifDefined } from 'lit-html/directives/if-defined';
-import '@material/mwc-fab';
 import '@material/mwc-icon';
 import '@material/mwc-button';
 import '@material/mwc-linear-progress';
@@ -72,11 +71,6 @@ class BandSchedule extends LitElement {
         margin: 0;
         color: #4a7cf1;
       }
-      mwc-fab {
-        position: fixed;
-        bottom: 1rem;
-        right: 1rem;
-      }
     `;
   }
 
@@ -110,7 +104,6 @@ class BandSchedule extends LitElement {
           ${this.adding ? html`<band-edit-event bandref="${this.bandref}"></band-edit-event>` 
                         : ''}
       </mwc-list>
-      <mwc-fab icon="add" @click=${e => this.toggleAdd()}></mwc-fab>      
     `;
   }
 

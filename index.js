@@ -1,14 +1,27 @@
 import "./band-selector.js";
 import "./band-schedule.js";
 import "./event-page.js";
+import '@material/mwc-fab';
 
-var ands;
+var bands;
+
+function selector() {
+  return document.getElementById("selector");
+}
 
 function openEvent(e) {
   console.log("Selected event", e.detail);
   let editpage = document.getElementById("editpage");
   editpage.setAttribute('eventref', e.detail.eventref);
   editpage.expandFrom(e.detail.item.offsetTop, e.detail.item.offsetHeight);
+}
+
+function addEvent(e) {
+  console.log("Add event", e);
+  let editpage = document.getElementById("editpage");
+  editpage.bandref = selector().currentRef();
+  editpage.eventref = null;
+  editpage.expandFrom(0, 10);
 }
 
 firebase.auth().onAuthStateChanged(function(user) {
@@ -19,6 +32,7 @@ firebase.auth().onAuthStateChanged(function(user) {
     let selector = document.getElementById("selector");
     let schedule = document.getElementById("band");
     schedule.addEventListener('select-event', e => { openEvent(e) });
+    document.getElementById('fab').addEventListener('click', e => { addEvent(e) });
     selector.style.display = 'block';
     schedule.style.display = 'block';
     query.get().then((querySnapshot) => {
