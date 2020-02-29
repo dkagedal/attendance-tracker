@@ -5,8 +5,18 @@ import { ifDefined } from 'lit-html/directives/if-defined';
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
 import '@material/mwc-button';
+import '@material/mwc-list';
 import '@material/mwc-textfield';
+import './datetime-input.js';
+import './event-editor.js';
 import './time-range.js';
+
+const responseIcons = {
+  yes: "thumb_up",
+  no: "thumb_down",
+  maybe: "thumbs_up_down",
+  sub: "import_export",
+}
 
 const attendances = {
   "yes": "Ja",
@@ -28,19 +38,19 @@ class EventPage extends LitElement {
       state: { type: String, reflect: true }, // "hidden", "small", "expanded"
       event: { type: Object },
       myResponse: { type: String },
+      participants: { type: Array },
+      users: { type: Array },
     }
   }
 
   constructor() {
     super();
-    this.bandref = null;
-    this.eventref = null;
+    this.clear();
     this.edit = false;
     this.itemTop = 0;
     this.itemHeight = 0;
     this.state = "hidden";
-    this.event = {};
-    this.myResponse = null;
+    this.users = [];
   }
 
   clear() {
@@ -49,25 +59,13 @@ class EventPage extends LitElement {
     this.event = {};
     this.edit = false;
     this.myResponse = null;
+    this.participants = [];
   }
 
   prepareAdd(bandref) {
     this.clear();
     this.bandref = bandref;
     this.edit = true;
-  }
-
-  joinDateTime(date, time) {
-    console.log("joining", date, time)
-    if (date) {
-      if (time) {
-        return `${date}T${time}`;
-      } else {
-        return date;
-      }
-    } else {
-      return undefined;
-    }
   }
 
   loadEvent(eventref) {
@@ -78,18 +76,6 @@ class EventPage extends LitElement {
     firebase.firestore().doc(eventref).get().then(doc => {
       if (doc.exists) {
         this.event = doc.data();
-        var convstart = this.joinDateTime(this.event.startdate, this.event.starttime);
-        if (convstart) {
-          this.event.start = convstart
-          delete this.event.startdate;
-          delete this.event.starttime;
-        }
-        var convstop = this.joinDateTime(this.event.stopdate, this.event.stoptime);
-        if (convstop) {
-          this.event.stop = convstop
-          delete this.event.stopdate;
-          delete this.event.stoptime;
-        }
         console.log('Got event snapshot ', this.event);
       } else {
         console.log('event', eventref, 'did not exist');
@@ -107,6 +93,12 @@ class EventPage extends LitElement {
       }
       this.myResponse = attending;
     });
+
+    console.log("Fetching participants");
+    firebase.firestore().collection(eventref + "/participants").onSnapshot(snapshot => {
+      console.log("Got participants", snapshot);
+      this.participants = snapshot.docs;
+    });
   }
 
   static get styles() {
@@ -123,9 +115,9 @@ class EventPage extends LitElement {
       .shrink {
         opacity: 0;
         transition:
-          opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s,
-          top 0.2s cubic-bezier(0.4, 0.0, 0.2, 1),
-          height 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
+          opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s,
+          top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+          height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
       }
       .expand {
         background: white; opacity: 100%;
@@ -160,35 +152,39 @@ class EventPage extends LitElement {
         font-weight: 600;
         margin-top: 16px;
       }
-      .response {
+      .myresponse {
         padding: 20px 50px;
       }
+      .participant-row {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        margin: 8px 32px;
+      } 
+      .participant-row .avatar {
+        padding: 10px;
+      }
+      .participant-row .row-main {
+        display: inline;
+        margin: 0 16px;
+        flex: 1;
+        overflow: hidden;
+      }
+      .participant-row .participant-name {
+        margin: 4px 0;
+        overflow: hidden;
+      }
+      .participant-row .comment {
+        margin: 4px 0;
+        font-size: 14px;
+        overflow: hidden;
+        color: rgba(0, 0, 0, 0.5);
+      }
+      .participant-row .response {
+        padding: 10px;
+        font-weight: 600;
+      }
     `;
-  }
-
-  renderForm() {
-    let startdate = this.event.start ? this.event.start.split('T')[0] : undefined;
-    let starttime = this.event.start ? this.event.start.split('T')[1] : undefined;
-    let stopdate = this.event.stop ? this.event.stop.split('T')[0] : undefined;
-    let stoptime = this.event.stop ? this.event.stop.split('T')[1] : undefined;
-    return html`<div class="edit-form">
-      <mwc-textfield label="Typ" id="type" type="text" 
-        value="${this.event ? this.event.type : ''}"></mwc-textfield>
-      <mwc-textfield label="Plats" id="location" type="text"
-        value="${this.event ? this.event.location : ''}"></mwc-textfield>
-      <mwc-textfield label="Beskrivning" id="desc" type="text"
-        value="${this.event ? this.event.description : ''}"></mwc-textfield>
-      <mwc-textfield label="Datum" id="startdate" type="date"
-        value="${ifDefined(startdate)}"></mwc-textfield>
-      <mwc-textfield label="Tid" id="starttime" type="time"
-        value="${ifDefined(starttime)}"></mwc-textfield>
-      <mwc-textfield label="Datum" id="stopdate" type="date"
-        value="${ifDefined(stopdate)}"></mwc-textfield>
-      <mwc-textfield label="Tid" id="stoptime" type="time"
-        value="${ifDefined(stoptime)}"></mwc-textfield>
-      <br>
-      <mwc-button raised type="button" @click=${e => this.save()}>Spara</mwc-button>
-      </div>`;
   }
 
   renderDisplay() {
@@ -199,6 +195,21 @@ class EventPage extends LitElement {
         <p>${this.event.location}</p>
         <p>${this.event.description}</p>
       </div>`;
+  }
+
+  participantName(id) {
+    console.log("users", this.users);
+    let user = this.users[id];
+    return user ? user.display_name : id;
+  }
+
+  responseButton(response) {
+    return html`<mwc-icon-button @click=${e => this.respond(response)}
+                            id="${response}"
+                            icon="${responseIcons[response]}"
+                            label="${attendances[response]}"
+                            style="color: ${this.myResponse == response ? '#5544bb' : '#888888'}"
+                ></mwc-icon-button>`;
   }
 
   render() {
@@ -213,13 +224,31 @@ class EventPage extends LitElement {
           ${this.eventref ? html`<mwc-icon-button icon="edit" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}
         </div>
         <div class="info">
-          ${this.edit ? this.renderForm() : this.renderDisplay()}
+          ${this.edit ? html`<event-editor ?range=${this.event.stop}
+                                           bandref="${ifDefined(this.bandref || undefined)}"
+                                           eventref="${ifDefined(this.eventref || undefined)}"
+                                           .event=${this.event}
+                                            @saved=${e => this.close()}></event-editor>`
+                      : this.renderDisplay()}
         </div>
-        <div class="response">
-          <mwc-button dense @click=${e => this.respond("yes")} id="yes" label="Ja" ?outlined=${this.myResponse == 'yes'}></mwc-button>
-          <mwc-button dense @click=${e => this.respond("no")} id="no" label="Nej" ?outlined=${this.myResponse == 'no'}></mwc-button>
-          <mwc-button dense @click=${e => this.respond("maybe")} id="maybe" label="Kanske" ?outlined=${this.myResponse == 'maybe'}></mwc-button>
-          <mwc-button dense @click=${e => this.respond("sub")} id="sub" label="Vikarie" ?outlined=${this.myResponse == 'sub'}></mwc-button>
+        <div class="myresponse">
+          ${this.responseButton("yes")}
+          ${this.responseButton("no")}
+          ${this.responseButton("maybe")}
+          ${this.responseButton("sub")}
+        </div>
+        <div class="participants">
+          ${repeat(this.participants, p => p.id, 
+            (p, index) => html`<div class="participant-row">
+               <mwc-icon class="avatar">person</mwc-icon>
+               <div class="row-main">
+                 <p class="participant-name">${this.participantName(p.id)}</p>
+                 ${p.data().comment ? html`<p class="comment">${p.data().comment}</p>` : ''}
+               </div>
+               <span class="response">${attendances[p.data().attending || "unknown"]}</span>
+               </p>
+               
+            </div>`)}
         </div>
       </div>`;
   }
@@ -248,39 +277,6 @@ class EventPage extends LitElement {
 
   close() {
     this.state = "small";
-  }
-
-  save() {
-    let doc = {
-      type: this.shadowRoot.getElementById('type').value,
-      location: this.shadowRoot.getElementById('location').value,
-      description: this.shadowRoot.getElementById('desc').value,
-    };
-    let start = this.joinDateTime(this.shadowRoot.getElementById('startdate').value,
-                                  this.shadowRoot.getElementById('starttime').value);
-    let stop = this.joinDateTime(this.shadowRoot.getElementById('stopdate').value,
-                                 this.shadowRoot.getElementById('stoptime').value);
-    if (start) { doc.start = start; }
-    if (stop) { doc.stop = stop; }
-    console.log("doc", doc);
-    var promise;
-    if (this.eventref) {
-      console.log("Updating", this.eventref);
-      promise = firebase.firestore().doc(this.eventref).set(doc).then(() => {
-        console.log("Successfully updated event");
-      })
-    } else {
-      let ref = this.bandref+"/events";
-      console.log("Adding to %s", ref)
-      promise = firebase.firestore().collection(ref).add(doc).then(docRef => {
-        console.log("New event created with ID", docRef.id);
-      });
-    }
-    promise.then(docRef => {
-      this.close()
-    }).catch(err => {
-      console.error("Error creating event: ", err);
-    });
   }
 }
 

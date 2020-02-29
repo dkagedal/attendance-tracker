@@ -30,11 +30,13 @@ firebase.auth().onAuthStateChanged(function(user) {
         .where("acl", "array-contains", user.uid);
     let selector = document.getElementById("selector");
     let schedule = document.getElementById("band");
+    let editpage = document.getElementById("editpage");
     schedule.addEventListener('select-event', e => { openEvent(e) });
     document.getElementById('fab').addEventListener('click', e => { addEvent(e) });
     selector.style.display = 'block';
     schedule.style.display = 'block';
     query.get().then((querySnapshot) => {
+      editpage.users = querySnapshot.docs[0].data().users || [];
       selector.setBands(querySnapshot.docs);
       console.log("Current band:", selector.current), selector.currentName();
       schedule.setAttribute('bandref', selector.currentRef());
