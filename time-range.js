@@ -58,7 +58,6 @@ class TimeRange extends LitElement {
       return fmt.formatRange(this.utcDate(start), this.utcDate(stop));
     }
     let single = (start) => {
-      console.log("single", start);
       let fmt = (start.indexOf("T") > 0) ? dateTimeFmt : dateFmt;
       return fmt.format(this.utcDate(start));
     }

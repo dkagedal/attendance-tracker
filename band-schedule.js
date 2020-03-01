@@ -6,8 +6,6 @@ import '@material/mwc-button';
 import '@material/mwc-linear-progress';
 import '@material/mwc-list/mwc-list';
 import '@material/mwc-list/mwc-list-item';
-import './band-event.js';
-import './band-edit-event.js';
 import './time-range.js';
 
 const dateFmt = new Intl.DateTimeFormat('sv-SE', {
@@ -28,7 +26,6 @@ class BandSchedule extends LitElement {
       bandref: { type: String }, // "bands/abc"
       events: { type: Array },
       loaded: { type: Boolean },
-      adding: { type: Boolean },
     }
   }
 
@@ -37,7 +34,6 @@ class BandSchedule extends LitElement {
     this.bandref = "";
     this.events = [];
     this.loaded = false;
-    this.adding = false;
   }
 
   attributeChangedCallback(name, oldval, newval) {
@@ -79,9 +75,9 @@ class BandSchedule extends LitElement {
     let elt = this;
     return html`
       <mwc-linear-progress indeterminate ?closed=${this.loaded}></mwc-linear-progress>
-      <mwc-list @selected=${event => { this.selected(event) }}>
+      <mwc-list>
           ${repeat(this.events, (e) => e.id, 
-            (e, index) => html`<mwc-list-item graphic="icon" twoline>
+            (e, index) => html`<mwc-list-item graphic="icon" twoline @request-selected=${ev => this.selected(ev.path[0], e)}>
               <mwc-icon slot="graphic">event</mwc-icon>
               <span>
                 <span class="type">${e.data().type}</span>
@@ -94,8 +90,6 @@ class BandSchedule extends LitElement {
              </span>
             </mwc-list-item>`)}
           ${this.loade && this.events.length == 0 ? html`<mwc-list-item noninteractive>Inget planerat</mwc-list-item>` : ''}
-          ${this.adding ? html`<band-edit-event bandref="${this.bandref}"></band-edit-event>` 
-                        : ''}
       </mwc-list>
     `;
   }
@@ -106,18 +100,13 @@ class BandSchedule extends LitElement {
       : ''}`
   }
 
-  toggleAdd() {
-    console.log('Toggle add: %s -> %s', this.adding, !this.adding);
-    this.adding = !this.adding;
-  }
-
-  selected(listEvent) {
-    console.log("Selected", listEvent);
+  selected(listItem, bandEvent) {
+    console.log("band-schedule selected", listItem, bandEvent);
     let event = new CustomEvent("select-event", {
       detail: {
-        index: listEvent.detail.index, 
-        item: listEvent.target.children[listEvent.detail.index],
-        eventref: this.bandref + "/events/" + this.events[listEvent.detail.index].id,
+        item: listItem,
+        eventref: this.bandref + "/events/" + bandEvent.id,
+        event: bandEvent.data(),
       }
     });
     this.dispatchEvent(event);

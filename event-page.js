@@ -1,11 +1,14 @@
 import { LitElement, html, css } from 'lit-element';
 import { classMap } from 'lit-html/directives/class-map';
+import { styleMap } from 'lit-html/directives/style-map';
 import { repeat } from 'lit-html/directives/repeat';
 import { ifDefined } from 'lit-html/directives/if-defined';
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
 import '@material/mwc-button';
 import '@material/mwc-list';
+import '@material/mwc-tab';
+import '@material/mwc-tab-bar';
 import '@material/mwc-textfield';
 import './datetime-input.js';
 import './event-editor.js';
@@ -35,11 +38,12 @@ class EventPage extends LitElement {
       edit: { type: Boolean, reflect: true },
       itemTop: { type: Number, reflect: true },
       itemHeight: { type: Number, reflect: true },
-      state: { type: String, reflect: true }, // "hidden", "small", "expanded"
+      state: { type: String, reflect: true }, // "hidden", "aligning-to-grow", "growing", "full", "aligning-to-hide"
       event: { type: Object },
       myResponse: { type: String },
-      participants: { type: Array },
-      users: { type: Array },
+      participants: { type: Object },
+      users: { type: Object },
+      currentTab: { Type: Number, reflect: true },
     }
   }
 
@@ -50,7 +54,8 @@ class EventPage extends LitElement {
     this.itemTop = 0;
     this.itemHeight = 0;
     this.state = "hidden";
-    this.users = [];
+    this.users = {};
+    this.currentTab = 0;
   }
 
   clear() {
@@ -59,7 +64,7 @@ class EventPage extends LitElement {
     this.event = {};
     this.edit = false;
     this.myResponse = null;
-    this.participants = [];
+    this.participants = {};
   }
 
   prepareAdd(bandref) {
@@ -68,19 +73,12 @@ class EventPage extends LitElement {
     this.edit = true;
   }
 
-  loadEvent(eventref) {
+  loadEvent(eventref, event) {
     this.clear();
     this.eventref = eventref;
 
-    console.log('Fetching event', eventref)
-    firebase.firestore().doc(eventref).get().then(doc => {
-      if (doc.exists) {
-        this.event = doc.data();
-        console.log('Got event snapshot ', this.event);
-      } else {
-        console.log('event', eventref, 'did not exist');
-      }
-    });
+    console.log('Loading event', eventref, event)
+    this.event = event;
 
     let user = firebase.auth().currentUser;
     let meref = eventref + "/participants/" + user.uid;
@@ -97,7 +95,10 @@ class EventPage extends LitElement {
     console.log("Fetching participants");
     firebase.firestore().collection(eventref + "/participants").onSnapshot(snapshot => {
       console.log("Got participants", snapshot);
-      this.participants = snapshot.docs;
+      this.participants = {};
+      snapshot.docs.forEach(p => {
+        this.participants[p.id] = p.data();
+      });
     });
   }
 
@@ -110,7 +111,15 @@ class EventPage extends LitElement {
         box-shadow: 3px 3px 8px 1px rgba(0,0,0,0.4);
       }
       .hidden {
+        display: none;
         opacity: 0;
+      }
+      .small {
+        background: white;
+      }
+      .fullscreen {
+        background: white;
+        top: 0; height: 100%;
       }
       .shrink {
         opacity: 0;
@@ -120,8 +129,7 @@ class EventPage extends LitElement {
           height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
       }
       .expand {
-        background: white; opacity: 100%;
-        top: 0; height: 100%;
+        opacity: 100%;
         transition:
           opacity 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
           top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s,
@@ -152,14 +160,11 @@ class EventPage extends LitElement {
         font-weight: 600;
         margin-top: 16px;
       }
-      .myresponse {
-        padding: 20px 50px;
-      }
       .participant-row {
         display: flex;
         flex-direction: row;
         align-items: center;
-        margin: 8px 32px;
+        margin: 1px 32px;
       } 
       .participant-row .avatar {
         padding: 10px;
@@ -212,12 +217,45 @@ class EventPage extends LitElement {
                 ></mwc-icon-button>`;
   }
 
+  userRow(uid, user) {
+    let participant = this.participants[uid] || {};
+    return html`<div class="participant-row">
+         <mwc-icon class="avatar">person</mwc-icon>
+         <div class="row-main">
+           <p class="participant-name">${user.display_name}</p>
+           ${participant.comment
+             ? html`<p class="comment">${participant.comment}</p>`
+             : ''}
+         </div>
+         <span class="response">${attendances[participant.attending || "unknown"]}</span>
+      </div>`;
+  }
+
+  renderMyResponse() {
+    return html`<div id="myresponse">
+        ${this.responseButton("yes")}
+        ${this.responseButton("no")}
+        ${this.responseButton("maybe")}
+        ${this.responseButton("sub")}
+      </div>`;
+  }
+
   render() {
-    let classes = { hidden: this.state == "hidden", 
-                    shrink: this.state == "small", 
-                    expand: this.state == "expanded" };
-    return html`<div id="top" class=${classMap(classes)}
-          style="${this.state != "expanded" ? `top: ${this.itemTop}px; height: ${this.itemHeight}px;` : ''}">
+    let classes = {
+      hidden: this.state == "hidden",
+      small: this.state == "aligning-to-grow" || this.state == "aligning-to-hide", 
+      shrink: this.state == "aligning-to-hide", 
+      expand: this.state == "growing",
+      fullscreen: this.state == "growing" || this.state == "full",
+    };
+    console.log("classes", classes);
+    let style = {}; // { display: this.state == "hidden" ? "none" : "block" };
+    if (this.state == "aligning-to-grow" || this.state == "aligning-to-hide") {
+      style.top = this.itemTop + 'px';
+      style.height = this.itemHeight + "px";
+    }
+    return html`<div id="top" class=${classMap(classes)} style=${styleMap(style)}
+          @transitionend=${ev => this.transitionend(ev)}>
         <div class="buttons">
           <mwc-icon-button icon="close" @click=${e => this.close()}></mwc-icon-button>
           <span style="flex: 1"> </span>
@@ -228,29 +266,26 @@ class EventPage extends LitElement {
                                            bandref="${ifDefined(this.bandref || undefined)}"
                                            eventref="${ifDefined(this.eventref || undefined)}"
                                            .event=${this.event}
-                                            @saved=${e => this.close()}></event-editor>`
+                                           @saved=${e => this.close()}></event-editor>`
                       : this.renderDisplay()}
         </div>
-        <div class="myresponse">
-          ${this.responseButton("yes")}
-          ${this.responseButton("no")}
-          ${this.responseButton("maybe")}
-          ${this.responseButton("sub")}
-        </div>
-        <div class="participants">
-          ${repeat(this.participants, p => p.id, 
-            (p, index) => html`<div class="participant-row">
-               <mwc-icon class="avatar">person</mwc-icon>
-               <div class="row-main">
-                 <p class="participant-name">${this.participantName(p.id)}</p>
-                 ${p.data().comment ? html`<p class="comment">${p.data().comment}</p>` : ''}
-               </div>
-               <span class="response">${attendances[p.data().attending || "unknown"]}</span>
-               </p>
-               
-            </div>`)}
+        ${this.renderMyResponse()}
+        <div id="participants">
+          ${Object.entries(this.users).map(([uid, user]) => this.userRow(uid, user))}
         </div>
       </div>`;
+  }
+
+  transitionend(ev) {
+    console.log("Transition end", this.state, ev.propertyName);
+    if (this.state == "growing" && ev.propertyName == "height") {
+      console.log("New state: full");
+      this.state = "full";
+    }
+    if (this.state == "aligning-to-hide" && ev.propertyName == "opacity") {
+      console.log("New state: hidden");
+      this.state = "hidden";
+    }
   }
 
   respond(response) {
@@ -265,18 +300,20 @@ class EventPage extends LitElement {
   async expandFrom(top, height) {
     this.itemTop = top;
     this.itemHeight = height;
-    this.state = "hidden";
+    this.state = "aligning-to-grow";
     console.log("Requesting update", this.shadowRoot.getElementById("top").style.cssText);
-    var promise = this.requestUpdate('state', 'hidden');
+    var promise = this.requestUpdate('state', 'aligning-to-grow');
     while (!await promise) {
       promise = this.updateComplete;
     }
     console.log("Updated?", this.shadowRoot.getElementById("top").style.cssText);
-    this.state = "expanded";
+    console.log("New state: growing");
+    this.state = "growing";
   }
 
   close() {
-    this.state = "small";
+    console.log("New state: aligning-to-hide");
+    this.state = "aligning-to-hide";
   }
 }
 

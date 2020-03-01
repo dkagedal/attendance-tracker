@@ -1,18 +1,23 @@
 import "./band-selector.js";
 import "./band-schedule.js";
-import "./event-page.js";
+import './event-page.js';
 import '@material/mwc-fab';
 
-var bands;
+let bands = {};
 
 function selector() {
   return document.getElementById("selector");
 }
 
-function openEvent(e) {
-  console.log("Selected event", e.detail);
+function selectBand(id, data) {
   let editpage = document.getElementById("editpage");
-  editpage.loadEvent(e.detail.eventref);
+  editpage.setBand(band);
+}
+
+function openEvent(e) {
+  let editpage = document.getElementById("editpage");
+  console.log("Selected event", e.detail);
+  editpage.loadEvent(e.detail.eventref, e.detail.event);
   editpage.expandFrom(e.detail.item.offsetTop, e.detail.item.offsetHeight);
 }
 
@@ -36,8 +41,12 @@ firebase.auth().onAuthStateChanged(function(user) {
     selector.style.display = 'block';
     schedule.style.display = 'block';
     query.get().then((querySnapshot) => {
-      editpage.users = querySnapshot.docs[0].data().users || [];
+      editpage.users = querySnapshot.docs[0].data().users || {};
       selector.setBands(querySnapshot.docs);
+      this.bands = {};
+      querySnapshot.docs.forEach(b => {
+        this.bands[b.id] = b.data();
+      });
       console.log("Current band:", selector.current), selector.currentName();
       schedule.setAttribute('bandref', selector.currentRef());
     });
