@@ -27,7 +27,7 @@ const attendances = {
   "no": "Nej",
   "maybe": "Kanske",
   "sub": "Vikarie",
-  "unknown": "Inte svarat",
+  "unknown": "",
 }
 
 class EventPage extends LitElement {
