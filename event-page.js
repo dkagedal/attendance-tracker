@@ -3,6 +3,7 @@ import { classMap } from 'lit-html/directives/class-map';
 import { styleMap } from 'lit-html/directives/style-map';
 import { repeat } from 'lit-html/directives/repeat';
 import { ifDefined } from 'lit-html/directives/if-defined';
+import '@material/mwc-dialog';
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
 import '@material/mwc-button';
@@ -41,9 +42,9 @@ class EventPage extends LitElement {
       state: { type: String, reflect: true }, // "hidden", "aligning-to-grow", "growing", "full", "aligning-to-hide"
       event: { type: Object },
       myResponse: { type: String },
+      editResponse: { type: Boolean },
       participants: { type: Object },
       users: { type: Object },
-      currentTab: { Type: Number, reflect: true },
     }
   }
 
@@ -55,7 +56,6 @@ class EventPage extends LitElement {
     this.itemHeight = 0;
     this.state = "hidden";
     this.users = {};
-    this.currentTab = 0;
   }
 
   clear() {
@@ -64,6 +64,7 @@ class EventPage extends LitElement {
     this.event = {};
     this.edit = false;
     this.myResponse = null;
+    this.editResponse = false;
     this.participants = {};
   }
 
@@ -141,14 +142,9 @@ class EventPage extends LitElement {
       }
       .info {
         padding: 0 20px;
+        margin-bottom: 2rem;
       }
       div.edit-form {
-      }
-      mwc-textfield {
-        margin-bottom: 10px;
-      }
-      mwc-textfield[type=text] {
-        width: 100%;
       }
       .display {
         margin: 0 40px;
@@ -189,6 +185,10 @@ class EventPage extends LitElement {
         padding: 10px;
         font-weight: 600;
       }
+      #myresponse {
+        display: flex;
+        flex-direction: column;
+      }
     `;
   }
 
@@ -208,18 +208,26 @@ class EventPage extends LitElement {
     return user ? user.display_name : id;
   }
 
-  responseButton(response) {
-    return html`<mwc-icon-button @click=${e => this.respond(response)}
+  responseButton(uid, participant, response) {
+    return html`<mwc-button @click=${e => this.setAttending(uid, response)}
                             id="${response}"
                             icon="${responseIcons[response]}"
                             label="${attendances[response]}"
-                            style="color: ${this.myResponse == response ? '#5544bb' : '#888888'}"
-                ></mwc-icon-button>`;
+                            ?outlined="${participant.attending == response}"
+                ></mwc-button>`;
+  }
+
+  clickParticipant(uid) {
+    let user = firebase.auth().currentUser;
+    if (uid == user.uid) {
+      console.log("Click myself", uid);
+      this.editResponse = true;
+    }
   }
 
   userRow(uid, user) {
     let participant = this.participants[uid] || {};
-    return html`<div class="participant-row">
+    return html`<div class="participant-row" @click=${e => this.clickParticipant(uid)}>
          <mwc-icon class="avatar">person</mwc-icon>
          <div class="row-main">
            <p class="participant-name">${user.display_name}</p>
@@ -231,13 +239,22 @@ class EventPage extends LitElement {
       </div>`;
   }
 
-  renderMyResponse() {
-    return html`<div id="myresponse">
-        ${this.responseButton("yes")}
-        ${this.responseButton("no")}
-        ${this.responseButton("maybe")}
-        ${this.responseButton("sub")}
-      </div>`;
+  renderMyResponseDialog() {
+    let uid = firebase.auth().currentUser.uid;
+    let participant = this.participants[uid] || {};
+    return html`
+      <mwc-dialog heading="Närvaro" ?open=${this.editResponse} @closed=${e => { this.editResponse = false }}>
+        <div id="myresponse">
+          ${this.responseButton(uid, participant, "yes")}
+          ${this.responseButton(uid, participant, "no")}
+          ${this.responseButton(uid, participant, "maybe")}
+          ${this.responseButton(uid, participant, "sub")}
+          <mwc-textfield label="Kommentar" id="comment" type="text" 
+            value="${ifDefined(participant.comment)}"
+            @blur=${e => this.setComment(uid, e.path[0].value)}></mwc-textfield>
+        </div>
+        <mwc-button dialogAction="ok" slot="primaryAction">ok</mwc-button>
+      </mwc-dialog>`;
   }
 
   render() {
@@ -248,7 +265,6 @@ class EventPage extends LitElement {
       expand: this.state == "growing",
       fullscreen: this.state == "growing" || this.state == "full",
     };
-    console.log("classes", classes);
     let style = {}; // { display: this.state == "hidden" ? "none" : "block" };
     if (this.state == "aligning-to-grow" || this.state == "aligning-to-hide") {
       style.top = this.itemTop + 'px';
@@ -269,7 +285,7 @@ class EventPage extends LitElement {
                                            @saved=${e => this.close()}></event-editor>`
                       : this.renderDisplay()}
         </div>
-        ${this.renderMyResponse()}
+        ${this.renderMyResponseDialog()}
         <div id="participants">
           ${Object.entries(this.users).map(([uid, user]) => this.userRow(uid, user))}
         </div>
@@ -288,13 +304,16 @@ class EventPage extends LitElement {
     }
   }
 
-  respond(response) {
-    console.log("Responding", response);
-    let user = firebase.auth().currentUser;
-    let meref = this.eventref + "/participants/" + user.uid;
-    firebase.firestore().doc(meref).set({
-      attending: response
-    }, { merge: true })
+  setAttending(uid, response) {
+    let ref = this.eventref + "/participants/" + uid;
+    firebase.firestore().doc(ref).set({ attending: response },
+                                        { merge: true });
+  }
+
+  setComment(uid, comment) {
+    let ref = this.eventref + "/participants/" + uid;
+    firebase.firestore().doc(ref).set({ comment: comment },
+                                      { merge: true });
   }
 
   async expandFrom(top, height) {
