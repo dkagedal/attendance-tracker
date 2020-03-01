@@ -41,8 +41,7 @@ class EventPage extends LitElement {
       itemHeight: { type: Number, reflect: true },
       state: { type: String, reflect: true }, // "hidden", "aligning-to-grow", "growing", "full", "aligning-to-hide"
       event: { type: Object },
-      myResponse: { type: String },
-      editResponse: { type: Boolean },
+      editResponse: { type: String }, // UID or null
       participants: { type: Object },
       users: { type: Object },
     }
@@ -63,8 +62,7 @@ class EventPage extends LitElement {
     this.eventref = null;
     this.event = {};
     this.edit = false;
-    this.myResponse = null;
-    this.editResponse = false;
+    this.editResponse = null;
     this.participants = {};
   }
 
@@ -80,18 +78,6 @@ class EventPage extends LitElement {
 
     console.log('Loading event', eventref, event)
     this.event = event;
-
-    let user = firebase.auth().currentUser;
-    let meref = eventref + "/participants/" + user.uid;
-    console.log("Fetching my participant", meref);
-    firebase.firestore().doc(meref).onSnapshot(doc => {
-      console.log("Got my participant", doc);
-      let attending = "unknown";
-      if (doc.exists) {
-        attending = doc.data().attending || "unknown";
-      }
-      this.myResponse = attending;
-    });
 
     console.log("Fetching participants");
     firebase.firestore().collection(eventref + "/participants").onSnapshot(snapshot => {
@@ -218,10 +204,8 @@ class EventPage extends LitElement {
   }
 
   clickParticipant(uid) {
-    let user = firebase.auth().currentUser;
-    if (uid == user.uid) {
-      console.log("Click myself", uid);
-      this.editResponse = true;
+    if (uid == firebase.auth().currentUser.uid) {
+      this.editResponse = uid;
     }
   }
 
@@ -240,17 +224,17 @@ class EventPage extends LitElement {
   }
 
   renderMyResponseDialog() {
-    let uid = firebase.auth().currentUser.uid;
+    let uid = this.editResponse;
     let participant = this.participants[uid] || {};
     return html`
-      <mwc-dialog heading="Närvaro" ?open=${this.editResponse} @closed=${e => { this.editResponse = false }}>
+      <mwc-dialog heading="Närvaro" ?open=${this.editResponse} @closed=${e => { this.editResponse = null }}>
         <div id="myresponse">
           ${this.responseButton(uid, participant, "yes")}
           ${this.responseButton(uid, participant, "no")}
           ${this.responseButton(uid, participant, "maybe")}
           ${this.responseButton(uid, participant, "sub")}
           <mwc-textfield label="Kommentar" id="comment" type="text" 
-            value="${ifDefined(participant.comment)}"
+            value=${participant.comment || ''}
             @blur=${e => this.setComment(uid, e.path[0].value)}></mwc-textfield>
         </div>
         <mwc-button dialogAction="ok" slot="primaryAction">ok</mwc-button>
