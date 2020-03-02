@@ -97,6 +97,9 @@ class EventPage extends LitElement {
         overflow: hidden;
         box-shadow: 3px 3px 8px 1px rgba(0,0,0,0.4);
       }
+      #participants {
+        margin: 0 20px;
+      }
       .hidden {
         display: none;
         opacity: 0;
@@ -127,7 +130,7 @@ class EventPage extends LitElement {
         display: flex;
       }
       .info {
-        padding: 0 20px;
+        margin: 0 30px;
         margin-bottom: 2rem;
       }
       div.edit-form {
@@ -139,6 +142,7 @@ class EventPage extends LitElement {
         margin: 4px 0;
       }
       .heading {
+        font-size: 20px;
         font-weight: 600;
         margin-top: 16px;
       }
@@ -146,14 +150,18 @@ class EventPage extends LitElement {
         display: flex;
         flex-direction: row;
         align-items: center;
-        margin: 1px 32px;
+        margin: 1px 0px;
       } 
       .participant-row .avatar {
+        flex: 0 1 30px;
         padding: 10px;
+      }
+      .dimmed {
+        color: rgba(0, 0, 0, 0.3);
       }
       .participant-row .row-main {
         display: inline;
-        margin: 0 16px;
+        margin: 0;
         flex: 1;
         overflow: hidden;
       }
@@ -212,7 +220,7 @@ class EventPage extends LitElement {
   userRow(uid, user) {
     let participant = this.participants[uid] || {};
     return html`<div class="participant-row" @click=${e => this.clickParticipant(uid)}>
-         <mwc-icon class="avatar">person</mwc-icon>
+         <mwc-icon class=${classMap({avatar: true, dimmed: !participant.attending})}>person</mwc-icon>
          <div class="row-main">
            <p class="participant-name">${user.display_name}</p>
            ${participant.comment
