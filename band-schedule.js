@@ -77,7 +77,7 @@ class BandSchedule extends LitElement {
       <mwc-linear-progress indeterminate ?closed=${this.loaded}></mwc-linear-progress>
       <mwc-list>
           ${repeat(this.events, (e) => e.id, 
-            (e, index) => html`<mwc-list-item graphic="icon" twoline @request-selected=${ev => this.selected(ev.path[0], e)}>
+            (e, index) => html`<mwc-list-item graphic="icon" twoline @request-selected=${ev => this.selected(ev, e)}>
               <mwc-icon slot="graphic">event</mwc-icon>
               <span>
                 <span class="type">${e.data().type}</span>
@@ -100,8 +100,9 @@ class BandSchedule extends LitElement {
       : ''}`
   }
 
-  selected(listItem, bandEvent) {
-    console.log("band-schedule selected", listItem, bandEvent);
+  selected(selectEvent, bandEvent) {
+    console.log("band-schedule selected", selectEvent, bandEvent);
+    let listItem = selectEvent.target;
     let event = new CustomEvent("select-event", {
       detail: {
         item: listItem,
