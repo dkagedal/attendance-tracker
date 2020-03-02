@@ -48,16 +48,17 @@ class EventEditor extends LitElement {
   }
 
   render() {
+    let event = this.event || {};
     return html`<div class="edit-form">
       <mwc-textfield label="Typ" id="type" type="text" 
-        value="${this.event ? this.event.type : ''}"></mwc-textfield>
+        value="${ifDefined(event.type)}"></mwc-textfield>
       <mwc-textfield label="Plats" id="location" type="text"
-        value="${this.event ? this.event.location : ''}"></mwc-textfield>
+        value="${ifDefined(event.location)}"></mwc-textfield>
       <mwc-textfield label="Beskrivning" id="desc" type="text"
-        value="${this.event ? this.event.description : ''}"></mwc-textfield>
-      <datetime-input id="start" initial_value="${ifDefined(this.event.start)}"></datetime-input><br>
+        value="${ifDefined(event.description)}"></mwc-textfield>
+      <datetime-input id="start" initial_value="${ifDefined(event.start)}"></datetime-input><br>
       <span style="display: ${this.range ? 'inline' : 'none'}">
-        <datetime-input id="stop" initial_value="${ifDefined(this.event.stop)}"></datetime-input>
+        <datetime-input id="stop" initial_value="${ifDefined(event.stop)}"></datetime-input>
         <mwc-icon-button icon="close" @click=${e => {this.range = false}}></mwc-icon-button>
       </span>
       <mwc-button style="display: ${this.range ? 'none' : 'block'}" icon="add" label="Lägg till sluttid"

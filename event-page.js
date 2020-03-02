@@ -212,7 +212,7 @@ class EventPage extends LitElement {
   }
 
   clickParticipant(uid) {
-    if (uid == firebase.auth().currentUser.uid) {
+    if (!this.edit && uid == firebase.auth().currentUser.uid) {
       this.editResponse = uid;
     }
   }
