@@ -25,7 +25,7 @@ const responseIcons = {
 const attendances = {
   "yes": "Ja",
   "no": "Nej",
-  "maybe": "Kanske",
+  "maybe": "Återkommer",
   "sub": "Vikarie",
   "unknown": "",
 }
@@ -89,6 +89,15 @@ class EventPage extends LitElement {
     });
   }
 
+  countResponses() {
+    let counts = { yes: 0, no: 0, maybe: 0, sub: 0 };
+    for (let uid in this.participants) {
+      let response = this.participants[uid].attending;
+      counts[response] += 1;
+    }
+    return counts;
+  }
+
   static get styles() {
     return css`
       #top {
@@ -131,12 +140,18 @@ class EventPage extends LitElement {
       }
       .info {
         margin: 0 30px;
-        margin-bottom: 2rem;
+        margin-bottom: 1rem;
+      }
+      #summary {
+        margin: 0 60px 0 60px;
+        font-variant: all-petite-caps;
+        font-weight: 600;
+        color: rgba(0,0,0,0.5);
       }
       div.edit-form {
       }
       .display {
-        margin: 0 40px;
+        margin: 0 30px;
       }
       p {
         margin: 4px 0;
@@ -154,7 +169,7 @@ class EventPage extends LitElement {
       } 
       .participant-row .avatar {
         flex: 0 1 30px;
-        padding: 10px;
+        padding: 0 5px;
       }
       .dimmed {
         color: rgba(0, 0, 0, 0.3);
@@ -176,7 +191,7 @@ class EventPage extends LitElement {
         color: rgba(0, 0, 0, 0.5);
       }
       .participant-row .response {
-        padding: 10px;
+        padding: 0 5px;
         font-weight: 600;
       }
       #myresponse {
@@ -250,6 +265,7 @@ class EventPage extends LitElement {
   }
 
   render() {
+    let counts = this.countResponses();
     let classes = {
       hidden: this.state == "hidden",
       small: this.state == "aligning-to-grow" || this.state == "aligning-to-hide", 
@@ -278,6 +294,10 @@ class EventPage extends LitElement {
                       : this.renderDisplay()}
         </div>
         ${this.renderMyResponseDialog()}
+        <div id="summary">
+          ${counts["yes"] + counts["sub"]} ja/vik &ndash;
+          ${counts["no"] + counts["sub"]} nej
+        </div>
         <div id="participants">
           ${Object.entries(this.users).map(([uid, user]) => this.userRow(uid, user))}
         </div>
