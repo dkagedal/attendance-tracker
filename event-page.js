@@ -94,7 +94,7 @@ class EventPage extends LitElement {
       #top {
         position: absolute; left: 0; width: 100%;
         z-index: 1;
-        overflow: hidden;
+        overflow: scroll;
         box-shadow: 3px 3px 8px 1px rgba(0,0,0,0.4);
       }
       #participants {
