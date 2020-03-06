@@ -105,7 +105,7 @@ class EventPage extends LitElement {
         z-index: 1;
         display: flex;
         flex-direction: column;
-        overflow: scroll;
+        overflow: hidden;
         box-shadow: 3px 3px 8px 1px rgba(0,0,0,0.4);
         background: #2f9856;
         color: white;
@@ -132,6 +132,7 @@ class EventPage extends LitElement {
         justify-contents: space-between;
         background: white;
         color: rgba(0,0,0,0.87);
+        overflow: scroll;
       }
       .hidden {
         display: none;
