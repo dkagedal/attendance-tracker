@@ -101,13 +101,37 @@ class EventPage extends LitElement {
   static get styles() {
     return css`
       #top {
-        position: absolute; left: 0; width: 100%;
+        position: absolute; left: 0; width: 100%; height: 100vh;
         z-index: 1;
+        display: flex;
+        flex-direction: column;
         overflow: scroll;
         box-shadow: 3px 3px 8px 1px rgba(0,0,0,0.4);
+        background: #2f9856;
+        color: white;
+      }
+      #buttons {
+        padding: 10px;
+        display: flex;
+      }
+      #info {
+        padding: 0 30px 1rem;
+      }
+      #summary {
+        padding: 0 60px 0 60px;
+        font-variant: all-petite-caps;
+        font-weight: 600;
+        background: white;
+        color: rgba(0,0,0,0.5);
       }
       #participants {
-        margin: 0 20px;
+        flex: 1;
+        padding: 0 20px;
+        display: flex;
+        flex-direction: column;
+        justify-contents: space-between;
+        background: white;
+        color: rgba(0,0,0,0.87);
       }
       .hidden {
         display: none;
@@ -124,6 +148,7 @@ class EventPage extends LitElement {
         opacity: 0;
         transition:
           opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s,
+          background 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
           top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
           height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
       }
@@ -133,20 +158,6 @@ class EventPage extends LitElement {
           opacity 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
           top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s,
           height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s;
-      }
-      .buttons {
-        padding: 10px;
-        display: flex;
-      }
-      .info {
-        margin: 0 30px;
-        margin-bottom: 1rem;
-      }
-      #summary {
-        margin: 0 60px 0 60px;
-        font-variant: all-petite-caps;
-        font-weight: 600;
-        color: rgba(0,0,0,0.5);
       }
       div.edit-form {
       }
@@ -166,7 +177,11 @@ class EventPage extends LitElement {
         flex-direction: row;
         align-items: center;
         margin: 1px 0px;
+        max-height: 40px;
+        flex: 1 1;
       } 
+      @media (max-height: 700px) {
+      }
       .participant-row .avatar {
         flex: 0 1 30px;
         padding: 0 5px;
@@ -280,12 +295,12 @@ class EventPage extends LitElement {
     }
     return html`<div id="top" class=${classMap(classes)} style=${styleMap(style)}
           @transitionend=${ev => this.transitionend(ev)}>
-        <div class="buttons">
+        <div id="buttons">
           <mwc-icon-button icon="close" @click=${e => this.close()}></mwc-icon-button>
           <span style="flex: 1"> </span>
           ${this.eventref ? html`<mwc-icon-button icon="edit" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}
         </div>
-        <div class="info">
+        <div id="info">
           ${this.edit ? html`<event-editor ?range=${this.event.stop}
                                            bandref="${ifDefined(this.bandref || undefined)}"
                                            eventref="${ifDefined(this.eventref || undefined)}"
