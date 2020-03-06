@@ -15,5 +15,13 @@
     "@material/mwc-tab": "^0.13.0",
     "@material/mwc-tab-bar": "^0.13.0",
     "@material/mwc-textfield": "^0.13.0"
-  }
+  },
+  "name": "attendance-tracker",
+  "description": "## An attendance tracker web app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "David Kågedal",
 }
