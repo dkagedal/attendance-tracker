@@ -103,12 +103,20 @@ class EventPage extends LitElement {
       #top {
         position: absolute; left: 0; width: 100%; height: 100vh;
         z-index: 1;
-        display: flex;
         flex-direction: column;
         overflow: hidden;
         box-shadow: 3px 3px 8px 1px rgba(0,0,0,0.4);
-        background: #2f9856;
-        color: white;
+      }
+      #top.hidden {
+        display: none;
+        opacity: 0;
+      }
+      #top.small {
+        background: white;
+      }
+      #top.fullscreen {
+        display: flex;
+        top: 0; height: 100vh;
       }
       #buttons {
         padding: 10px;
@@ -134,17 +142,6 @@ class EventPage extends LitElement {
         color: rgba(0,0,0,0.87);
         overflow: scroll;
       }
-      .hidden {
-        display: none;
-        opacity: 0;
-      }
-      .small {
-        background: white;
-      }
-      .fullscreen {
-        background: white;
-        top: 0; height: 100%;
-      }
       .shrink {
         opacity: 0;
         transition:
@@ -159,6 +156,10 @@ class EventPage extends LitElement {
           opacity 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
           top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s,
           height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s;
+      }
+      .inverted {
+        color: white;
+        background: #2f9856;
       }
       div.edit-form {
       }
@@ -296,12 +297,12 @@ class EventPage extends LitElement {
     }
     return html`<div id="top" class=${classMap(classes)} style=${styleMap(style)}
           @transitionend=${ev => this.transitionend(ev)}>
-        <div id="buttons">
+        <div id="buttons" class="inverted">
           <mwc-icon-button icon="close" @click=${e => this.close()}></mwc-icon-button>
           <span style="flex: 1"> </span>
           ${this.eventref ? html`<mwc-icon-button icon="edit" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}
         </div>
-        <div id="info">
+        <div id="info" class="inverted">
           ${this.edit ? html`<event-editor ?range=${this.event.stop}
                                            bandref="${ifDefined(this.bandref || undefined)}"
                                            eventref="${ifDefined(this.eventref || undefined)}"

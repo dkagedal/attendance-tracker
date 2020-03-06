@@ -41,14 +41,27 @@ firebase.auth().onAuthStateChanged(function(user) {
     selector.style.display = 'block';
     schedule.style.display = 'block';
     query.get().then((querySnapshot) => {
-      editpage.users = querySnapshot.docs[0].data().users || {};
-      selector.setBands(querySnapshot.docs);
       this.bands = {};
       querySnapshot.docs.forEach(b => {
         this.bands[b.id] = b.data();
       });
-      console.log("Current band:", selector.current), selector.currentName();
+
+      let fromUrl = location.hash.substr(1);
+      if (fromUrl.length > 0 && !(fromUrl in this.bands)) {
+        console.log("Making a join request to", fromUrl);
+        let joinreq = {};
+        joinreq[fromUrl] = firebase.firestore.Timestamp.now();
+        firebase.firestore().doc("joins/" + user.uid).set(joinreq, { merge: true }).then(d => {
+          console.log("Done", d);
+        });
+        return;
+      }
+      selector.current = fromUrl;
+      selector.setBands(querySnapshot.docs);
+      editpage.users = this.bands[selector.current].users || {};
+      console.log("Current band:", selector.current, selector.currentName());
       schedule.setAttribute('bandref', selector.currentRef());
+      window.location = "#" + selector.current;
     });
     document.getElementById("firebaseui-auth-container").style.display = 'none'
     document.getElementById("username").innerText = user.displayName + ' - ' + user.email
