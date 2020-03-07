@@ -14,6 +14,15 @@ function selectBand(id, data) {
   editpage.setBand(band);
 }
 
+function openBand(e) {
+  let editpage = document.getElementById("editpage");
+  let schedule = document.getElementById("band");
+  editpage.users = bands[e.detail.id].users || {};
+  console.log("Current band:", e.detail.id);
+  schedule.setAttribute('bandref', e.detail.ref);
+  window.location = "#" + e.detail.id;
+}
+
 function openEvent(e) {
   let editpage = document.getElementById("editpage");
   console.log("Selected event", e.detail);
@@ -36,18 +45,19 @@ firebase.auth().onAuthStateChanged(function(user) {
     let selector = document.getElementById("selector");
     let schedule = document.getElementById("band");
     let editpage = document.getElementById("editpage");
+    selector.addEventListener('select-band', e => { openBand(e) });
     schedule.addEventListener('select-event', e => { openEvent(e) });
     document.getElementById('fab').addEventListener('click', e => { addEvent(e) });
     selector.style.display = 'block';
     schedule.style.display = 'block';
     query.get().then((querySnapshot) => {
-      this.bands = {};
+      bands = {};
       querySnapshot.docs.forEach(b => {
-        this.bands[b.id] = b.data();
+        bands[b.id] = b.data();
       });
 
       let fromUrl = location.hash.substr(1);
-      if (fromUrl.length > 0 && !(fromUrl in this.bands)) {
+      if (fromUrl.length > 0 && !(fromUrl in bands)) {
         console.log("Making a join request to", fromUrl);
         let joinreq = {};
         joinreq[fromUrl] = firebase.firestore.Timestamp.now();
@@ -58,10 +68,6 @@ firebase.auth().onAuthStateChanged(function(user) {
       }
       selector.current = fromUrl;
       selector.setBands(querySnapshot.docs);
-      editpage.users = this.bands[selector.current].users || {};
-      console.log("Current band:", selector.current, selector.currentName());
-      schedule.setAttribute('bandref', selector.currentRef());
-      window.location = "#" + selector.current;
     });
     document.getElementById("firebaseui-auth-container").style.display = 'none'
     document.getElementById("username").innerText = user.displayName + ' - ' + user.email

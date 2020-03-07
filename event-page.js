@@ -7,7 +7,6 @@ import '@material/mwc-dialog';
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
 import '@material/mwc-button';
-import '@material/mwc-list';
 import '@material/mwc-tab';
 import '@material/mwc-tab-bar';
 import '@material/mwc-textfield';
