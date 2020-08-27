@@ -19,20 +19,18 @@ $ npm install lit-element
 
 See https://lit-element.polymer-project.org/ for more information.
 
-## Polymer CLI
+## Rollup
 
-There are apparently many tools that can do the things we need, but I
-have only tried the polymer CLI, and the polymer configuration file is
-included in the Git repository.
+Install rollup
 
 ```
-$ npm install -g polymer-cli
+$ npm install -g rollup
 ```
 
 To rebuild:
 
 ```
-$ polymer build
+$ rollup -c
 ```
 
 ## Install firebase and set it up
@@ -59,7 +57,7 @@ learn about how to deploy the app.
 For testing:
 
 ```
-$ firebase serve --only functions
+$ firebase serve
 ```
 
 To upload:

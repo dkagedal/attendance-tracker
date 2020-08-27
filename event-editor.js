@@ -15,7 +15,6 @@ class EventEditor extends LitElement {
   static get properties() {
     return {
       bandref: { type: String, reflect: true }, // "bands/abc"
-      eventref: { type: String, reflect: true }, // "bands/abc/events/def"
       event: { type: Object },
       range: { type: Boolean, reflect: true },
     }
@@ -24,7 +23,7 @@ class EventEditor extends LitElement {
   constructor() {
     super();
     this.bandref = null;
-    this.event = {};
+    this.event = null;
     this.range = false;
   }
 
@@ -48,7 +47,7 @@ class EventEditor extends LitElement {
   }
 
   render() {
-    let event = this.event || {};
+    let event = this.event.data() || {};
     return html`<div class="edit-form">
       <mwc-textfield label="Typ" id="type" type="text" 
         value="${ifDefined(event.type)}"></mwc-textfield>
@@ -95,13 +94,13 @@ class EventEditor extends LitElement {
     }
     console.log("doc", doc);
     var promise;
-    console.log("Save", this.eventref, this);
-    if (this.eventref) {
-      console.log("Updating", this.eventref);
-      promise = firebase.firestore().doc(this.eventref).set(doc).then(() => {
+    if (this.event) {
+      console.log("Updating", this.event.ref.path);
+      promise = firebase.firestore().doc(this.event.ref.path).set(doc).then(() => {
         console.log("Successfully updated event");
       })
     } else {
+      console.log("Creating new gig in", this.bandref);
       let ref = this.bandref+"/events";
       console.log("Adding to %s", ref)
       promise = firebase.firestore().collection(ref).add(doc).then(docRef => {

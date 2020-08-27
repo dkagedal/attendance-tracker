@@ -1,47 +1,93 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Närvarokoll</title>
-
-    <script src="/__/firebase/7.8.0/firebase-app.js"></script>
-    <script src="/__/firebase/7.8.0/firebase-auth.js"></script>
-    <script src="/__/firebase/7.8.0/firebase-firestore.js"></script>
-    <script src="/__/firebase/init.js"></script>
-    <script src="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js"></script>
-    <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" />
-    <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
-
-    <style media="screen">
-      body { background: gray; color: rgba(0,0,0,0.87);
-             font-family: Roboto, Helvetica, Arial, sans-serif;
-             margin: 0; padding: 0; }
-      #username { margin: 5px 5px; font-size: 12px; }
-      mwc-fab {
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Närvarokoll</title>
+  
+  <script src="/__/firebase/7.8.0/firebase-app.js"></script>
+  <script src="/__/firebase/7.8.0/firebase-auth.js"></script>
+  <script src="/__/firebase/7.8.0/firebase-firestore.js"></script>
+  <script src="/__/firebase/init.js"></script>
+  <script src="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js"></script>
+  <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" />
+  <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
+  
+  <style media="screen">
+    body { 
+      background: gray; color: rgba(0,0,0,0.87);
+      font-family: Roboto, Helvetica, Arial, sans-serif;
+      margin: 0; padding: 0;
+      height: 100%;
+    }
+    #username { margin: 5px 5px; font-size: 12px; }
+    mwc-fab {
+      position: fixed;
+      bottom: 1rem;
+      right: 1rem;
+    }
+    #main {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+    }
+    @media (max-width: 600px) {
+      body { background: white; }
+      event-card.expanded {
         position: fixed;
-        bottom: 1rem;
-        right: 1rem;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100vw;
       }
-      #main {
-          max-width: 600px;
-          margin: 0 auto;
-          background: white;
+    }
+    @media (min-width: 600px) {
+      event-card.expanded {
+        position: absolute;
+        top: 5vh;
+        left: 50%;
+        margin-left: -250px;
+        height: 90vh;
+        width: 500px;
       }
-      @media (max-width: 600px) {
-          body { background: white; }
+    }
+    event-card {
+        z-index: 4;
+        overflow: hidden;
+        transition:
+          opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s,
+          background 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
+          top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+          height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
       }
-    </style>
-    <script type="module" src="./index.js"></script>
-  </head>
-  <body>
-    <p id="username"></p>
-    <div id="main">
-      <band-selector id="selector" style="display: none"></band-selector>
-      <band-schedule id="band" style="display: none"></band-schedule>
-      <mwc-fab id="fab" icon="add"></mwc-fab>      
-      <div id="firebaseui-auth-container" style="display: none;"></div>
+      event-card.small {
+        position: absolute;
+        opacity: 0%;
+        top: 0;
+        left: 0;
+        height: 72px;
+        width: 100%;
+      }
+  </style>
+  <script type="module" src="./index.js"></script>
+</head>
+<body>
+  
+  <!-- Event list -->
+  <mwc-top-app-bar-fixed>
+    <mwc-icon-button icon="menu" slot="navigationIcon"></mwc-icon-button>
+    <div slot="title">Närvarokollen</div>
+    <mwc-icon-button icon="account_circle" slot="actionItems"></mwc-icon-button>
+    <div>
+      <p id="username"></p>
+      <div id="main">
+        <band-selector id="selector" style="display: none"></band-selector>
+        <band-schedule id="band" style="display: none"></band-schedule>
+        <mwc-fab id="fab" icon="add"></mwc-fab>      
+        <div id="firebaseui-auth-container" style="display: none;"></div>
+      </div>
     </div>
-    <event-page id="editpage"></event-page>
-  </body>
+  </mwc-top-app-bar-fixed>
+  
+</body>
 </html>

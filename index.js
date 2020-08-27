@@ -1,7 +1,8 @@
 import "./band-selector.js";
 import "./band-schedule.js";
-import './event-page.js';
+import './event-card.js';
 import '@material/mwc-fab';
+import '@material/mwc-top-app-bar-fixed';
 
 let bands = {};
 
@@ -15,26 +16,33 @@ function selectBand(id, data) {
 }
 
 function openBand(e) {
-  let editpage = document.getElementById("editpage");
   let schedule = document.getElementById("band");
-  editpage.users = bands[e.detail.id].users || {};
+  schedule.users = bands[e.detail.id].users || {};
   console.log("Current band:", e.detail.id);
-  schedule.setAttribute('bandref', e.detail.ref);
+  schedule.setAttribute('path', e.detail.path);
   window.location = "#" + e.detail.id;
 }
 
+function createEventCard() {
+  let card = document.createElement("event-card")
+  card.users = bands[selector().current].users || {}
+  card.classList.add('expanded')
+  card.addEventListener('close', e => { card.remove() });
+  return card
+}
 function openEvent(e) {
-  let editpage = document.getElementById("editpage");
   console.log("Selected event", e.detail);
-  editpage.loadEvent(e.detail.eventref, e.detail.event);
-  editpage.expandFrom(e.detail.item.offsetTop, e.detail.item.offsetHeight);
+  let card = createEventCard()
+  card.setGig(e.detail.gig)
+  document.body.appendChild(card)
 }
 
 function addEvent(e) {
   console.log("Add event", e);
-  let editpage = document.getElementById("editpage");
-  editpage.prepareAdd(selector().currentRef());
-  editpage.expandFrom(0, 10);
+  let card = createEventCard()
+  card.bandref = selector().currentRef()
+  card.edit = true
+  document.body.appendChild(card)
 }
 
 firebase.auth().onAuthStateChanged(function(user) {

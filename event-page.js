@@ -38,7 +38,7 @@ class EventPage extends LitElement {
       edit: { type: Boolean, reflect: true },
       itemTop: { type: Number, reflect: true },
       itemHeight: { type: Number, reflect: true },
-      state: { type: String, reflect: true }, // "hidden", "aligning-to-grow", "growing", "full", "aligning-to-hide"
+      state: { type: String, reflect: true }, // "hidden", "aligning-to-grow", "full", "aligning-to-hide"
       event: { type: Object },
       editResponse: { type: String }, // UID or null
       participants: { type: Object },
@@ -100,8 +100,9 @@ class EventPage extends LitElement {
   static get styles() {
     return css`
       #top {
-        position: absolute; left: 0; width: 100%; height: 100vh;
-        z-index: 1;
+        position: absolute; left: 0; width: 100%;
+        z-index: 4;
+        display: flex;
         flex-direction: column;
         overflow: hidden;
         box-shadow: 3px 3px 8px 1px rgba(0,0,0,0.4);
@@ -113,9 +114,8 @@ class EventPage extends LitElement {
       #top.small {
         background: white;
       }
-      #top.fullscreen {
-        display: flex;
-        top: 0; height: 100vh;
+      .fullscreen {
+        opacity: 100%;
       }
       #buttons {
         padding: 10px;
@@ -141,20 +141,20 @@ class EventPage extends LitElement {
         color: rgba(0,0,0,0.87);
         overflow: scroll;
       }
+      .grow {
+        transition:
+          opacity 2s cubic-bezier(0.4, 0.0, 0.2, 1) 3s,
+          background 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
+          top 3s cubic-bezier(0.4, 0.0, 0.2, 1),
+          height 3s cubic-bezier(0.4, 0.0, 0.2, 1);
+      }
       .shrink {
         opacity: 0;
         transition:
-          opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s,
+          opacity 2s cubic-bezier(0.4, 0.0, 0.2, 1) 3s,
           background 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
-          top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
-          height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-      }
-      .expand {
-        opacity: 100%;
-        transition:
-          opacity 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
-          top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s,
-          height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.2s;
+          top 3s cubic-bezier(0.4, 0.0, 0.2, 1),
+          height 3s cubic-bezier(0.4, 0.0, 0.2, 1);
       }
       .inverted {
         color: white;
@@ -286,14 +286,17 @@ class EventPage extends LitElement {
       hidden: this.state == "hidden",
       small: this.state == "aligning-to-grow" || this.state == "aligning-to-hide", 
       shrink: this.state == "aligning-to-hide", 
-      expand: this.state == "growing",
-      fullscreen: this.state == "growing" || this.state == "full",
+      grow: this.state == "aligning-to-grow" || this.state == "full",
+      fullscreen: this.state == "full",
     };
     let style = {}; // { display: this.state == "hidden" ? "none" : "block" };
-    if (this.state == "aligning-to-grow" || this.state == "aligning-to-hide") {
+    if (this.state == "full") {
+      style.top = "0";
+      style.height = "100vh";
+    } else {
       style.top = this.itemTop + 'px';
       style.height = this.itemHeight + "px";
-    }
+    } 
     return html`<div id="top" class=${classMap(classes)} style=${styleMap(style)}
           @transitionend=${ev => this.transitionend(ev)}>
         <div id="buttons" class="inverted">
@@ -322,10 +325,10 @@ class EventPage extends LitElement {
 
   transitionend(ev) {
     console.log("Transition end", this.state, ev.propertyName);
-    if (this.state == "growing" && ev.propertyName == "height") {
-      console.log("New state: full");
-      this.state = "full";
-    }
+    // if (this.state == "growing" && ev.propertyName == "height") {
+    //   console.log("New state: full");
+    //   this.state = "full";
+    // }
     if (this.state == "aligning-to-hide" && ev.propertyName == "opacity") {
       console.log("New state: hidden");
       this.state = "hidden";
@@ -347,15 +350,13 @@ class EventPage extends LitElement {
   async expandFrom(top, height) {
     this.itemTop = top;
     this.itemHeight = height;
+    console.log("New state: aligning-to-grow");
     this.state = "aligning-to-grow";
-    console.log("Requesting update", this.shadowRoot.getElementById("top").style.cssText);
-    var promise = this.requestUpdate('state', 'aligning-to-grow');
-    while (!await promise) {
-      promise = this.updateComplete;
+    while (!await this.updateComplete) {
+      console.log("Not complete yet")
     }
-    console.log("Updated?", this.shadowRoot.getElementById("top").style.cssText);
-    console.log("New state: growing");
-    this.state = "growing";
+    console.log("New state: full");
+    this.state = "full";
   }
 
   close() {

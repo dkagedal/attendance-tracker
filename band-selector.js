@@ -77,7 +77,7 @@ class BandSelector extends LitElement {
     let event = new CustomEvent(
       "select-band",
       {detail: {id: this.current,
-                ref: this.currentRef()}});
+                path: this.currentRef()}});
     this.dispatchEvent(event);
   }
 }
