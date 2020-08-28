@@ -29,6 +29,14 @@ const attendances = {
     "unknown": "",
 }
 
+var db = firebase.firestore();
+if (location.hostname === "localhost") {
+    db.settings({
+      host: "localhost:8080",
+      ssl: false
+    });
+  }
+
 class EventCard extends LitElement {
     
     static get properties() {
@@ -56,7 +64,7 @@ class EventCard extends LitElement {
     setGig(gig) {
         this.event = gig
         console.log(`event-card: Fetching participants ${this.event.ref.path}/participants`);
-        firebase.firestore().collection(`${this.event.ref.path}/participants`).onSnapshot(snapshot => {
+        db.collection(`${this.event.ref.path}/participants`).onSnapshot(snapshot => {
             let participants = {}
             snapshot.docs.forEach(p => {
                 participants[p.id] = p.data();
@@ -65,7 +73,7 @@ class EventCard extends LitElement {
             this.participants = participants
         });
     }
-
+    
     attributeChangedCallback(name, oldval, newval) {
         console.log('event-card attribute change: ', name, oldval, '->', newval);
         super.attributeChangedCallback(name, oldval, newval);
@@ -98,7 +106,7 @@ class EventCard extends LitElement {
             display: flex;
         }
         #info {
-            padding: 0 30px 1rem;
+            padding: 0 72px 1rem;
         }
         #summary {
             padding: 0 60px 0 60px;
@@ -117,6 +125,10 @@ class EventCard extends LitElement {
             color: rgba(0,0,0,0.87);
             overflow: scroll;
         }
+        mwc-top-app-bar-fixed {
+            --mdc-theme-primary: #2f9856;
+            --mdc-theme-on-primary: white;          
+        }
         .inverted {
             color: white;
             background: #2f9856;
@@ -124,7 +136,7 @@ class EventCard extends LitElement {
         div.edit-form {
         }
         .display {
-            margin: 0 30px;
+            margin: 0;
         }
         p {
             margin: 4px 0;
@@ -179,13 +191,9 @@ class EventCard extends LitElement {
     }
     
     renderDisplay() {
-        if (this.event == null) {
-            return ''
-        }
         return html`<div class="display">
         <time-range start=${ifDefined(this.event.data().start)}
         stop=${ifDefined(this.event.data().stop)}></time-range>
-        <p class="heading">${this.event.data().type}</p>
         <p>${this.event.data().location}</p>
         <p>${this.event.data().description}</p>
         </div>`;
@@ -229,18 +237,18 @@ class EventCard extends LitElement {
     
     render() {
         let counts = this.countResponses();
-        return html`<div id="top">
-        <div id="buttons" class="inverted">
-        <mwc-icon-button icon="close" @click=${e => this.close()}></mwc-icon-button>
-        <span style="flex: 1"> </span>
-        ${this.event ? html`<mwc-icon-button icon="edit" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}
-        </div>
+        return html`<mwc-top-app-bar-fixed>
+        <mwc-icon-button icon="close" slot="navigationIcon" @click=${e => this.close()}></mwc-icon-button>
+        <div slot="title">${this.edit ? '' : this.event.data().type}</div>
+        ${this.event ? html`<mwc-icon-button icon="edit" slot="actionItems" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}<div>
         <div id="info" class="inverted">
-        ${this.edit ? html`<event-editor ?range=${this.event ? this.event.data().stop : false}
-        bandref="${ifDefined(this.bandref || undefined)}"
-        .event=${this.event}
-        @saved=${e => this.close()}></event-editor>`
-        : this.renderDisplay()}
+        ${this.edit 
+            ? html`<event-editor ?range=${this.event ? this.event.data().stop : false}
+            bandref="${ifDefined(this.bandref || undefined)}"
+            .event=${this.event}
+            @saved=${e => this.close()}></event-editor>`
+            : this.renderDisplay()
+        }
         </div>
         <div id="summary">
         ${counts["yes"] + counts["sub"]} ja/vik &ndash;
@@ -249,17 +257,17 @@ class EventCard extends LitElement {
         <div id="participants">
         ${Object.entries(this.users).map(([uid, user]) => this.userRow(uid, user))}
         </div>
-        </div>`;
+        </div></mwc-top-app-bar-fixed>`;
     }
     
     setAttending(uid, response) {
         let ref = `${this.event.ref.path}/participants/${uid}`;
-        firebase.firestore().doc(ref).set({ attending: response },  { merge: true });
+        db.doc(ref).set({ attending: response },  { merge: true });
     }
     
     setComment(uid, comment) {
         let ref = `${this.event.ref.path}/participants/${uid}`;
-        firebase.firestore().doc(ref).set({ comment: comment }, { merge: true });
+        db.doc(ref).set({ comment: comment }, { merge: true });
     }
     
     close() {

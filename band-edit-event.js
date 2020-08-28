@@ -15,6 +15,14 @@ const shortDate = new Intl.DateTimeFormat(undefined, {
   'year': 'numeric', 'month': '2-digit', 'day': '2-digit'
 });
 
+var db = firebase.firestore();
+if (location.hostname === "localhost") {
+    db.settings({
+      host: "localhost:8080",
+      ssl: false
+    });
+  }
+
 function isoDate(millis) {
   let date = new Date(millis);
   return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
@@ -83,7 +91,7 @@ class BandEditEvent extends LitElement {
     let ref = this.bandref+"/events";
     console.log("Clicked! Adding to %s", ref)
     let start = this.shadowRoot.getElementById('start').valueAsDate;
-    firebase.firestore().collection(ref).add({
+    db.collection(ref).add({
       type: this.shadowRoot.getElementById('type').value,
       location: this.shadowRoot.getElementById('location').value,
       description: this.shadowRoot.getElementById('desc').value,

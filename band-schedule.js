@@ -21,6 +21,14 @@ const timeFmt = new Intl.DateTimeFormat('sv-SE', {
       minute: 'numeric',
     });
 
+var db = firebase.firestore();
+if (location.hostname === "localhost") {
+    db.settings({
+      host: "localhost:8080",
+      ssl: false
+    });
+  }
+
 class BandSchedule extends LitElement {
   static get properties() {
     return {
@@ -47,7 +55,7 @@ class BandSchedule extends LitElement {
     if (name == 'path') {
       let ref = `${newval}/events`;
       console.log('Fetching ', ref)
-      firebase.firestore().collection(ref).orderBy('start').onSnapshot((querySnapshot) => {
+      db.collection(ref).orderBy('start').onSnapshot((querySnapshot) => {
         console.log('got snapshot ', querySnapshot.docs);
         this.events = querySnapshot.docs.map((event) => event);
         this.loaded = true;

@@ -1,0 +1,36 @@
+rules_version = '2'
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /admins/{user} {
+			allow read: if exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+    }
+
+  	match /joins/{uid} {
+    	allow read, write: if uid == request.auth.uid;
+    }
+
+    match /bands/{band} {      
+    	function bandUser() {
+        return get(/databases/$(database)/documents/bands/$(band)).data.users[request.auth.uid];
+      }
+
+      function isAcld() {
+      	return true;
+      	// return bandUser() != null;
+        // return request.auth.uid in get(/databases/$(database)/documents/bands/$(band)).data.users;
+      }
+
+			allow read: if isAcld();
+			allow write: if bandUser().admin;
+
+    	match /events/{event} {
+        allow read, write: if isAcld();
+    	
+    		match /participants/{participant} {
+   		   allow read: if isAcld();
+         allow write: if participant == request.auth.uid;
+		    }
+      }
+    }
+  }
+}

@@ -26,6 +26,9 @@
       bottom: 1rem;
       right: 1rem;
     }
+    #bandList {
+      padding-left: 1rem;
+    }
     #main {
       max-width: 600px;
       margin: 0 auto;
@@ -52,42 +55,49 @@
       }
     }
     event-card {
-        z-index: 4;
-        overflow: hidden;
-        transition:
-          opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s,
-          background 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
-          top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
-          height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-      }
-      event-card.small {
-        position: absolute;
-        opacity: 0%;
-        top: 0;
-        left: 0;
-        height: 72px;
-        width: 100%;
-      }
+      z-index: 4;
+      overflow: hidden;
+      transition:
+      opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s,
+      background 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
+      top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+      height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    }
+    event-card.small {
+      position: absolute;
+      opacity: 0%;
+      top: 0;
+      left: 0;
+      height: 72px;
+      width: 100%;
+    }
   </style>
   <script type="module" src="./index.js"></script>
 </head>
 <body>
   
   <!-- Event list -->
-  <mwc-top-app-bar-fixed>
-    <mwc-icon-button icon="menu" slot="navigationIcon"></mwc-icon-button>
-    <div slot="title">Närvarokollen</div>
-    <mwc-icon-button icon="account_circle" slot="actionItems"></mwc-icon-button>
+  <mwc-drawer id="mainMenuDrawer" type="modal">
     <div>
+      <div id="bandList"></div>
       <p id="username"></p>
-      <div id="main">
-        <band-selector id="selector" style="display: none"></band-selector>
-        <band-schedule id="band" style="display: none"></band-schedule>
-        <mwc-fab id="fab" icon="add"></mwc-fab>      
-        <div id="firebaseui-auth-container" style="display: none;"></div>
-      </div>
     </div>
-  </mwc-top-app-bar-fixed>
+    <div slot="appContent">
+      <mwc-top-app-bar-fixed>
+        <mwc-icon-button id="mainMenuButton" icon="menu" slot="navigationIcon"></mwc-icon-button>
+        <div slot="title">Närvarokollen</div>
+        <mwc-icon-button icon="account_circle" slot="actionItems"></mwc-icon-button>
+        <div>
+          <div id="main">
+            <band-selector id="selector" style="display: none"></band-selector>
+            <band-schedule id="band" style="display: none"></band-schedule>
+            <mwc-fab id="fab" icon="add"></mwc-fab>      
+            <div id="firebaseui-auth-container" style="display: none;"></div>
+          </div>
+        </div>
+      </mwc-top-app-bar-fixed>
+    </div>
+  </mwc-drawer>
+  </body>
+  </html>
   
-</body>
-</html>

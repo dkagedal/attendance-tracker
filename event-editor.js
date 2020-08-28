@@ -10,6 +10,14 @@ import '@material/mwc-textfield';
 import './datetime-input.js';
 import './time-range.js';
 
+var db = firebase.firestore();
+if (location.hostname === "localhost") {
+    db.settings({
+      host: "localhost:8080",
+      ssl: false
+    });
+  }
+
 class EventEditor extends LitElement {
 
   static get properties() {
@@ -47,7 +55,7 @@ class EventEditor extends LitElement {
   }
 
   render() {
-    let event = this.event.data() || {};
+    let event = this.event?.data() || {};
     return html`<div class="edit-form">
       <mwc-textfield label="Typ" id="type" type="text" 
         value="${ifDefined(event.type)}"></mwc-textfield>
@@ -96,14 +104,14 @@ class EventEditor extends LitElement {
     var promise;
     if (this.event) {
       console.log("Updating", this.event.ref.path);
-      promise = firebase.firestore().doc(this.event.ref.path).set(doc).then(() => {
+      promise = db.doc(this.event.ref.path).set(doc).then(() => {
         console.log("Successfully updated event");
       })
     } else {
       console.log("Creating new gig in", this.bandref);
       let ref = this.bandref+"/events";
       console.log("Adding to %s", ref)
-      promise = firebase.firestore().collection(ref).add(doc).then(docRef => {
+      promise = db.collection(ref).add(doc).then(docRef => {
         console.log("New event created with ID", docRef.id);
       });
     }

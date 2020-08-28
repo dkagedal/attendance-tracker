@@ -29,6 +29,14 @@ const attendances = {
   "unknown": "",
 }
 
+var db = firebase.firestore();
+if (location.hostname === "localhost") {
+    db.settings({
+      host: "localhost:8080",
+      ssl: false
+    });
+  }
+
 class EventPage extends LitElement {
 
   static get properties() {
@@ -79,7 +87,7 @@ class EventPage extends LitElement {
     this.event = event;
 
     console.log("Fetching participants");
-    firebase.firestore().collection(eventref + "/participants").onSnapshot(snapshot => {
+    db.collection(eventref + "/participants").onSnapshot(snapshot => {
       console.log("Got participants", snapshot);
       this.participants = {};
       snapshot.docs.forEach(p => {
@@ -337,13 +345,13 @@ class EventPage extends LitElement {
 
   setAttending(uid, response) {
     let ref = this.eventref + "/participants/" + uid;
-    firebase.firestore().doc(ref).set({ attending: response },
+    db.doc(ref).set({ attending: response },
                                         { merge: true });
   }
 
   setComment(uid, comment) {
     let ref = this.eventref + "/participants/" + uid;
-    firebase.firestore().doc(ref).set({ comment: comment },
+    db.doc(ref).set({ comment: comment },
                                       { merge: true });
   }
 

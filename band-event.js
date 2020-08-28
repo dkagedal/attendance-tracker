@@ -15,6 +15,14 @@ const shortDate = new Intl.DateTimeFormat(undefined, {
   'year': 'numeric', 'month': '2-digit', 'day': '2-digit'
 });
 
+var db = firebase.firestore();
+if (location.hostname === "localhost") {
+    db.settings({
+      host: "localhost:8080",
+      ssl: false
+    });
+  }
+
 class BandEvent extends LitElement {
 
   static get properties() {
@@ -51,7 +59,7 @@ class BandEvent extends LitElement {
     if (name == 'eventref') {
       let ref = `${newval}/participants`;
       console.log('Fetching ', ref)
-      firebase.firestore().collection(ref).onSnapshot((querySnapshot) => {
+      db.collection(ref).onSnapshot((querySnapshot) => {
         // console.log('got participants snapshot ', querySnapshot.docs.map(p => p.data()));
         this.participants = querySnapshot.docs;
         let user = firebase.auth().currentUser;
