@@ -9,11 +9,11 @@ let bands = {};
 
 var db = firebase.firestore();
 if (location.hostname === "localhost") {
-    db.settings({
-      host: "localhost:8080",
-      ssl: false
-    });
-  }
+  db.settings({
+    host: "localhost:8080",
+    ssl: false
+  });
+}
 
 function selector() {
   return document.getElementById("selector");
@@ -32,26 +32,46 @@ function openBand(id, path) {
   window.location = "#" + id;
 }
 
-function createEventCard() {
+function createEventCard(from) {
   let card = document.createElement("event-card")
   card.users = bands[selector().current].users || {}
-  card.classList.add('expanded')
-  card.addEventListener('close', e => { card.remove() });
+  let container = document.createElement("div");
+  container.classList.add("event-container", "smallcard")
+  container.style.top = `${from.offsetTop}px`;
+  container.style.left = `${from.offsetleft}px`;
+  container.style.height = `${from.offsetHeight}px`;
+  container.style.width = `${from.offsetWidth}px`;
+  card.addEventListener('close', e => {
+    container.classList.remove('largecard');
+    container.classList.add('smallcard');
+    container.style.top = `${from.offsetTop}px`;
+    container.style.left = `${from.offsetleft}px`;
+    container.style.height = `${from.offsetHeight}px`;
+    container.style.width = `${from.offsetWidth}px`;
+    container.ontransitionend = (e => {
+      container.remove();
+    });
+  });
+  container.appendChild(card);
+  document.body.appendChild(container)
+  requestAnimationFrame(() => {
+    container.classList.remove('smallcard')
+    container.classList.add('largecard')
+    container.style = null;
+  });
   return card
 }
 function openEvent(e) {
   console.log("Selected event", e.detail);
-  let card = createEventCard()
+  let card = createEventCard(e.detail.item)
   card.setGig(e.detail.gig)
-  document.body.appendChild(card)
 }
 
 function addEvent(e) {
   console.log("Add event", e);
-  let card = createEventCard()
+  let card = createEventCard(document.getElementById("fab"));
   card.bandref = selector().currentRef()
   card.edit = true
-  document.body.appendChild(card)
 }
 
 function joinRequest(user, bandId) {
@@ -70,7 +90,7 @@ firebase.auth().onAuthStateChanged(function(user) {
   if (user) {
     let selector = document.getElementById("selector");
     let drawer = document.getElementById('mainMenuDrawer');
-
+    
     // User is signed in.
     let query = db.collection("bands")
     .where("acl", "array-contains", user.uid);
@@ -88,10 +108,16 @@ firebase.auth().onAuthStateChanged(function(user) {
       let fromUrl = location.hash.substr(1);
       if (fromUrl.length > 0 && !(fromUrl in bands)) {
         joinRequest(user, fromUrl);
+        let msg = document.createTextNode("Registrering inskickad!");
+        let msgDiv = document.getElementById("message");
+        msgDiv.appendChild(msg);
+        msgDiv.style.display = 'block'
         return;
       }
       selector.current = fromUrl;
       selector.setBands(querySnapshot.docs);
+      selector.style.display = 'block';
+      schedule.style.display = 'block';
     });
     
     document.getElementById("mainMenuButton").addEventListener('click', e => drawer.open = !drawer.open)
@@ -99,8 +125,6 @@ firebase.auth().onAuthStateChanged(function(user) {
     selector.addEventListener('select-band', e => { openBand(e.detail.id, e.detail.path) });
     schedule.addEventListener('select-event', e => { openEvent(e) });
     document.getElementById('fab').addEventListener('click', e => { addEvent(e) });
-    selector.style.display = 'block';
-    schedule.style.display = 'block';
     
     document.getElementById("firebaseui-auth-container").style.display = 'none'
     document.getElementById("username").innerText = user.displayName + ' - ' + user.email

@@ -136,7 +136,7 @@ class BandSchedule extends LitElement {
   }
 
   selected(selectEvent, gig) {
-    // console.log("band-schedule selected", gig.ref.path);
+    // console.log("band-schedule selected", selectEvent.target);
     // this.selected_event = gig.id
 
     let listItem = selectEvent.target;

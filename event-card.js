@@ -105,6 +105,9 @@ class EventCard extends LitElement {
             padding: 10px;
             display: flex;
         }
+        #buttons h1 {
+            flex: 1;
+        }
         #info {
             padding: 0 72px 1rem;
         }
@@ -187,7 +190,11 @@ class EventCard extends LitElement {
             display: flex;
             flex-direction: column;
         }
-        `;
+        h1 {
+            margin: 0; font-size: 24px; font-weight: bold; 
+            padding: 8px 16px 8px 16px;
+        }
+       `;
     }
     
     renderDisplay() {
@@ -215,6 +222,7 @@ class EventCard extends LitElement {
     }
     
     clickParticipant(uid) {
+        console.log('participant clicked', uid, firebase.auth().currentUser);
         if (!this.edit && uid == firebase.auth().currentUser.uid) {
             this.editResponse = uid;
         }
@@ -235,12 +243,32 @@ class EventCard extends LitElement {
         </div>`;
     }
     
-    render() {
+    renderMyResponseDialog() {
+        let uid = this.editResponse;
+        let participant = this.participants[uid] || {};
+        return html`
+          <mwc-dialog heading="Närvaro" ?open=${this.editResponse} @closed=${e => { this.editResponse = null }}>
+            <div id="myresponse">
+              ${this.responseButton(uid, participant, "yes")}
+              ${this.responseButton(uid, participant, "no")}
+              ${this.responseButton(uid, participant, "maybe")}
+              ${this.responseButton(uid, participant, "sub")}
+              <mwc-textfield label="Kommentar" id="comment" type="text" 
+                value=${participant.comment || ''}
+                @blur=${e => this.setComment(uid, e.path[0].value)}></mwc-textfield>
+            </div>
+            <mwc-button dialogAction="ok" slot="primaryAction">ok</mwc-button>
+          </mwc-dialog>`;
+      }
+
+      render() {
         let counts = this.countResponses();
-        return html`<mwc-top-app-bar-fixed>
-        <mwc-icon-button icon="close" slot="navigationIcon" @click=${e => this.close()}></mwc-icon-button>
-        <div slot="title">${this.edit ? '' : this.event.data().type}</div>
-        ${this.event ? html`<mwc-icon-button icon="edit" slot="actionItems" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}<div>
+        return html`
+        <div id="buttons" class="inverted">
+        <mwc-icon-button icon="close" @click=${e => this.close()}></mwc-icon-button>
+        <h1>${this.edit ? '' : this.event.data().type}</h1>
+        ${this.event ? html`<mwc-icon-button icon="edit" slot="actionItems" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}
+        </div>
         <div id="info" class="inverted">
         ${this.edit 
             ? html`<event-editor ?range=${this.event ? this.event.data().stop : false}
@@ -250,6 +278,7 @@ class EventCard extends LitElement {
             : this.renderDisplay()
         }
         </div>
+        ${this.renderMyResponseDialog()}
         <div id="summary">
         ${counts["yes"] + counts["sub"]} ja/vik &ndash;
         ${counts["no"] + counts["sub"]} nej
@@ -257,7 +286,7 @@ class EventCard extends LitElement {
         <div id="participants">
         ${Object.entries(this.users).map(([uid, user]) => this.userRow(uid, user))}
         </div>
-        </div></mwc-top-app-bar-fixed>`;
+        </div>`;
     }
     
     setAttending(uid, response) {

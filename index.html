@@ -34,42 +34,56 @@
       margin: 0 auto;
       background: white;
     }
+    .event-container {
+      background: white;
+      z-index: 4;
+      overflow: hidden;
+    }
+    .smallcard {
+      opacity: 0%;
+      transition:
+        opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s,
+        top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+        height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+    }
+    .largecard {
+      opacity: 100%;
+      box-shadow: 3px 3px 8px 1px rgba(0,0,0,0.4);
+      transition:
+        opacity 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
+        top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s,
+        height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s;
+    }
     @media (max-width: 600px) {
       body { background: white; }
-      event-card.expanded {
+      .event-container {
         position: fixed;
-        top: 0;
         left: 0;
-        height: 100vh;
         width: 100vw;
+      }
+      .largecard {
+        top: 0;
+        height: 100vh;
       }
     }
     @media (min-width: 600px) {
-      event-card.expanded {
+      .event-container {
         position: absolute;
-        top: 5vh;
         left: 50%;
-        margin-left: -250px;
-        height: 90vh;
         width: 500px;
+        margin-left: -250px;
+      }
+      .largecard {
+        top: 5vh;
+        height: 90vh;
       }
     }
-    event-card {
-      z-index: 4;
-      overflow: hidden;
-      transition:
-      opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s,
-      background 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
-      top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
-      height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-    }
-    event-card.small {
-      position: absolute;
-      opacity: 0%;
-      top: 0;
-      left: 0;
-      height: 72px;
-      width: 100%;
+    #message {
+      padding: 1rem 3rem;
+      margin: 1rem auto;
+      width: fit-content;
+      background: #dddd88;
+      border-radius: 5px;
     }
   </style>
   <script type="module" src="./index.js"></script>
@@ -88,6 +102,7 @@
         <div slot="title">Närvarokollen</div>
         <mwc-icon-button icon="account_circle" slot="actionItems"></mwc-icon-button>
         <div>
+          <div id="message" style="display: none;"></div>
           <div id="main">
             <band-selector id="selector" style="display: none"></band-selector>
             <band-schedule id="band" style="display: none"></band-schedule>
@@ -98,6 +113,5 @@
       </mwc-top-app-bar-fixed>
     </div>
   </mwc-drawer>
-  </body>
-  </html>
-  
+</body>
+</html>
