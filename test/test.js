@@ -11,6 +11,10 @@ function getAdminFirestore() {
     return firebase.initializeAdminApp({projectId: PROJECT_ID}).firestore();
 }
 
+beforeEach(async() => {
+    await firebase.clearFirestoreData({projectId: PROJECT_ID});
+})
+
 describe("Attendance tracker", () => {
     it("Unauthenticated users can't read bands", async () => {
         const db = getFirestore(null);
@@ -53,4 +57,8 @@ describe("Attendance tracker", () => {
         const doc = db.collection("bands").doc("beatles");
         await firebase.assertFails(doc.set({foo: "bar"}));
     });
+})
+
+after(async() => {
+    await firebase.clearFirestoreData({projectId: PROJECT_ID});
 })
