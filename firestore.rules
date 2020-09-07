@@ -9,18 +9,23 @@ service cloud.firestore {
     	allow read, write: if uid == request.auth.uid;
     }
 
-    match /bands/{band} {      
+    match /bands/{band} {
+      function getBand() {
+        return get(/databases/$(database)/documents/bands/$(band));
+      }
+
     	function bandUser() {
         return get(/databases/$(database)/documents/bands/$(band)).data.users[request.auth.uid];
       }
 
       function isAcld() {
-      	return true;
+        return getBand().data != null && request.auth.uid in getBand().data.acl;
+      	// return true;
       	// return bandUser() != null;
         // return request.auth.uid in get(/databases/$(database)/documents/bands/$(band)).data.users;
       }
 
-			allow read: if isAcld();
+			allow read: if request.auth != null && request.auth.uid in resource.data.acl;
 			allow write: if bandUser().admin;
 
     	match /events/{event} {
