@@ -1,44 +1,58 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Närvarokoll</title>
-  
-  <script src="/__/firebase/7.8.0/firebase-app.js"></script>
-  <script src="/__/firebase/7.8.0/firebase-auth.js"></script>
-  <script src="/__/firebase/7.8.0/firebase-firestore.js"></script>
+
+  <script src="/__/firebase/7.20.0/firebase-app.js"></script>
+  <script src="/__/firebase/7.20.0/firebase-auth.js"></script>
+  <script src="/__/firebase/7.20.0/firebase-firestore.js"></script>
+  <!-- initialize the SDK after all desired features are loaded -->
   <script src="/__/firebase/init.js"></script>
   <script src="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js"></script>
   <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" />
   <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
-  
+  <script type="module" src="/index.js"></script>
+
   <style media="screen">
-    body { 
-      background: gray; color: rgba(0,0,0,0.87);
+    body {
+      background: gray;
+      color: rgba(0, 0, 0, 0.87);
       font-family: Roboto, Helvetica, Arial, sans-serif;
-      margin: 0; padding: 0;
+      margin: 0;
+      padding: 0;
       height: 100%;
     }
-    #username { margin: 5px 5px; font-size: 12px; }
+
+    #username {
+      margin: 5px 5px;
+      font-size: 12px;
+    }
+
     mwc-fab {
       position: fixed;
       bottom: 1rem;
       right: 1rem;
     }
+
     #bandList {
       padding-left: 1rem;
     }
+
     #main {
       max-width: 600px;
       margin: 0 auto;
       background: white;
     }
+
     .event-container {
       background: white;
       z-index: 4;
       overflow: hidden;
     }
+
     .smallcard {
       opacity: 0%;
       transition:
@@ -48,9 +62,10 @@
         height 0.2s cubic-bezier(0.4, 0.0, 0.2, 1),
         width 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
     }
+
     .largecard {
       opacity: 100%;
-      box-shadow: 3px 3px 8px 1px rgba(0,0,0,0.4);
+      box-shadow: 3px 3px 8px 1px rgba(0, 0, 0, 0.4);
       transition:
         opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1),
         top 0.2s cubic-bezier(0.4, 0.0, 0.2, 1),
@@ -58,17 +73,23 @@
         height 0.2s cubic-bezier(0.4, 0.0, 0.2, 1),
         width 0.2s cubic-bezier(0.4, 0.0, 0.2, 1);
     }
+
     @media (max-width: 600px) {
-      body { background: white; }
+      body {
+        background: white;
+      }
+
       .event-container {
         position: fixed;
       }
+
       .largecard {
         top: 0;
         left: 0;
         height: 100vh;
         width: 100vw;
       }
+
       .smallcard {
         top: 10vh;
         left: 10vw;
@@ -76,10 +97,12 @@
         width: 80vw;
       }
     }
+
     @media (min-width: 600px) {
       .event-container {
         position: absolute;
       }
+
       .largecard {
         left: 50%;
         width: 500px;
@@ -87,6 +110,7 @@
         top: 5vh;
         height: 90vh;
       }
+
       .smallcard {
         left: 50%;
         width: 400px;
@@ -95,6 +119,7 @@
         height: 80vh;
       }
     }
+
     #message {
       padding: 1rem 3rem;
       margin: 1rem auto;
@@ -103,10 +128,9 @@
       border-radius: 5px;
     }
   </style>
-  <script type="module" src="./index.js"></script>
 </head>
+
 <body>
-  
   <!-- Event list -->
   <mwc-drawer id="mainMenuDrawer" type="modal">
     <div>
@@ -122,7 +146,7 @@
           <div id="message" style="display: none;"></div>
           <div id="main">
             <band-schedule id="band" style="display: none"></band-schedule>
-            <mwc-fab id="fab" icon="add"></mwc-fab>      
+            <mwc-fab id="fab" icon="add"></mwc-fab>
             <div id="firebaseui-auth-container" style="display: none;"></div>
           </div>
         </div>
@@ -130,4 +154,5 @@
     </div>
   </mwc-drawer>
 </body>
+
 </html>

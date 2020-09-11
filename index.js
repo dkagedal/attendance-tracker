@@ -23,7 +23,10 @@ function selectBand(id) {
   const schedule = document.getElementById("band");
   console.log("Current band:", id);
   schedule.setAttribute('path', path);
-  window.location = "#" + id;
+  const urlPath = `/${id}`;
+  if (location.pathname != urlPath) {
+    history.replaceState({}, "", urlPath);
+  }
 }
 
 function createEventCard() {
@@ -45,7 +48,7 @@ function createEventCard() {
   requestAnimationFrame(timestamp => {
     requestAnimationFrame(timestamp => {
       container.classList.remove('smallcard')
-      container.classList.add('largecard')  
+      container.classList.add('largecard')
     });
   });
   return card
@@ -69,17 +72,17 @@ async function joinRequest(uid, bandId) {
   console.log("Done");
 }
 
-firebase.auth().onAuthStateChanged(async(authUser) => {
+firebase.auth().onAuthStateChanged(async (authUser) => {
   if (!authUser) {
     // No user is signed in.
     document.getElementById("firebaseui-auth-container").style.display = 'block';
     document.getElementById("username").innerText = "inte inloggad";
     return;
   }
-  
+
   const user = await getOrCreateUser(authUser);
   const drawer = document.getElementById('mainMenuDrawer');
-  
+
   bands = {};
   for (const bandId in user.bands) {
     const band = user.bands[bandId];
@@ -92,8 +95,9 @@ firebase.auth().onAuthStateChanged(async(authUser) => {
     document.getElementById('bandList').appendChild(bandElt)
   }
   console.log("Bands:", bands);
-  
-  let fromUrl = location.hash.substr(1);
+
+  let fromUrl = location.hash != "" ? location.hash.substr(1) : location.pathname.substr(1);
+  console.log("Band id from URL:", fromUrl);
   if (fromUrl.length > 0 && !(fromUrl in bands)) {
     await joinRequest(authUser.uid, fromUrl);
     let msg = document.createTextNode("Registrering inskickad!");
@@ -110,10 +114,10 @@ firebase.auth().onAuthStateChanged(async(authUser) => {
   const schedule = document.getElementById("band");
   schedule.style.display = 'block';
   schedule.addEventListener('select-event', e => { openEvent(e) });
-  
+
   document.getElementById("mainMenuButton").addEventListener('click', e => drawer.open = !drawer.open)
   document.getElementById('fab').addEventListener('click', e => { addEvent(e) });
-  
+
   document.getElementById("firebaseui-auth-container").style.display = 'none'
   document.getElementById("username").innerText = user.display_name;
 });
