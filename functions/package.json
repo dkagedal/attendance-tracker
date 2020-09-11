@@ -8,7 +8,8 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "testinit": "curl http://localhost:5001/attendance-tracker-b8e9f/us-central1/testinint"
+    "migrate": "curl https://us-central1-attendance-tracker-b8e9f.cloudfunctions.net/migrate",
+    "migrate-test": "curl http://localhost:5001/attendance-tracker-b8e9f/us-central1/migrate"
   },
   "engines": {
     "node": "10"

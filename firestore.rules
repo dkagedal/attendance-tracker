@@ -1,41 +1,54 @@
 rules_version = '2'
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /admins/{user} {
-			allow read: if exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+    function isUser(uid) {
+        let user = /databases/$(database)/documents/users/$(uid);
+        return exists(user);
     }
 
-  	match /joins/{uid} {
-    	allow read, write: if uid == request.auth.uid;
+    match /users/{user} {
+			allow read: if request.auth.uid == user;
+      allow create: if request.auth.uid == user;
+      allow update: if request.auth.uid == user && request.resource.data == resource.data;
+      allow delete: if false;
     }
 
     match /bands/{band} {
-      function getBand() {
-        return get(/databases/$(database)/documents/bands/$(band));
+      allow list: if false;
+			allow get: if true;
+			allow write: if false;
+
+      function isMember(uid) {
+        let member = /databases/$(database)/documents/bands/$(band)/members/$(uid);
+        return exists(member);
       }
 
-    	function bandUser() {
-        return get(/databases/$(database)/documents/bands/$(band)).data.users[request.auth.uid];
+      function isAdmin(uid) {
+        let member = /databases/$(database)/documents/bands/$(band)/members/$(uid);
+        return exists(member) && get(member).data.admin;
       }
 
-      function isAcld() {
-        return getBand().data != null && request.auth.uid in getBand().data.acl;
-      	// return true;
-      	// return bandUser() != null;
-        // return request.auth.uid in get(/databases/$(database)/documents/bands/$(band)).data.users;
+      match /join_requests/{user} {
+        allow list: if isAdmin(request.auth.uid);
+        allow get: if request.auth.uid == user || isAdmin(request.auth.uid);
+        allow create: if request.resource.id == request.auth.uid && !isMember(request.auth.uid) && isUser(request.auth.uid) && !request.resource.data.approved;
+        allow update: if isAdmin(request.auth.uid);
+        allow delete: if false;
       }
 
-			allow read: if request.auth != null && request.auth.uid in resource.data.acl;
-			allow write: if bandUser().admin;
+      match /members/{member} {
+        allow read: if isMember(request.auth.uid);
+        allow write: if false;
+      }
 
     	match /events/{event} {
-        allow read, write: if isAcld();
-    	
-    		match /participants/{participant} {
-   		   allow read: if isAcld();
-         allow write: if participant == request.auth.uid;
-		    }
+        allow read, write: if isMember(request.auth.uid);
+
+        match /participants/{participant} {
+          allow read: if isMember(request.auth.uid);
+          allow write: if request.resource.id == request.auth.uid && isMember(request.auth.uid);
+        }
       }
     }
   }
-}
+} 

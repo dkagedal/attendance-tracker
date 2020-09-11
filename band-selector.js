@@ -13,33 +13,31 @@ class BandSelector extends LitElement {
   constructor() {
     super();
     this.current = "";
-    this.bands = [];
+    this.bands = {};
   }
 
   setBands(bands) {
+    console.log("setBands", bands);
     this.bands = bands;
-    if (bands.length == 0) {
+    const ids = Object.keys(bands);
+    if (ids.length == 0) {
       this.current = "";
     } else if (this.current == "") {
-      this.selectBand(bands[0].id);
+      this.selectBand(ids[0]);
     } else {
-      for (var i = 0; i < bands.length; i++) {
-        if (bands[i].id == this.current) {
+      for (var id in bands) {
+        if (id == this.current) {
           this.selectBand(this.current);
           return;
         }
       }
-      this.selectBand(bands[0].id);
+      this.selectBand(ids[0]);
     }
   }
 
   currentName() {
-    for (var i = 0; i < this.bands.length; i++) {
-      if (this.bands[i].id == this.current) {
-        return this.bands[i].data().display_name;
-      }
-    }
-    return "";
+    const band = this.bands[this.current]
+    return band ? band.display_name : "";
   }
 
   currentRef() {
@@ -60,25 +58,15 @@ class BandSelector extends LitElement {
   render() {
     return html`<h1 @click=${e => this.openMenu()} >${this.currentName()}</h1>
       <mwc-menu fullwidth id="menu" @selected=${ev => this.selectBand(this.bands[ev.detail.index].id)}>
-        ${this.bands.map(
-            (band) => html`<mwc-list-item id=${band.id}>${band.data().display_name}</mwc-list-item>`)}
+        ${Object.keys(this.bands).map(
+            (bandId) => html`<mwc-list-item id=${bandId}>${this.bands[bandId].display_name}</mwc-list-item>`)}
       </mwc-menu>`;
   }
 
   openMenu() {
-    if (this.bands.length > 1) {
+    if (Object.keys(this.bands).length > 1) {
       this.shadowRoot.getElementById("menu").show();
     }
-  }
-
-  selectBand(id) {
-    console.log("Selected band", id);
-    this.current = id;
-    let event = new CustomEvent(
-      "select-band",
-      {detail: {id: this.current,
-                path: this.currentRef()}});
-    this.dispatchEvent(event);
   }
 }
 

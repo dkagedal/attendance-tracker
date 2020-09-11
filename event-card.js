@@ -13,6 +13,7 @@ import '@material/mwc-textfield';
 import './datetime-input.js';
 import './event-editor.js';
 import './time-range.js';
+import { getUser } from './users.js';
 
 const responseIcons = {
     yes: "thumb_up",
@@ -32,10 +33,10 @@ const attendances = {
 var db = firebase.firestore();
 if (location.hostname === "localhost") {
     db.settings({
-      host: "localhost:8080",
-      ssl: false
+        host: "localhost:8080",
+        ssl: false
     });
-  }
+}
 
 class EventCard extends LitElement {
     
@@ -46,7 +47,7 @@ class EventCard extends LitElement {
             event: { type: Object },  // QueryDocumentSnapshot
             editResponse: { type: String }, // UID or null
             participants: { type: Object },
-            users: { type: Object },
+            members: { type: Object },
         }
     }
     
@@ -58,12 +59,27 @@ class EventCard extends LitElement {
         this.editResponse = null;
         this.participants = {};
         this.edit = false;
-        this.users = {};
+        this.members = {};
+    }
+    
+    async setBand(bandref) {
+        const snapshot = await db.doc(bandref).collection("members").get();
+        const members = {};
+        snapshot.forEach(async (doc) => {
+            console.log("Member:", doc);
+            members[doc.id] = Object.assign({}, doc.data());
+            if (!members[doc.id].display_name) {
+                members[doc.id].display_name = "??";
+            }
+        });
+        console.log("Members:", members);
+        this.members = members;
     }
     
     setGig(gig) {
         this.event = gig
         console.log(`event-card: Fetching participants ${this.event.ref.path}/participants`);
+        // TODO: remember the cancel function.
         db.collection(`${this.event.ref.path}/participants`).onSnapshot(snapshot => {
             let participants = {}
             snapshot.docs.forEach(p => {
@@ -77,6 +93,9 @@ class EventCard extends LitElement {
     attributeChangedCallback(name, oldval, newval) {
         console.log('event-card attribute change: ', name, oldval, '->', newval);
         super.attributeChangedCallback(name, oldval, newval);
+        if (name == 'bandref' && newval != oldval) {
+            this.setBand(newval)
+        }
         if (name == 'event' && newval != oldval) {
             this.setGig(newval)
         }
@@ -194,7 +213,7 @@ class EventCard extends LitElement {
             margin: 0; font-size: 24px; font-weight: bold; 
             padding: 8px 16px 8px 16px;
         }
-       `;
+        `;
     }
     
     renderDisplay() {
@@ -207,8 +226,8 @@ class EventCard extends LitElement {
     }
     
     participantName(id) {
-        console.log("users", this.users);
-        let user = this.users[id];
+        console.log("Members", this.members);
+        let user = this.members[id];
         return user ? user.display_name : id;
     }
     
@@ -247,21 +266,21 @@ class EventCard extends LitElement {
         let uid = this.editResponse;
         let participant = this.participants[uid] || {};
         return html`
-          <mwc-dialog heading="Närvaro" ?open=${this.editResponse} @closed=${e => { this.editResponse = null }}>
-            <div id="myresponse">
-              ${this.responseButton(uid, participant, "yes")}
-              ${this.responseButton(uid, participant, "no")}
-              ${this.responseButton(uid, participant, "maybe")}
-              ${this.responseButton(uid, participant, "sub")}
-              <mwc-textfield label="Kommentar" id="comment" type="text" 
-                value=${participant.comment || ''}
-                @blur=${e => this.setComment(uid, e.path[0].value)}></mwc-textfield>
-            </div>
-            <mwc-button dialogAction="ok" slot="primaryAction">ok</mwc-button>
-          </mwc-dialog>`;
-      }
-
-      render() {
+        <mwc-dialog heading="Närvaro" ?open=${this.editResponse} @closed=${e => { this.editResponse = null }}>
+        <div id="myresponse">
+        ${this.responseButton(uid, participant, "yes")}
+        ${this.responseButton(uid, participant, "no")}
+        ${this.responseButton(uid, participant, "maybe")}
+        ${this.responseButton(uid, participant, "sub")}
+        <mwc-textfield label="Kommentar" id="comment" type="text" 
+        value=${participant.comment || ''}
+        @blur=${e => this.setComment(uid, e.path[0].value)}></mwc-textfield>
+        </div>
+        <mwc-button dialogAction="ok" slot="primaryAction">ok</mwc-button>
+        </mwc-dialog>`;
+    }
+    
+    render() {
         let counts = this.countResponses();
         return html`
         <div id="buttons" class="inverted">
@@ -284,7 +303,7 @@ class EventCard extends LitElement {
         ${counts["no"] + counts["sub"]} nej
         </div>
         <div id="participants">
-        ${Object.entries(this.users).map(([uid, user]) => this.userRow(uid, user))}
+        ${Object.entries(this.members).map(([uid, user]) => this.userRow(uid, user))}
         </div>
         </div>`;
     }

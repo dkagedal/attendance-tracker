@@ -1,11 +1,12 @@
-import "./band-selector.js";
 import "./band-schedule.js";
 import './event-card.js';
+import { getOrCreateUser } from './users.js';
 import '@material/mwc-drawer';
 import '@material/mwc-fab';
 import '@material/mwc-top-app-bar-fixed';
 
 let bands = {};
+let current = null;
 
 var db = firebase.firestore();
 if (location.hostname === "localhost") {
@@ -15,26 +16,21 @@ if (location.hostname === "localhost") {
   });
 }
 
-function selector() {
-  return document.getElementById("selector");
-}
-
-function selectBand(id, data) {
-  let editpage = document.getElementById("editpage");
-  editpage.setBand(band);
-}
-
-function openBand(id, path) {
-  let schedule = document.getElementById("band");
-  schedule.users = bands[id].users || {};
+function selectBand(id) {
+  console.log("Selected band", id);
+  current = id;
+  const path = `bands/${id}`
+  const schedule = document.getElementById("band");
   console.log("Current band:", id);
   schedule.setAttribute('path', path);
   window.location = "#" + id;
 }
 
 function createEventCard(from) {
+  console.log("Creating event card from", from);
   let card = document.createElement("event-card")
-  card.users = bands[selector().current].users || {}
+  card.bandref = `bands/${current}`
+  // card.users = bands[selector().current].users || {}
   let container = document.createElement("div");
   container.classList.add("event-container", "smallcard")
   container.style.top = `${from.offsetTop}px`;
@@ -70,69 +66,63 @@ function openEvent(e) {
 function addEvent(e) {
   console.log("Add event", e);
   let card = createEventCard(document.getElementById("fab"));
-  card.bandref = selector().currentRef()
   card.edit = true
 }
 
-function joinRequest(user, bandId) {
-  console.log("Making a join request to", bandId, "for", user.displayName);
-  let joinreq = {
-    band: `bands/${bandId}`,
-    timestamp: firebase.firestore.Timestamp.now(),
-    display_name: user.displayName
-  };
-  db.doc(`joins/${user.uid}`).set(joinreq, { merge: true }).then(d => {
-    console.log("Done", d);
-  });
+async function joinRequest(uid, bandId) {
+  const docPath = `bands/${bandId}/join_requests/${uid}`;
+  console.log("Making a join request to", docPath);
+  await db.doc(docPath).set({ approved: false }, { merge: true });
+  console.log("Done");
 }
 
-firebase.auth().onAuthStateChanged(function(user) {
-  if (user) {
-    let selector = document.getElementById("selector");
-    let drawer = document.getElementById('mainMenuDrawer');
-    
-    // User is signed in.
-    let query = db.collection("bands")
-    .where("acl", "array-contains", user.uid);
-    query.get().then((querySnapshot) => {
-      bands = {};
-      querySnapshot.docs.forEach(b => {
-        console.log('Found band', b.ref, b.data())
-        bands[b.id] = b.data();
-        let bandElt = document.createElement('p')
-        let bandName = document.createTextNode(b.data().display_name)
-        bandElt.appendChild(bandName)
-        bandElt.addEventListener('click', e => { drawer.open = false; selector.selectBand(b.id) });
-        document.getElementById('bandList').appendChild(bandElt)
-      });
-      let fromUrl = location.hash.substr(1);
-      if (fromUrl.length > 0 && !(fromUrl in bands)) {
-        joinRequest(user, fromUrl);
-        let msg = document.createTextNode("Registrering inskickad!");
-        let msgDiv = document.getElementById("message");
-        msgDiv.appendChild(msg);
-        msgDiv.style.display = 'block'
-        return;
-      }
-      selector.current = fromUrl;
-      selector.setBands(querySnapshot.docs);
-      selector.style.display = 'block';
-      schedule.style.display = 'block';
-    });
-    
-    document.getElementById("mainMenuButton").addEventListener('click', e => drawer.open = !drawer.open)
-    let schedule = document.getElementById("band");
-    selector.addEventListener('select-band', e => { openBand(e.detail.id, e.detail.path) });
-    schedule.addEventListener('select-event', e => { openEvent(e) });
-    document.getElementById('fab').addEventListener('click', e => { addEvent(e) });
-    
-    document.getElementById("firebaseui-auth-container").style.display = 'none'
-    document.getElementById("username").innerText = user.displayName + ' - ' + user.email
-  } else {
+firebase.auth().onAuthStateChanged(async(authUser) => {
+  if (!authUser) {
     // No user is signed in.
-    document.getElementById("firebaseui-auth-container").style.display = 'block'
-    document.getElementById("username").innerText = "inte inloggad"
+    document.getElementById("firebaseui-auth-container").style.display = 'block';
+    document.getElementById("username").innerText = "inte inloggad";
+    return;
   }
+  
+  const user = await getOrCreateUser(authUser);
+  const drawer = document.getElementById('mainMenuDrawer');
+  
+  bands = {};
+  for (const bandId in user.bands) {
+    const band = user.bands[bandId];
+    console.log('Found band', bandId, band)
+    bands[bandId] = Object.assign({}, band);
+    let bandElt = document.createElement('p')
+    let bandName = document.createTextNode(band.display_name)
+    bandElt.appendChild(bandName)
+    bandElt.addEventListener('click', e => { drawer.open = false; selectBand(bandId) });
+    document.getElementById('bandList').appendChild(bandElt)
+  }
+  console.log("Bands:", bands);
+  
+  let fromUrl = location.hash.substr(1);
+  if (fromUrl.length > 0 && !(fromUrl in bands)) {
+    await joinRequest(authUser.uid, fromUrl);
+    let msg = document.createTextNode("Registrering inskickad!");
+    let msgDiv = document.getElementById("message");
+    msgDiv.appendChild(msg);
+    msgDiv.style.display = 'block'
+    return;
+  }
+
+  if (fromUrl in bands) {
+    selectBand(fromUrl);
+  }
+
+  const schedule = document.getElementById("band");
+  schedule.style.display = 'block';
+  schedule.addEventListener('select-event', e => { openEvent(e) });
+  
+  document.getElementById("mainMenuButton").addEventListener('click', e => drawer.open = !drawer.open)
+  document.getElementById('fab').addEventListener('click', e => { addEvent(e) });
+  
+  document.getElementById("firebaseui-auth-container").style.display = 'none'
+  document.getElementById("username").innerText = user.display_name;
 });
 
 // Initialize the FirebaseUI Widget using Firebase.

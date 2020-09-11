@@ -8,83 +8,62 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
-export const helloWorld = functions.https.onRequest((request, response) => {
-    functions.logger.info("Hello logs!", {structuredData: true});
-    response.send("Hello from Firebase!");
-});
-
-export const testinit = functions.https.onRequest((request, response) => {
-    functions.logger.info("Creating test data.", {structuredData: true});
-    db.doc('bands/test').set({display_name: 'Testband'}).then(_ => {
-        response.send("Created test data\n");
-    }).catch(error => {
-        functions.logger.error(error);
-        response.sendStatus(500);
-    })
-});
-
-export const testusers = functions.https.onRequest((request, response) => {
-    functions.logger.info("Creating test users.", {structuredData: true});
-    db.doc('bands/test').set({
-        acl: ["user1", "user2", "user3", "user4", "user5", "user6", "user7", "user8", "user9", "user10"],
-        users: {
-            user1: {display_name: "Allan Allansson"},
-            user2: {display_name: "Bertil Bertilsson"},
-            user3: {display_name: "Cecilia Certifikat"},
-            user4: {display_name: "David Dumbom"},
-            user5: {display_name: "Elsa Elendil"},
-            user6: {display_name: "Fegis Fafnersbane"},
-            user7: {display_name: "Greta Gul"},
-            user8: {display_name: "Hakan Hector"},
-            user9: {display_name: "Inge Is"},
-            user10: {display_name: "Jöns Jakobsson"},
-        }
-    }, {merge: true}).then(_ => {
-        response.send("Created test data\n");
-    }).catch(error => {
-        functions.logger.error(error);
-        response.sendStatus(500);
-    })
-});
-
-export const newjoin = functions.firestore.document('joins/{userId}').onCreate((snapshot, context) => {
-    functions.logger.info('newjoin', snapshot.data());
-    const bandPath = snapshot.data().band;
-    const joinRequestDoc = db.doc(`${bandPath}/join_requests/${snapshot.ref.id}`)
-    functions.logger.info(`${snapshot.data().display_name} wants to join ${bandPath}, creating ${joinRequestDoc.path}`);
-    joinRequestDoc.set({
-        timestamp: snapshot.data().timestamp,
-        display_name: snapshot.data().display_name,
-        approved: false
-    }).then(_ => {
-        functions.logger.info(`Created join request, deleting ${snapshot.ref.path}`);
-        return snapshot.ref.delete();
-    }).catch(error => {
-        functions.logger.error(error);
-    });
-    return "OK";
-});
-
-export const approval = functions.firestore.document('bands/{bandid}/join_requests/{userId}').onUpdate((change, context) => {
-    functions.logger.info(change.after.data()?.approved) ;
+export const approval = functions.firestore.document('bands/{bandId}/join_requests/{userId}').onUpdate(async (change, context) => {
+    functions.logger.info(change.after.data()?.approved);
     if (change.after.data()?.approved) {
         functions.logger.info('Approving join request', change.after.ref.path);
         const bandDocRef = change.after.ref.parent.parent!;
-        bandDocRef.get().then(doc => {
-            const data = doc.data()!;
-            const acl = data.acl || [];
-            const users = data.users || {};
-            acl.push(context.params.userId);
-            users[context.params.userId] = {
-                display_name: change.after.data()?.display_name
-            };
-            
-            return bandDocRef.set({acl: acl, users: users}, {merge: true});
-        }).then(_ => {
-            return change.after.ref.delete();
-        }).catch(error => {
-            functions.logger.error(error);
-        });
+        const memberDocRef = bandDocRef.collection("members").doc(context.params.userId);
+        const userDocRef = db.collection("users").doc(context.params.userId);
+        const bandSnapshot = await bandDocRef.get();
+        const userSnapshot = await userDocRef.get();
+        const data = userSnapshot.data()!;
+        if (data.bands == undefined) {
+            data.bands = {};
+        }
+        data.bands[context.params.bandId] = { display_name: bandSnapshot.data()!.display_name };
+        await Promise.all([
+            userDocRef.set(data),
+            memberDocRef.set({ display_name: data.display_name }),
+            change.after.ref.delete()
+        ]);
+        functions.logger.info('Approved', change.after.ref.path);
     }
     return "OK";
+})
+
+async function migrateUser(uid: string, data: any) {
+    const userDoc = db.collection("users").doc(uid)
+    const existing = await userDoc.get()
+    if (existing.exists) {
+        functions.logger.info("Updating global user", uid)
+        Object.assign(data.bands, existing.data()!.bands)
+    } else {
+        functions.logger.info("Creating global user", uid)
+    }
+    functions.logger.info("Setting global user", uid, data)
+    await userDoc.set(data)
+}
+
+export const migrate = functions.https.onRequest((req, resp) => {
+    db.collection("bands").get().then(async (snap) => {
+        const users: any = {}
+        snap.docs.forEach(band => {
+            for (const uid in band.data().users) {
+                if (!(uid in users)) {
+                    users[uid] = { display_name: "?", bands: {} }
+                }
+                users[uid].display_name = band.data().users[uid].display_name
+                users[uid].bands[band.id] = { display_name: band.data().display_name }
+            }
+        })
+        functions.logger.info("Users to migrate", users)
+        await Promise.all(Object.entries(users).map((elt: any[]) => {
+            return migrateUser(elt[0], elt[1])
+        }))
+        resp.sendStatus(200);
+    }).catch(reason => {
+        functions.logger.error(reason)
+        resp.sendStatus(500)
+    })
 })
