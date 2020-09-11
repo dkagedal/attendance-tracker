@@ -18,7 +18,7 @@ export const approval = functions.firestore.document('bands/{bandId}/join_reques
         const bandSnapshot = await bandDocRef.get();
         const userSnapshot = await userDocRef.get();
         const data = userSnapshot.data()!;
-        if (data.bands == undefined) {
+        if (data.bands === undefined) {
             data.bands = {};
         }
         data.bands[context.params.bandId] = { display_name: bandSnapshot.data()!.display_name };
@@ -45,8 +45,14 @@ async function migrateUser(uid: string, data: any) {
     await userDoc.set(data)
 }
 
+async function migrateMember(doc: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>, data: any) {
+    functions.logger.info("Updating", doc.path, data)
+    await doc.set(data, { merge: true})
+}
+
 export const migrate = functions.https.onRequest((req, resp) => {
     db.collection("bands").get().then(async (snap) => {
+        const promises: Promise<void>[] = []
         const users: any = {}
         snap.docs.forEach(band => {
             for (const uid in band.data().users) {
@@ -55,12 +61,17 @@ export const migrate = functions.https.onRequest((req, resp) => {
                 }
                 users[uid].display_name = band.data().users[uid].display_name
                 users[uid].bands[band.id] = { display_name: band.data().display_name }
+
+                const memberDoc = band.ref.collection("members").doc(uid)
+                promises.push(migrateMember(memberDoc, band.data().users[uid]))
             }
         })
         functions.logger.info("Users to migrate", users)
-        await Promise.all(Object.entries(users).map((elt: any[]) => {
-            return migrateUser(elt[0], elt[1])
-        }))
+        Object.entries(users).forEach((elt: any[]) => {
+            promises.push(migrateUser(elt[0], elt[1]))
+        })
+
+        await Promise.all(promises)
         resp.sendStatus(200);
     }).catch(reason => {
         functions.logger.error(reason)
