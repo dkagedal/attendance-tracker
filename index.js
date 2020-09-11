@@ -26,46 +26,39 @@ function selectBand(id) {
   window.location = "#" + id;
 }
 
-function createEventCard(from) {
-  console.log("Creating event card from", from);
+function createEventCard() {
+  console.log("Creating event card");
   let card = document.createElement("event-card")
   card.bandref = `bands/${current}`
   // card.users = bands[selector().current].users || {}
   let container = document.createElement("div");
   container.classList.add("event-container", "smallcard")
-  container.style.top = `${from.offsetTop}px`;
-  container.style.left = `${from.offsetleft}px`;
-  container.style.height = `${from.offsetHeight}px`;
-  container.style.width = `${from.offsetWidth}px`;
   card.addEventListener('close', e => {
     container.classList.remove('largecard');
     container.classList.add('smallcard');
-    container.style.top = `${from.offsetTop}px`;
-    container.style.left = `${from.offsetleft}px`;
-    container.style.height = `${from.offsetHeight}px`;
-    container.style.width = `${from.offsetWidth}px`;
     container.ontransitionend = (e => {
       container.remove();
     });
   });
   container.appendChild(card);
   document.body.appendChild(container)
-  requestAnimationFrame(() => {
-    container.classList.remove('smallcard')
-    container.classList.add('largecard')
-    container.style = null;
+  requestAnimationFrame(timestamp => {
+    requestAnimationFrame(timestamp => {
+      container.classList.remove('smallcard')
+      container.classList.add('largecard')  
+    });
   });
   return card
 }
 function openEvent(e) {
   console.log("Selected event", e.detail);
-  let card = createEventCard(e.detail.item)
+  let card = createEventCard()
   card.setGig(e.detail.gig)
 }
 
 function addEvent(e) {
   console.log("Add event", e);
-  let card = createEventCard(document.getElementById("fab"));
+  let card = createEventCard();
   card.edit = true
 }
 
