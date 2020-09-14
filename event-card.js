@@ -39,7 +39,7 @@ if (location.hostname === "localhost") {
 }
 
 class EventCard extends LitElement {
-    
+
     static get properties() {
         return {
             bandref: { type: String, reflect: true }, // "bands/abc"
@@ -47,10 +47,10 @@ class EventCard extends LitElement {
             event: { type: Object },  // QueryDocumentSnapshot
             editResponse: { type: String }, // UID or null
             participants: { type: Object },
-            members: { type: Object },
+            members: { type: Object }, // array of sections, where each section is a pair [name, members]
         }
     }
-    
+
     constructor() {
         super();
         this.bandref = null;
@@ -59,23 +59,28 @@ class EventCard extends LitElement {
         this.editResponse = null;
         this.participants = {};
         this.edit = false;
-        this.members = {};
+        this.members = [];
     }
-    
+
     async setBand(bandref) {
         const snapshot = await db.doc(bandref).collection("members").get();
-        const members = {};
+        const sections = {};
         snapshot.forEach(async (doc) => {
             console.log("Member:", doc);
-            members[doc.id] = Object.assign({}, doc.data());
-            if (!members[doc.id].display_name) {
-                members[doc.id].display_name = "??";
+            const member = Object.assign({}, doc.data());
+            if (!member.display_name) {
+                member.display_name = "??";
             }
+            const section = member.section || "";
+            if (!(section in sections)) {
+                sections[section] = {};
+            }
+            sections[section][doc.id] = member;
         });
-        console.log("Members:", members);
-        this.members = members;
+        console.log("Members:", sections);
+        this.members = Object.entries(sections);
     }
-    
+
     setGig(gig) {
         this.event = gig
         console.log(`event-card: Fetching participants ${this.event.ref.path}/participants`);
@@ -89,7 +94,7 @@ class EventCard extends LitElement {
             this.participants = participants
         });
     }
-    
+
     attributeChangedCallback(name, oldval, newval) {
         console.log('event-card attribute change: ', name, oldval, '->', newval);
         super.attributeChangedCallback(name, oldval, newval);
@@ -100,7 +105,7 @@ class EventCard extends LitElement {
             this.setGig(newval)
         }
     }
-    
+
     countResponses() {
         let counts = { yes: 0, no: 0, maybe: 0, sub: 0 };
         for (let uid in this.participants) {
@@ -109,7 +114,7 @@ class EventCard extends LitElement {
         }
         return counts;
     }
-    
+
     static get styles() {
         return css`
         #top {
@@ -130,8 +135,8 @@ class EventCard extends LitElement {
         #info {
             padding: 0 72px 1rem;
         }
-        #summary {
-            padding: 0 60px 0 60px;
+        .summary {
+            padding: 0 40px 0 40px;
             font-variant: all-petite-caps;
             font-weight: 600;
             background: white;
@@ -215,7 +220,7 @@ class EventCard extends LitElement {
         }
         `;
     }
-    
+
     renderDisplay() {
         return html`<div class="display">
         <time-range start=${ifDefined(this.event.data().start)}
@@ -224,13 +229,7 @@ class EventCard extends LitElement {
         <p>${this.event.data().description}</p>
         </div>`;
     }
-    
-    participantName(id) {
-        console.log("Members", this.members);
-        let user = this.members[id];
-        return user ? user.display_name : id;
-    }
-    
+
     responseButton(uid, participant, response) {
         return html`<mwc-button @click=${e => this.setAttending(uid, response)}
         id="${response}"
@@ -239,29 +238,29 @@ class EventCard extends LitElement {
         ?outlined="${participant.attending == response}"
         ></mwc-button>`;
     }
-    
+
     clickParticipant(uid) {
         console.log('participant clicked', uid, firebase.auth().currentUser);
         if (!this.edit && uid == firebase.auth().currentUser.uid) {
             this.editResponse = uid;
         }
     }
-    
+
     userRow(uid, user) {
         let participant = this.participants[uid] || {};
         return html`<div class="participant-row" @click=${e => this.clickParticipant(uid)}>
-        <mwc-icon class=${classMap({avatar: true, dimmed: !participant.attending})}>person</mwc-icon>
+        <mwc-icon class=${classMap({ avatar: true, dimmed: !participant.attending })}>person</mwc-icon>
         <div class="row-main">
         <p class="participant-name">${user.display_name}</p>
         ${participant.comment
-            ? html`<p class="comment">${participant.comment}</p>`
-            : ''
-        }
+                ? html`<p class="comment">${participant.comment}</p>`
+                : ''
+            }
         </div>
-        <span class="response">${attendances[participant.attending || "unknown"]}</span>
+        <span class="response">${attendances[participant.attending || "unknown"]}</span>
         </div>`;
     }
-    
+
     renderMyResponseDialog() {
         let uid = this.editResponse;
         let participant = this.participants[uid] || {};
@@ -279,8 +278,9 @@ class EventCard extends LitElement {
         <mwc-button dialogAction="ok" slot="primaryAction">ok</mwc-button>
         </mwc-dialog>`;
     }
-    
+
     render() {
+        const sections = [];
         let counts = this.countResponses();
         return html`
         <div id="buttons" class="inverted">
@@ -289,35 +289,38 @@ class EventCard extends LitElement {
         ${this.event ? html`<mwc-icon-button icon="edit" slot="actionItems" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}
         </div>
         <div id="info" class="inverted">
-        ${this.edit 
-            ? html`<event-editor ?range=${this.event ? this.event.data().stop : false}
-            bandref="${ifDefined(this.bandref || undefined)}"
-            .event=${this.event}
-            @saved=${e => this.close()}></event-editor>`
-            : this.renderDisplay()
-        }
+        ${this.edit
+                ? html`<event-editor ?range=${this.event ? this.event.data().stop : false}
+                    bandref="${ifDefined(this.bandref || undefined)}"
+                    .event=${this.event}
+                    @saved=${e => this.close()}></event-editor>`
+                : this.renderDisplay()
+            }
         </div>
         ${this.renderMyResponseDialog()}
-        <div id="summary">
+        <div id="participants">
+        <div class="summary">
         ${counts["yes"] + counts["sub"]} ja/vik &ndash;
         ${counts["no"] + counts["sub"]} nej
         </div>
-        <div id="participants">
-        ${Object.entries(this.members).map(([uid, user]) => this.userRow(uid, user))}
+        ${this.members.map(([section, members]) =>
+                html`${section != "" ? html`<div class="summary">${section}</div>` : ''}
+                    ${Object.entries(members).map(([uid, user]) => this.userRow(uid, user))}`
+            )}
         </div>
         </div>`;
     }
-    
+
     setAttending(uid, response) {
         let ref = `${this.event.ref.path}/participants/${uid}`;
-        db.doc(ref).set({ attending: response },  { merge: true });
+        db.doc(ref).set({ attending: response }, { merge: true });
     }
-    
+
     setComment(uid, comment) {
         let ref = `${this.event.ref.path}/participants/${uid}`;
         db.doc(ref).set({ comment: comment }, { merge: true });
     }
-    
+
     close() {
         let event = new CustomEvent("close", {});
         this.dispatchEvent(event);

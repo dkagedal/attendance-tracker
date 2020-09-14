@@ -4,41 +4,47 @@ const { promises } = require('dns');
 
 const PROJECT_ID = "attendance-tracker-b8e9f";
 
-const admin = firebase.initializeAdminApp({projectId: PROJECT_ID}).firestore();
+const admin = firebase.initializeAdminApp({ projectId: PROJECT_ID }).firestore();
+
+const bands = {
+    ellington: {
+        display_name: "The Duke Ellington Orchestra",
+    }
+};
+
+function user(display_name, band) {
+    const u = { display_name: display_name, bands: {} }
+    if (band != undefined) {
+        u.bands[band] = bands[band];
+    }
+    return u;
+}
 
 const data = {
     users: {
-        uid_duke: {
-            display_name: "Duke Ellington",
-            bands: {
-                ellington: {
-                    display_name: "The Duke Ellington Orchestra",
-                }
-            }
-        },
-        uid_carney: {
-            display_name: "Harry Carney",
-            bands: {
-                ellington: {
-                    display_name: "The Duke Ellington Orchestra",
-                }
-            }
-        },
-        uid_cootie: {
-            display_name: "Cootie Williams",
-            bands: {}
-        },
+        uid_duke: user("Duke Ellington", "ellington"),
+        uid_carney: user("Harry Carney", "ellington"),
+        uid_carney: user("Juan Tizol", "ellington"),
+        uid_guy: user("Fred Guy", "ellington"),
+        uid_hodges: user("Johnny Hodges", "ellington"),
+        uid_tricky: user("Joe Nanton", "ellington"),
+        uid_cootie: user("Cootie Williams", "ellington"),
     },
     bands: {
         ellington: {
             display_name: "The Duke Ellington Orchestra",
+            sections: [ "sax", "rhythm" ],
             collections: {
                 members: {
-                    uid_duke: {status: "active", admin: true},
-                    uid_carney: {status: "active"},
+                    uid_duke: { display_name: "Duke Ellington", admin: true },
+                    uid_carney: { display_name: "Harry Carney" },
+                    uid_tizol: { display_name: "Juan Tizol" },
+                    uid_guy: { display_name: "Fred Guy", section: "rhythm" },
+                    uid_hodges: { display_name: "Johnny Hodges", section: "sax" },
+                    uid_tricky: { display_name: "Tricky Sam" },
+                    uid_cootie: { display_name: "Cootie Williams" },
                 },
                 join_requests: {
-                    uid_cootie: {},
                 },
                 events: {
                     aaa: {
@@ -47,7 +53,7 @@ const data = {
                         start: "2020-09-19T20:00",
                         collections: {
                             participants: {
-                                uid_duke: {attending: true}
+                                uid_duke: { attending: true }
                             }
                         }
                     },
@@ -70,7 +76,7 @@ const data = {
                         proposed: true,
                         start: "2020-09-21T20:00",
                     },
-                    
+
                 }
             }
         }
@@ -98,8 +104,8 @@ async function walkTestData(data, parent) {
 }
 
 function createTestData() {
-    firebase.clearFirestoreData({projectId: PROJECT_ID}).then((result) => {
-        return  walkTestData(data, admin);
+    firebase.clearFirestoreData({ projectId: PROJECT_ID }).then((result) => {
+        return walkTestData(data, admin);
     }).then((result) => {
         console.log("Done.");
     }).catch((reason) => {
