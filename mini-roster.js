@@ -65,10 +65,10 @@ class MiniRoster extends LitElement {
             background: green
         }
         .maybe {
-            background: gray
+            background: lightgray
           }
         .unknown {
-            background: black
+            background: white
           }
         .no {
             background: red
@@ -85,7 +85,7 @@ class MiniRoster extends LitElement {
         ${repeat(this.responses.sub, id => id, () => html`<span class="sub"></span>`)}
         ${repeat(this.responses.no, id => id, () => html`<span class="no"></span>`)}
         ${repeat(this.responses.maybe, id => id, () => html`<span class="maybe"></span>`)}
-        ${repeat(this.responses.unknown, id => id, () => html`<span class="maybe"></span>`)}
+        ${repeat(this.responses.unknown, id => id, () => html`<span class="unknown"></span>`)}
     `;
     }
 }
