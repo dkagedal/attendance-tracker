@@ -7,27 +7,28 @@ import '@material/mwc-linear-progress';
 import '@material/mwc-list/mwc-list';
 import '@material/mwc-list/mwc-list-item';
 import './time-range.js';
-import './event-card.js'
+import './event-card.js';
+import './mini-roster.js';
 
 const dateFmt = new Intl.DateTimeFormat('sv-SE', {
-      timeZone: 'Europe/Stockholm',
-      month: 'numeric',
-      day: 'numeric',
-    });
+  timeZone: 'Europe/Stockholm',
+  month: 'numeric',
+  day: 'numeric',
+});
 
 const timeFmt = new Intl.DateTimeFormat('sv-SE', {
-      timeZone: 'Europe/Stockholm',
-      hour: 'numeric',
-      minute: 'numeric',
-    });
+  timeZone: 'Europe/Stockholm',
+  hour: 'numeric',
+  minute: 'numeric',
+});
 
 var db = firebase.firestore();
 if (location.hostname === "localhost") {
-    db.settings({
-      host: "localhost:8080",
-      ssl: false
-    });
-  }
+  db.settings({
+    host: "localhost:8080",
+    ssl: false
+  });
+}
 
 class BandSchedule extends LitElement {
   static get properties() {
@@ -37,6 +38,7 @@ class BandSchedule extends LitElement {
       loaded: { type: Boolean },
       selected_event: { type: Object },
       event_expanded: { type: Boolean },
+      member_count: { type: Number },
     }
   }
 
@@ -47,22 +49,23 @@ class BandSchedule extends LitElement {
     this.loaded = false;
     this.selected_event = null;
     this.event_expanded = false;
+    this.member_count = 0;
   }
 
   attributeChangedCallback(name, oldval, newval) {
     console.log('attribute change: ', name, newval);
     super.attributeChangedCallback(name, oldval, newval);
     if (name == 'path') {
-      let ref = `${newval}/events`;
-      console.log('Fetching ', ref)
-      db.collection(ref).orderBy('start').onSnapshot((querySnapshot) => {
-        console.log('got snapshot ', querySnapshot.docs);
+      db.collection(`${newval}/events`).orderBy('start').onSnapshot((querySnapshot) => {
         this.events = querySnapshot.docs.map((event) => event);
         this.loaded = true;
       });
+      db.collection(`${newval}/members`).onSnapshot((querySnapshot) => {
+        this.member_count = querySnapshot.docs.length;
+      });
     }
   }
-  
+
   static get styles() {
     return css`
       .type { font-weight: 600; }
@@ -102,6 +105,9 @@ class BandSchedule extends LitElement {
         height: 72px;
         width: 100%;
       }
+      mini-roster {
+        margin-left: 72px;
+      }
     `;
   }
 
@@ -110,8 +116,8 @@ class BandSchedule extends LitElement {
     return html`
       <mwc-linear-progress indeterminate ?closed=${this.loaded}></mwc-linear-progress>
       <mwc-list>
-          ${repeat(this.events, (e) => e.id, 
-            (e, index) => html`<mwc-list-item graphic="icon" twoline @request-selected=${ev => this.selected(ev, e)}>
+          ${repeat(this.events, (e) => e.id,
+      (e, index) => html`<mwc-list-item graphic="icon" twoline @request-selected=${ev => this.selected(ev, e)}>
               <mwc-icon slot="graphic">event</mwc-icon>
               <span>
                 <span class="type">${e.data().type}</span>
@@ -123,6 +129,8 @@ class BandSchedule extends LitElement {
                 ${e.data().description ? html` · <span class="description">${e.data().description}</span>` : ''} 
               </span>
             </mwc-list-item>
+            <mini-roster size=${this.member_count} event=${e.ref.path}></mini-roster>
+            </div>
             `)}
             ${this.loaded && this.events.length == 0 ? html`<mwc-list-item noninteractive>Inget planerat</mwc-list-item>` : ''}
       </mwc-list>

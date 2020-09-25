@@ -33,7 +33,7 @@ const data = {
     bands: {
         ellington: {
             display_name: "The Duke Ellington Orchestra",
-            sections: [ "sax", "rhythm" ],
+            sections: ["sax", "rhythm"],
             collections: {
                 members: {
                     uid_duke: { display_name: "Duke Ellington", admin: true },
@@ -53,7 +53,7 @@ const data = {
                         start: "2020-09-19T20:00",
                         collections: {
                             participants: {
-                                uid_duke: { attending: true }
+                                uid_duke: { attending: "yes" }
                             }
                         }
                     },
