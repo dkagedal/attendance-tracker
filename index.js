@@ -97,6 +97,11 @@ firebase.auth().onAuthStateChanged(async (authUser) => {
   console.log("Bands:", bands);
 
   let fromUrl = location.hash != "" ? location.hash.substr(1) : location.pathname.substr(1);
+  if (fromUrl.length == 0) {
+    console.log("Empty path, looking host by hostname", location.hostname);
+    fromUrl = await db.collection("hosts").doc(location.hostname).get().then(snapshot => snapshot.exists ? snapshot.data().band : null);
+  };
+
   console.log("Band id from URL:", fromUrl);
   if (fromUrl.length > 0 && !(fromUrl in bands)) {
     await joinRequest(authUser.uid, fromUrl);

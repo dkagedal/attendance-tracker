@@ -13,6 +13,10 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /hosts/{hostname} {
+      allow get: if true;
+    }
+
     match /bands/{band} {
       allow list: if false;
 			allow get: if true;
