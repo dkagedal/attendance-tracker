@@ -16,14 +16,27 @@ if (location.hostname === "localhost") {
   });
 }
 
-function selectBand(id) {
+var hostmap = {}
+async function bandFromHostname() {
+  if (!(location.hostname in hostmap)) {
+    const snapshot = await db.collection("hosts").doc(location.hostname).get();
+    if (snapshot.exists) {
+      hostmap[location.hostname] = snapshot.data().band;
+    } else {
+      hostmap[location.hostname] = null;
+    }
+  }
+  return hostmap[location.hostname] || null;
+}
+
+async function selectBand(id) {
   console.log("Selected band", id);
   current = id;
   const path = `bands/${id}`
   const schedule = document.getElementById("band");
   console.log("Current band:", id);
   schedule.setAttribute('path', path);
-  const urlPath = `/${id}`;
+  const urlPath = (await bandFromHostname()) == id ? '/' : `/${id}`;
   if (location.pathname != urlPath) {
     history.replaceState({}, "", urlPath);
   }
@@ -98,8 +111,7 @@ firebase.auth().onAuthStateChanged(async (authUser) => {
 
   let fromUrl = location.hash != "" ? location.hash.substr(1) : location.pathname.substr(1);
   if (fromUrl.length == 0) {
-    console.log("Empty path, looking host by hostname", location.hostname);
-    fromUrl = await db.collection("hosts").doc(location.hostname).get().then(snapshot => snapshot.exists ? snapshot.data().band : null);
+    fromUrl = await bandFromHostname();
   };
 
   console.log("Band id from URL:", fromUrl);
