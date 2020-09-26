@@ -34,22 +34,22 @@ class BandSchedule extends LitElement {
   static get properties() {
     return {
       path: { type: String }, // "bands/abc"
-      events: { type: Array },
+      events: { type: Object }, // QuerySnapshot
       loaded: { type: Boolean },
       selected_event: { type: Object },
       event_expanded: { type: Boolean },
-      member_count: { type: Number },
+      members: { type: Array },
     }
   }
 
   constructor() {
     super();
     this.path = "";
-    this.events = [];
+    this.events = null;
     this.loaded = false;
     this.selected_event = null;
     this.event_expanded = false;
-    this.member_count = 0;
+    this.members = [];
   }
 
   attributeChangedCallback(name, oldval, newval) {
@@ -57,11 +57,19 @@ class BandSchedule extends LitElement {
     super.attributeChangedCallback(name, oldval, newval);
     if (name == 'path') {
       db.collection(`${newval}/events`).orderBy('start').onSnapshot((querySnapshot) => {
-        this.events = querySnapshot.docs.map((event) => event);
+        this.events = querySnapshot;
         this.loaded = true;
       });
       db.collection(`${newval}/members`).onSnapshot((querySnapshot) => {
-        this.member_count = querySnapshot.docs.length;
+        this.members = querySnapshot.docs.sort((m1, m2) => {
+          if (m1.id < m2.id) {
+            return -1;
+          }
+          if (m1.id > m2.id) {
+            return 1;
+          }
+          return 0;
+        });
       });
     }
   }
@@ -117,7 +125,7 @@ class BandSchedule extends LitElement {
     return html`
       <mwc-linear-progress indeterminate ?closed=${this.loaded}></mwc-linear-progress>
       <mwc-list>
-          ${repeat(this.events, (e) => e.id,
+          ${repeat(this.events ? this.events.docs : [], (e) => e.id,
       (e, index) => html`<mwc-list-item graphic="icon" twoline @request-selected=${ev => this.selected(ev, e)}>
               <mwc-icon slot="graphic">event</mwc-icon>
               <span>
@@ -130,10 +138,10 @@ class BandSchedule extends LitElement {
                 ${e.data().description ? html` · <span class="description">${e.data().description}</span>` : ''} 
               </span>
             </mwc-list-item>
-            <mini-roster size=${this.member_count} event=${e.ref.path}></mini-roster>
+            <mini-roster .members=${this.members} .event=${e}></mini-roster>
             </div>
             `)}
-            ${this.loaded && this.events.length == 0 ? html`<mwc-list-item noninteractive>Inget planerat</mwc-list-item>` : ''}
+            ${this.loaded && this.events.size == 0 ? html`<mwc-list-item noninteractive>Inget planerat</mwc-list-item>` : ''}
       </mwc-list>
     `;
   }
