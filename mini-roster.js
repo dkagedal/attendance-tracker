@@ -56,7 +56,7 @@ class MiniRoster extends LitElement {
             display: flex;
         }
         span {
-            width: 8px;
+            flex: 1 1 8px;
             height: 8px;
             margin: 1px;
             border: 1px solid #888;

@@ -107,6 +107,7 @@ class BandSchedule extends LitElement {
       }
       mini-roster {
         margin-left: 72px;
+        margin-right: 16px;
       }
     `;
   }
