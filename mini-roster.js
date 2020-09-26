@@ -70,7 +70,7 @@ class MiniRoster extends LitElement {
     render() {
         return html`
         ${repeat(this.members, member => member.id, member => {
-            return html`<span class=${this.responses[member.id] || 'unknown'}></span>`;
+            return html`<span title=${member.data().display_name} class=${this.responses[member.id] || 'unknown'}></span>`;
         })}
     `;
     }
