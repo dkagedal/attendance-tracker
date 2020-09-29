@@ -76,42 +76,16 @@ class BandSchedule extends LitElement {
 
   static get styles() {
     return css`
+      .list {
+        display: flex;
+        flex-direction: column;
+      }
       .type { font-weight: 600; }
       time-range { color: rgba(0,0,0,0.7); }
       @media (max-width: 600px) {
         div.schedule {
           padding: 16px 16px;
         }
-      }
-      .toggle {
-        font-size: 12px;
-        font-weight: 600;
-        margin: 0;
-        color: #4a7cf1;
-      }
-      event-card {
-        z-index: 4;
-        overflow: hidden;
-        transition:
-          opacity 0.2s cubic-bezier(0.4, 0.0, 0.2, 1) 0.3s,
-          background 0.5s cubic-bezier(0.4, 0.0, 0.2, 1),
-          top 0.3s cubic-bezier(0.4, 0.0, 0.2, 1),
-          height 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
-      }
-      event-card.expanded {
-        position: fixed;
-        top: 5vh;
-        left: 30px;
-        height: 90vh;
-        width: 500px;
-      }
-      event-card.small {
-        position: absolute;
-        opacity: 0%;
-        top: 0;
-        left: 0;
-        height: 72px;
-        width: 100%;
       }
       mini-roster {
         margin-left: 72px;
@@ -124,25 +98,12 @@ class BandSchedule extends LitElement {
     let elt = this;
     return html`
       <mwc-linear-progress indeterminate ?closed=${this.loaded}></mwc-linear-progress>
-      <mwc-list>
-          ${repeat(this.events ? this.events.docs : [], (e) => e.id,
-      (e, index) => html`<mwc-list-item graphic="icon" twoline @request-selected=${ev => this.selected(ev, e)}>
-              <mwc-icon slot="graphic">event</mwc-icon>
-              <span>
-                <span class="type">${e.data().type}</span>
-                <time-range start=${ifDefined(e.data().start)}
-                            stop=${ifDefined(e.data().stop)}></time-range>
-              </span>
-              <span slot="secondary">
-                <span class="location">${e.data().location}</span>
-                ${e.data().description ? html` · <span class="description">${e.data().description}</span>` : ''} 
-              </span>
-            </mwc-list-item>
-            <mini-roster .members=${this.members} .event=${e}></mini-roster>
-            </div>
-            `)}
-            ${this.loaded && this.events.size == 0 ? html`<mwc-list-item noninteractive>Inget planerat</mwc-list-item>` : ''}
-      </mwc-list>
+      <div class="list">
+        ${repeat(this.events ? this.events.docs : [], (e) => e.id, (e, index) => html`
+          <event-card .members=${this.members} .event=${e}></event-card>
+          `)}
+          <div style="display: ${this.loaded && this.events.size == 0 ? "block" : "none"}">Inget planerat</div>
+      </div>
     `;
   }
 

@@ -7,6 +7,8 @@ import '@material/mwc-dialog';
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
 import '@material/mwc-button';
+import '@material/mwc-menu';
+import '@material/mwc-list/mwc-list-item';
 import '@material/mwc-tab';
 import '@material/mwc-tab-bar';
 import '@material/mwc-textfield';
@@ -16,107 +18,84 @@ import './time-range.js';
 import { getUser } from './users.js';
 
 const responseIcons = {
-    yes: "thumb_up",
-    no: "thumb_down",
-    maybe: "thumbs_up_down",
-    sub: "import_export",
+  yes: "thumb_up",
+  no: "thumb_down",
+  maybe: "thumbs_up_down",
+  sub: "import_export",
 }
 
 const attendances = {
-    "yes": "Ja",
-    "no": "Nej",
-    "maybe": "Återkommer",
-    "sub": "Vikarie",
-    "unknown": "",
+  "yes": "Ja",
+  "no": "Nej",
+  "maybe": "Återkommer",
+  "sub": "Vikarie",
+  "unknown": "",
 }
 
 var db = firebase.firestore();
 if (location.hostname === "localhost") {
-    db.settings({
-        host: "localhost:8080",
-        ssl: false
-    });
+  db.settings({
+    host: "localhost:8080",
+    ssl: false
+  });
 }
 
 class EventCard extends LitElement {
 
-    static get properties() {
-        return {
-            bandref: { type: String, reflect: true }, // "bands/abc"
-            edit: { type: Boolean, reflect: true },
-            event: { type: Object },  // QueryDocumentSnapshot
-            editResponse: { type: String }, // UID or null
-            participants: { type: Object },
-            members: { type: Object }, // array of sections, where each section is a pair [name, members]
+  static get properties() {
+    return {
+      members: { type: Array, attribute: false }, // [DocumentSnapshot]
+      event: { type: Object, attribute: false },  // QueryDocumentSnapshot
+      responses: { type: Object, attribute: false },
+      comments: { type: Object, attribute: false },
+      expanded: { type: Boolean },
+      openmenu: { type: Boolean },
+    }
+  }
+
+  constructor() {
+    super();
+    this.members = [];
+    this.event = null;
+    this.responses = [];
+    this.comments = []
+    this.expanded = false;
+    this.openmenu = false;
+  }
+
+  fetchParticipants() {
+    console.log(`event-card: Fetching participants ${this.event.ref.path}/participants`);
+    // TODO: remember the cancel function.
+    this.event.ref.collection('participants').onSnapshot(snapshot => {
+      const responses = {};
+      this.comments = [];
+      snapshot.docs.forEach(p => {
+        responses[p.id] = p.data().attending;
+        if (p.data().comment != undefined) {
+          this.comments[p.id] = p.data().comment;
         }
-    }
+      });
+      this.responses = responses;
+    });
+  }
 
-    constructor() {
-        super();
-        this.bandref = null;
-        this.event = null;
-        this.edit = false;
-        this.editResponse = null;
-        this.participants = {};
-        this.edit = false;
-        this.members = [];
-    }
+  updated(changedProperties) {
+    changedProperties.forEach((oldValue, propName) => {
+      if (propName == 'event') {
+        this.fetchParticipants()
+      }
+    })
+  }
 
-    async setBand(bandref) {
-        const snapshot = await db.doc(bandref).collection("members").get();
-        const sections = {};
-        snapshot.forEach(async (doc) => {
-            console.log("Member:", doc);
-            const member = Object.assign({}, doc.data());
-            if (!member.display_name) {
-                member.display_name = "??";
-            }
-            const section = member.section || "";
-            if (!(section in sections)) {
-                sections[section] = {};
-            }
-            sections[section][doc.id] = member;
-        });
-        console.log("Members:", sections);
-        this.members = Object.entries(sections);
-    }
-
-    setGig(gig) {
-        this.event = gig
-        console.log(`event-card: Fetching participants ${this.event.ref.path}/participants`);
-        // TODO: remember the cancel function.
-        db.collection(`${this.event.ref.path}/participants`).onSnapshot(snapshot => {
-            let participants = {}
-            snapshot.docs.forEach(p => {
-                participants[p.id] = p.data();
-            });
-            console.log("event-card: Got participants", participants);
-            this.participants = participants
-        });
-    }
-
-    attributeChangedCallback(name, oldval, newval) {
-        console.log('event-card attribute change: ', name, oldval, '->', newval);
-        super.attributeChangedCallback(name, oldval, newval);
-        if (name == 'bandref' && newval != oldval) {
-            this.setBand(newval)
+  static get styles() {
+    return css`
+        :host {
+          margin: 4px;
+          border-radius: 5px;
+          border: solid #ddd 1px;
+          background: white;
+          cursor: pointer;
         }
-        if (name == 'event' && newval != oldval) {
-            this.setGig(newval)
-        }
-    }
-
-    countResponses() {
-        let counts = { yes: 0, no: 0, maybe: 0, sub: 0 };
-        for (let uid in this.participants) {
-            let response = this.participants[uid].attending;
-            counts[response] += 1;
-        }
-        return counts;
-    }
-
-    static get styles() {
-        return css`
         #top {
             position: absolute; left: 0; 
             height: 100%; width: 100%;
@@ -125,21 +104,39 @@ class EventCard extends LitElement {
             overflow: hidden;
             box-shadow: 3px 3px 8px 1px rgba(0,0,0,0.4);
         }
-        #buttons {
-            padding: 10px;
-            display: flex;
+        #head {
+          display: flex;
+          margin-bottom: -16px;
         }
-        #buttons h1 {
-            flex: 1;
+        #head .event-type {
+          font-weight: 600;
+          margin: 16px 10px 16px 20px;
+        }
+        #head time-range {
+          color: rgba(0, 0, 0, 0.7);
+          margin: 16px 0;
+        }
+        #head .push-right {
+          margin-left: auto;
         }
         #info {
-            padding: 0 72px 1rem;
+          padding: 0 20px 10px 20px;
+          color: rgba(0, 0, 0, 0.54);
+          font-size: 0.875rem;
+          font-weight: 400;
+        }
+        .comment {
+          margin: 0 20px;
+          color: rgba(0, 0, 0, 0.54);
+          font-size: 0.875rem;
+          font-weight: 400;
+        }
+        mini-roster {
+          margin: 4px 20px;
         }
         .summary {
             padding: 0 40px 0 40px;
             font-variant: all-petite-caps;
-            font-weight: 600;
-            background: white;
             color: rgba(0,0,0,0.5);
         }
         #participants {
@@ -148,22 +145,13 @@ class EventCard extends LitElement {
             display: flex;
             flex-direction: column;
             justify-contents: space-between;
-            background: white;
             color: rgba(0,0,0,0.87);
             overflow: scroll;
-        }
-        mwc-top-app-bar-fixed {
-            --mdc-theme-primary: #2f9856;
-            --mdc-theme-on-primary: white;          
-        }
-        .inverted {
-            color: white;
-            background: #2f9856;
         }
         div.edit-form {
         }
         .display {
-            margin: 0;
+          margin: 0;
         }
         p {
             margin: 4px 0;
@@ -214,57 +202,53 @@ class EventCard extends LitElement {
             display: flex;
             flex-direction: column;
         }
-        h1 {
-            margin: 0; font-size: 24px; font-weight: bold; 
-            padding: 8px 16px 8px 16px;
-        }
         `;
-    }
+  }
 
-    renderDisplay() {
-        return html`<div class="display">
+  renderDisplay() {
+    return html`<div class="display">
         <time-range start=${ifDefined(this.event.data().start)}
         stop=${ifDefined(this.event.data().stop)}></time-range>
         <p>${this.event.data().location}</p>
         <p>${this.event.data().description}</p>
         </div>`;
-    }
+  }
 
-    responseButton(uid, participant, response) {
-        return html`<mwc-button @click=${e => this.setAttending(uid, response)}
+  responseButton(uid, participant, response) {
+    return html`<mwc-button @click=${e => this.setAttending(uid, response)}
         id="${response}"
         icon="${responseIcons[response]}"
         label="${attendances[response]}"
         ?outlined="${participant.attending == response}"
         ></mwc-button>`;
-    }
+  }
 
-    clickParticipant(uid) {
-        console.log('participant clicked', uid, firebase.auth().currentUser);
-        if (!this.edit && uid == firebase.auth().currentUser.uid) {
-            this.editResponse = uid;
-        }
+  clickParticipant(uid) {
+    console.log('participant clicked', uid, firebase.auth().currentUser);
+    if (!this.edit && uid == firebase.auth().currentUser.uid) {
+      this.editResponse = uid;
     }
+  }
 
-    userRow(uid, user) {
-        let participant = this.participants[uid] || {};
-        return html`<div class="participant-row" @click=${e => this.clickParticipant(uid)}>
+  userRow(uid, user) {
+    let participant = this.participants[uid] || {};
+    return html`<div class="participant-row" @click=${e => this.clickParticipant(uid)}>
         <mwc-icon class=${classMap({ avatar: true, dimmed: !participant.attending })}>person</mwc-icon>
         <div class="row-main">
         <p class="participant-name">${user.display_name}</p>
         ${participant.comment
-                ? html`<p class="comment">${participant.comment}</p>`
-                : ''
-            }
+        ? html`<p class="comment">${participant.comment}</p>`
+        : ''
+      }
         </div>
         <span class="response">${attendances[participant.attending || "unknown"]}</span>
         </div>`;
-    }
+  }
 
-    renderMyResponseDialog() {
-        let uid = this.editResponse;
-        let participant = this.participants[uid] || {};
-        return html`
+  renderMyResponseDialog() {
+    let uid = this.editResponse;
+    let participant = this.participants[uid] || {};
+    return html`
         <mwc-dialog heading="Närvaro" ?open=${this.editResponse} @closed=${e => { this.editResponse = null }}>
         <div id="myresponse">
         ${this.responseButton(uid, participant, "yes")}
@@ -277,54 +261,46 @@ class EventCard extends LitElement {
         </div>
         <mwc-button dialogAction="ok" slot="primaryAction">ok</mwc-button>
         </mwc-dialog>`;
-    }
+  }
 
-    render() {
-        const sections = [];
-        let counts = this.countResponses();
-        return html`
-        <div id="buttons" class="inverted">
-        <mwc-icon-button icon="close" @click=${e => this.close()}></mwc-icon-button>
-        <h1>${this.edit ? '' : this.event.data().type}</h1>
-        ${this.event ? html`<mwc-icon-button icon="edit" slot="actionItems" @click=${e => { this.edit = !this.edit; }}></mwc-icon-button>` : ''}
-        </div>
-        <div id="info" class="inverted">
-        ${this.edit
-                ? html`<event-editor ?range=${this.event ? this.event.data().stop : false}
-                    bandref="${ifDefined(this.bandref || undefined)}"
-                    .event=${this.event}
-                    @saved=${e => this.close()}></event-editor>`
-                : this.renderDisplay()
-            }
-        </div>
-        ${this.renderMyResponseDialog()}
-        <div id="participants">
-        <div class="summary">
-        ${counts["yes"] + counts["sub"]} ja/vik &ndash;
-        ${counts["no"] + counts["sub"]} nej
-        </div>
-        ${this.members.map(([section, members]) =>
-                html`${section != "" ? html`<div class="summary">${section}</div>` : ''}
-                    ${Object.entries(members).map(([uid, user]) => this.userRow(uid, user))}`
-            )}
-        </div>
-        </div>`;
-    }
+  render() {
+    const sections = [];
+    return html`
+      <div id="head" @click=${e => { this.expanded = true }}>
+        <span class="event-type">${this.edit ? '' : this.event.data().type}</span>
+        <time-range start=${ifDefined(this.event.data().start)} stop=${ifDefined(this.event.data().stop)}></time-range>
+        ${this.expanded ? html`<mwc-icon-button class="push-right" icon="more_vert" 
+            @click=${e => { this.openmenu = !this.openmenu }}></mwc-icon-button>` : ''}
+        <mwc-menu id="menu" ?open=${this.openmenu}>
+          <mwc-list-item>Redigera</mwc-list-item>
+          <mwc-list-item>Ställ in</mwc-list-item>
+        </mwc-menu>
+      </div>
+      <div id="info">
+        <p>${this.event.data().location}</p>
+        <p>${this.event.data().description}</p>
+      </div>
+      ${repeat(this.members, member => member.id, member => {
+      return member.id in this.comments ? html`<p class="comment"><b>${member.data().display_name}</b> ${this.comments[member.id]}</p>` : '';
+    })}
+      <mini-roster .members=${this.members} .event=${this.event} .responses=${this.responses}></mini-roster>
+      `;
+  }
 
-    setAttending(uid, response) {
-        let ref = `${this.event.ref.path}/participants/${uid}`;
-        db.doc(ref).set({ attending: response }, { merge: true });
-    }
+  setAttending(uid, response) {
+    let ref = `${this.event.ref.path}/participants/${uid}`;
+    db.doc(ref).set({ attending: response }, { merge: true });
+  }
 
-    setComment(uid, comment) {
-        let ref = `${this.event.ref.path}/participants/${uid}`;
-        db.doc(ref).set({ comment: comment }, { merge: true });
-    }
+  setComment(uid, comment) {
+    let ref = `${this.event.ref.path}/participants/${uid}`;
+    db.doc(ref).set({ comment: comment }, { merge: true });
+  }
 
-    close() {
-        let event = new CustomEvent("close", {});
-        this.dispatchEvent(event);
-    }
+  close() {
+    let event = new CustomEvent("close", {});
+    this.dispatchEvent(event);
+  }
 }
 
 customElements.define('event-card', EventCard);
