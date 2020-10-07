@@ -12,7 +12,16 @@
             },
             "problemMatcher": [],
             "label": "npm: build",
-            "detail": "rollup -c"
+            "detail": "tsc"
+        },
+        {
+            "type": "npm",
+            "script": "build",
+            "path": "functions/",
+            "group": "build",
+            "problemMatcher": [],
+            "label": "npm: build - functions",
+            "detail": "tsc"
         }
     ]
 }
