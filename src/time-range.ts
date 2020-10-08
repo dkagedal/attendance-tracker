@@ -30,6 +30,22 @@ function utcDate(timestring: string): number {
   }
 }
 
+function range(start: string, stop: string): string {
+  let fmt = (start.indexOf("T") > 0) ? dateTimeFmt : dateFmt;
+  if ("formatRange" in fmt) {
+    return (fmt as any).formatRange(utcDate(start), utcDate(stop));
+  } else {
+    return `${fmt.format(utcDate(start))} – ${fmt.format(utcDate(stop))}`
+  }
+}
+
+function single(start: string): string {
+  const fmt = (start.indexOf("T") > 0) ? dateTimeFmt : dateFmt;
+  const milliseconds = utcDate(start);
+  console.log("Formatting", start, "parsed to", milliseconds, "with", fmt)
+  return fmt.format(milliseconds);
+}
+
 @customElement("time-range")
 export class TimeRange extends LitElement {
   @property({ type: String })
@@ -40,27 +56,10 @@ export class TimeRange extends LitElement {
 
   static = css``;
 
-
   render() {
-    const range = (start: string, stop: string) => {
-      let fmt = (start.indexOf("T") > 0) ? dateTimeFmt : dateFmt;
-      if ("formatRange" in fmt) {
-        return (fmt as any).formatRange(utcDate(start), utcDate(stop));
-      } else {
-        return `${fmt.format(utcDate(start))} – ${fmt.format(utcDate(stop))}`
-      }
-    }
-    const single = (start: string) => {
-      const fmt = (start.indexOf("T") > 0) ? dateTimeFmt : dateFmt;
-      const milliseconds = utcDate(start);
-      console.log("Formatting", start, "parsed to", milliseconds, "with", fmt)
-      return fmt.format(milliseconds);
-    }
-
     return html`
         ${this.start && this.stop ? range(this.start, this.stop)
-        : this.start ? single(this.start)
-          : ''}`;
+        : this.start ? single(this.start) : ''}`;
   }
 }
 

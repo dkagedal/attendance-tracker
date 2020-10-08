@@ -263,6 +263,9 @@ export class EventCard extends LitElement {
   closingEditor(event: CustomEvent): void {
     console.log("Closing editor:", event.detail);
     if (event.detail.action == "save") {
+      if (!this.editor.checkValidity()) {
+        console.log("Invalid data, not saving")
+      }
       this.editor.save();
       const data = this.editor.data;
       console.log("New data:", data);
