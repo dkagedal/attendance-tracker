@@ -1,4 +1,4 @@
-import { LitElement, html, css, customElement, property } from 'lit-element';
+import { LitElement, html, css, customElement, property, query } from 'lit-element';
 // import { classMap } from 'lit-html/directives/class-map';
 // import { styleMap } from 'lit-html/directives/style-map';
 import { repeat } from 'lit-html/directives/repeat';
@@ -16,6 +16,9 @@ import '@material/mwc-menu';
 // import './event-editor.js';
 import './time-range';
 import './mini-roster';
+import { Menu } from '@material/mwc-menu';
+import { IconButton } from '@material/mwc-icon-button';
+import { SelectedDetail } from '@material/mwc-list/mwc-list-foundation';
 
 // const responseIcons = {
 //   yes: "thumb_up",
@@ -47,10 +50,12 @@ interface Comments {
 }
 
 interface Event {
+  type: string,
   start: string,
   stop: string,
   location: string,
   description: string,
+  cancelled: boolean,
 }
 
 @customElement("event-card")
@@ -68,11 +73,11 @@ export class EventCard extends LitElement {
   @property({ type: Object, attribute: false })
   comments = {} as Comments;
 
-  @property({ type: Boolean })
-  expanded = false;
+  @query('#menu-button')
+  menuButton: IconButton;
 
-  @property({ type: Boolean })
-  openmenu = false
+  @query('#menu')
+  menu: Menu;
 
   fetchParticipants() {
     const event = this.event!;
@@ -204,17 +209,34 @@ export class EventCard extends LitElement {
         }
         `;
 
+  menuAction(event: CustomEvent): void {
+    const detail = event.detail as SelectedDetail;
+    const data = this.event!.data()! as Event
+    switch (detail.index) {
+      case 0:  // edit
+        console.log(("Edit event"));
+        return;
+      case 1:  // cancel
+        console.log("Cancel event", data.cancelled, "to", !data.cancelled);
+        this.event.ref.set({ cancelled: !data.cancelled }, { merge: true }).then(
+          () => console.log("Cancel successful"),
+          reason => console.log("Cancel failed:", reason));
+        return;
+    }
+  }
+
   render() {
     const data = this.event!.data()! as Event
     return html`
-      <div id="head" @click=${() => { this.expanded = true }}>
-        <span class="event-type">${this.event!.data()!.type}</span>
+      <div id="head">
+        <span class="event-type">${data.type}</span>
         <time-range start=${ifDefined(data.start)} stop=${ifDefined(data.stop)}></time-range>
-        ${this.expanded ? html`<mwc-icon-button class="push-right" icon="more_vert" 
-            @click=${() => { this.openmenu = !this.openmenu }}></mwc-icon-button>` : ''}
-        <mwc-menu id="menu" ?open=${this.openmenu}>
+        <mwc-icon-button id="menu-button" class="push-right" icon="more_vert" 
+            @click=${() => this.menu.show()}></mwc-icon-button>
+        <mwc-menu id="menu" fixed corner="TOP_END" menuCorner="END" .anchor=${this.menuButton}
+            @action=${this.menuAction}>
           <mwc-list-item>Redigera</mwc-list-item>
-          <mwc-list-item>Ställ in</mwc-list-item>
+          <mwc-list-item>${data.cancelled ? "Ångra ställ in" : "Ställ in"}</mwc-list-item>
         </mwc-menu>
       </div>
       <div id="info">
@@ -225,8 +247,8 @@ export class EventCard extends LitElement {
       const data = member.data() as Member
       return member.id in this.comments ? html`<p class="comment"><b>${data.display_name}</b> ${this.comments[member.id]}</p>` : '';
     })}
-      <mini-roster .members=${this.members} .event=${this.event} .responses=${this.responses}></mini-roster>
-      `;
+    <mini-roster .members=${this.members} .event=${this.event} .responses=${this.responses}></mini-roster>
+    `;
   }
 }
 

@@ -49,10 +49,22 @@ export class MiniRoster extends LitElement {
       .sub {
         background: rgb(255 235 59)
       }
+      .cancelled {
+        background: rgb(255, 87, 34);
+        color: white;
+        text-align: center;
+        font-weight: 600;
+        font-stretch: expanded;
+        margin: 0;
+        width: 100%;
+      }
     `;
   }
 
   render() {
+    if (this.event.data().cancelled) {
+      return html`<p class="cancelled">I N S T Ä L L T</p>`;
+    }
     return html`
         ${repeat(this.members, member => member.id, member => {
       const data = member.data() as Member

@@ -41,9 +41,9 @@ export class BandSchedule extends LitElement {
 
   updated(changedProperties: any) {
     changedProperties.forEach((_oldValue: any, propName: string) => {
-      if (propName == 'band') {
+      if (propName == 'band' && this.band != null) {
         console.log('Getting band events and members...');
-        this.band!.ref.collection('events').orderBy('start').onSnapshot((querySnapshot) => {
+        this.band.ref.collection('events').orderBy('start').onSnapshot((querySnapshot) => {
           this.events = querySnapshot;
           this.loaded = true;
         });
