@@ -5,6 +5,7 @@ import '@material/mwc-button';
 import '@material/mwc-linear-progress';
 import '@material/mwc-list/mwc-list';
 import '@material/mwc-list/mwc-list-item';
+import firebase from "firebase/app";  // HIDE
 import './time-range';
 import './event-card';
 import './mini-roster';
@@ -12,11 +13,6 @@ import './mini-roster';
 interface EventsSnapshot {
   docs: firebase.firestore.DocumentSnapshot[],
   size: number,
-}
-
-interface Event {
-  starttime: string,
-  stoptime: string,
 }
 
 @customElement("band-schedule")
@@ -42,11 +38,17 @@ export class BandSchedule extends LitElement {
   updated(changedProperties: any) {
     changedProperties.forEach((_oldValue: any, propName: string) => {
       if (propName == 'band' && this.band != null) {
-        console.log('Getting band events and members...');
-        this.band.ref.collection('events').orderBy('start').onSnapshot((querySnapshot) => {
-          this.events = querySnapshot;
-          this.loaded = true;
-        });
+        const now = firebase.firestore.Timestamp.now();
+        const nowMinus24h = new firebase.firestore.Timestamp(now.seconds - 86400, 0).toDate();
+        const yesterday = nowMinus24h.toISOString().split('T')[0];
+        console.log('Getting band events and members...', yesterday);
+        this.band.ref.collection('events')
+          .where("start", ">=", yesterday)
+          .orderBy('start')
+          .onSnapshot((querySnapshot) => {
+            this.events = querySnapshot;
+            this.loaded = true;
+          });
         this.band!.ref.collection('members').onSnapshot((querySnapshot) => {
           this.members = querySnapshot.docs.sort((m1, m2) => {
             if (m1.id < m2.id) {
@@ -92,12 +94,6 @@ export class BandSchedule extends LitElement {
           <div style="display: ${this.loaded && this.events.size == 0 ? "block" : "none"}">Inget planerat</div>
       </div>
     `;
-  }
-
-  renderTime(event: Event) {
-    return html`${event.starttime
-      ? html`<span class="time">${event.starttime}${event.stoptime ? html`-${event.stoptime}` : ''}</span>`
-      : ''}`
   }
 
   selected(selectEvent: any, gig: Event) {
