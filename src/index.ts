@@ -8,6 +8,10 @@ import { Drawer } from "@material/mwc-drawer";
 import './band-schedule';
 // import type { BandSchedule } from "./band-schedule";
 import { getOrCreateUser, db } from './storage';
+import { Dialog } from '@material/mwc-dialog';
+import { Button } from '@material/mwc-button';
+import { EventEditor } from './event-editor';
+import { BandSchedule } from './band-schedule';
 
 interface BandMap {
   [key: string]: any
@@ -52,6 +56,28 @@ async function joinRequest(uid: string, bandId: string) {
   console.log("Making a join request to", docPath);
   await db.doc(docPath).set({ approved: false }, { merge: true });
   console.log("Done");
+}
+
+function addBandEvent() {
+  console.log("Add a new band event!");
+  const dialog = document.getElementById("add-dialog")! as Dialog;
+  const editor = document.getElementById("add-dialog-editor")! as EventEditor;
+  const saveButton = document.getElementById("add-dialog-save")! as Button;
+  const schedule = document.getElementById("band")! as BandSchedule;
+  saveButton.onclick = () => {
+    if (editor.checkValidity()) {
+      editor.save();
+      const data = editor.data;
+      console.log("New data:", data);
+      schedule.band.ref.collection("events").add(data).then(
+        () => {
+          console.log("Add successful");
+          dialog.close();
+        },
+        reason => console.log("Update failed:", reason));
+    }
+  };
+  dialog.show();
 }
 
 firebase.auth().onAuthStateChanged(async (authUser) => {
@@ -101,7 +127,7 @@ firebase.auth().onAuthStateChanged(async (authUser) => {
   schedule.style.display = 'block';
 
   document.getElementById("mainMenuButton")!.addEventListener('click', () => drawer.open = !drawer.open)
-  // document.getElementById('fab')!.addEventListener('click', e => { addEvent(e) });
+  document.getElementById('fab')!.addEventListener('click', addBandEvent);
 
   document.getElementById("firebaseui-auth-container")!.style.display = 'none'
   document.getElementById("username")!.innerText = user.display_name;
