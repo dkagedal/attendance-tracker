@@ -32,9 +32,10 @@ function utcDate(timestring: string): number {
 
 @customElement("time-range")
 export class TimeRange extends LitElement {
-  @property() start = "";
+  @property({ type: String })
+  start = "";
 
-  @property()
+  @property({ type: String })
   stop = "";
 
   static = css``;
@@ -60,5 +61,11 @@ export class TimeRange extends LitElement {
         ${this.start && this.stop ? range(this.start, this.stop)
         : this.start ? single(this.start)
           : ''}`;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'time-range': TimeRange;
   }
 }

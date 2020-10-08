@@ -1,9 +1,10 @@
-import { LitElement, html, css, customElement, property, query } from 'lit-element';
+
+import "./event-editor"; import { LitElement, html, css, customElement, property, query } from 'lit-element';
 // import { classMap } from 'lit-html/directives/class-map';
 // import { styleMap } from 'lit-html/directives/style-map';
 import { repeat } from 'lit-html/directives/repeat';
 import { ifDefined } from 'lit-html/directives/if-defined';
-// import '@material/mwc-dialog';
+import '@material/mwc-dialog';
 import '@material/mwc-icon';
 import '@material/mwc-icon-button';
 // import '@material/mwc-button';
@@ -19,6 +20,9 @@ import './mini-roster';
 import { Menu } from '@material/mwc-menu';
 import { IconButton } from '@material/mwc-icon-button';
 import { SelectedDetail } from '@material/mwc-list/mwc-list-foundation';
+import { BandEvent, ParticipantResponse } from './storage';
+import { Dialog } from "@material/mwc-dialog";
+import { EventEditor } from "./event-editor";
 
 // const responseIcons = {
 //   yes: "thumb_up",
@@ -39,23 +43,12 @@ interface Member {
   display_name: string,
 }
 
-type ParticipantResponse = "yes" | "no" | "maybe" | "sub" | null
-
 interface Responses {
   [uid: string]: ParticipantResponse
 }
 
 interface Comments {
   [uid: string]: string,
-}
-
-interface Event {
-  type: string,
-  start: string,
-  stop: string,
-  location: string,
-  description: string,
-  cancelled: boolean,
 }
 
 @customElement("event-card")
@@ -79,12 +72,20 @@ export class EventCard extends LitElement {
   @query('#menu')
   menu: Menu;
 
+  @query('mwc-dialog')
+  editDialog: Dialog;
+
+  @query('event-editor')
+  editor: EventEditor;
+
+  cancelParticipantsListener: () => void = () => { };
+
   fetchParticipants() {
     const event = this.event!;
     const ref = event.ref;
     // console.log(`event-card: Fetching participants ${ref.path}/participants`);
-    // TODO: remember the cancel function.
-    ref.collection('participants').onSnapshot((snapshot) => {
+    this.cancelParticipantsListener();
+    this.cancelParticipantsListener = ref.collection('participants').onSnapshot((snapshot) => {
       this.responses = {};
       this.comments = {};
       snapshot.docs.forEach((p) => {
@@ -211,10 +212,13 @@ export class EventCard extends LitElement {
 
   menuAction(event: CustomEvent): void {
     const detail = event.detail as SelectedDetail;
-    const data = this.event!.data()! as Event
+    const data = this.event!.data()! as BandEvent
     switch (detail.index) {
       case 0:  // edit
         console.log(("Edit event"));
+        this.editor.data = data;
+        this.editor.range = 'stop' in data;
+        this.editDialog.show();
         return;
       case 1:  // cancel
         console.log("Cancel event", data.cancelled, "to", !data.cancelled);
@@ -226,7 +230,7 @@ export class EventCard extends LitElement {
   }
 
   render() {
-    const data = this.event!.data()! as Event
+    const data = this.event!.data()! as BandEvent
     return html`
       <div id="head">
         <span class="event-type">${data.type}</span>
@@ -238,6 +242,11 @@ export class EventCard extends LitElement {
           <mwc-list-item>Redigera</mwc-list-item>
           <mwc-list-item>${data.cancelled ? "Ångra ställ in" : "Ställ in"}</mwc-list-item>
         </mwc-menu>
+        <mwc-dialog @closing=${this.closingEditor}>
+          <event-editor></event-editor>
+          <mwc-button slot="primaryAction" dialogAction="save">Spara</mwc-button>
+          <mwc-button slot="secondaryAction" dialogAction="cancel">Avbryt</mwc-button>
+        </mwc-dialog>
       </div>
       <div id="info">
         <p>${data.location}</p>
@@ -249,6 +258,18 @@ export class EventCard extends LitElement {
     })}
     <mini-roster .members=${this.members} .event=${this.event} .responses=${this.responses}></mini-roster>
     `;
+  }
+
+  closingEditor(event: CustomEvent): void {
+    console.log("Closing editor:", event.detail);
+    if (event.detail.action == "save") {
+      this.editor.save();
+      const data = this.editor.data;
+      console.log("New data:", data);
+      this.event.ref.set(data, { merge: false }).then(
+        () => console.log("Update successful"),
+        reason => console.log("Update failed:", reason));
+    }
   }
 }
 

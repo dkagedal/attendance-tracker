@@ -11,15 +11,26 @@ export interface User {
     },
 }
 
+export interface BandEvent {
+    type: string,
+    start?: string,
+    stop?: string,
+    location?: string,
+    description?: string,
+    cancelled?: boolean,
+}
+
+export type ParticipantResponse = "yes" | "no" | "maybe" | "sub" | null
+
 export type UID = string
 
 export const db = firebase.firestore();
-if (location.hostname === "localhost") {
-    db.settings({
-        host: "localhost:8080",
-        ssl: false
-    });
-}
+// if (location.hostname === "localhost") {
+//     db.settings({
+//         host: "localhost:8080",
+//         ssl: false
+//     });
+// }
 
 export async function getUser(uid: UID) {
     const docRef = db.doc(`users/${uid}`);
