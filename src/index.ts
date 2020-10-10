@@ -123,7 +123,8 @@ firebase.auth().onAuthStateChanged(async (authUser) => {
     selectBand(fromUrl);
   }
 
-  const schedule = document.getElementById("band")! as any /*BandSchedule*/;
+  const schedule = document.getElementById("band")! as BandSchedule;
+  schedule.uid = authUser.uid;
   schedule.style.display = 'block';
 
   document.getElementById("mainMenuButton")!.addEventListener('click', () => drawer.open = !drawer.open)

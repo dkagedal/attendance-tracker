@@ -1,11 +1,10 @@
 import { LitElement, html, css, property, customElement } from 'lit-element';
 import { repeat } from 'lit-html/directives/repeat';
+import { ParticipantResponse } from './storage';
 
 interface Member {
   display_name: string,
 }
-
-type ParticipantResponse = "yes" | "no" | "maybe" | "sub" | null
 
 interface Responses {
   [uid: string]: ParticipantResponse
@@ -33,6 +32,7 @@ export class MiniRoster extends LitElement {
         margin: 1px;
         border: inset 1px;
         box-shadow: inset 0 0 2px 1px rgba(0, 0, 0, 0.3);
+        cursor: pointer;
       }
       .yes {
         background: rgb(139 195 74)
@@ -68,9 +68,20 @@ export class MiniRoster extends LitElement {
     return html`
         ${repeat(this.members, member => member.id, member => {
       const data = member.data() as Member
-      return html`<span title=${data.display_name} class=${this.responses[member.id] || 'unknown'}></span>`;
+      return html`<span title=${data.display_name} class=${this.responses[member.id] || 'unknown'}
+          @click=${() => this.clickOne(member.id)}></span>`;
     })}
     `;
+  }
+
+  clickOne(uid: string) {
+    console.log("Clicked", uid);
+    let event = new CustomEvent("click-participant", {
+      detail: {
+        uid: uid,
+      }
+    });
+    this.dispatchEvent(event);
   }
 }
 

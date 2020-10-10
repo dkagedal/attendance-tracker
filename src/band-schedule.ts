@@ -17,6 +17,9 @@ interface EventsSnapshot {
 
 @customElement("band-schedule")
 export class BandSchedule extends LitElement {
+  @property({ type: String })
+  uid: string = "";
+
   @property({ type: Object, attribute: false })
   band: firebase.firestore.DocumentSnapshot | null = null
 
@@ -89,7 +92,7 @@ export class BandSchedule extends LitElement {
       <mwc-linear-progress indeterminate ?closed=${this.loaded}></mwc-linear-progress>
       <div class="list">
         ${repeat(this.events.docs, (e) => e.id, (e: firebase.firestore.DocumentSnapshot) => html`
-          <event-card .members=${this.members} .event=${e}></event-card>
+          <event-card selfuid=${this.uid} .members=${this.members} .event=${e}></event-card>
           `)}
           <div style="display: ${this.loaded && this.events.size == 0 ? "block" : "none"}">Inget planerat</div>
       </div>

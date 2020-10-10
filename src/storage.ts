@@ -11,6 +11,10 @@ export interface User {
     },
 }
 
+export interface Member {
+    display_name: string,
+}
+
 export interface BandEvent {
     type: string,
     start?: string,
@@ -21,6 +25,17 @@ export interface BandEvent {
 }
 
 export type ParticipantResponse = "yes" | "no" | "maybe" | "sub" | null
+
+export function hasResponded(response: ParticipantResponse): boolean {
+    switch (response) {
+        case "yes":
+        case "no":
+        case "sub":
+            return true;
+        default:
+            return false;
+    }
+}
 
 export type UID = string
 
