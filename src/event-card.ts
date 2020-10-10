@@ -307,14 +307,16 @@ export class EventCard extends LitElement {
       <div id="head">
         <span class="event-type">${data.type}</span>
         <time-range start=${ifDefined(data.start)} stop=${ifDefined(data.stop)}></time-range>
-        <mwc-icon-button id="menu-button" class="push-right" icon="more_vert" 
-            @click=${() => this.menu.show()}></mwc-icon-button>
-        <mwc-menu id="menu" fixed corner="TOP_END" menuCorner="END" .anchor=${this.menuButton}
-            @action=${this.menuAction}>
-          <mwc-list-item>Redigera</mwc-list-item>
-          <mwc-list-item>${data.cancelled ? "Ångra ställ in" : "Ställ in"}</mwc-list-item>
-          <mwc-list-item>Ändra svar</mwc-list-item>
-        </mwc-menu>
+        <div class="push-right" style="position: relative">
+          <mwc-icon-button id="menu-button" icon="more_vert" 
+              @click=${() => this.menu.show()}></mwc-icon-button>
+          <mwc-menu id="menu" corner="TOP_END" menuCorner="END" .anchor=${this.menuButton}
+              @action=${this.menuAction}>
+            <mwc-list-item>Redigera</mwc-list-item>
+            <mwc-list-item>${data.cancelled ? "Ångra ställ in" : "Ställ in"}</mwc-list-item>
+            <mwc-list-item>Ändra svar</mwc-list-item>
+          </mwc-menu>
+        </div>
         <mwc-dialog id="event-editor-dialog" @closing=${this.closingEditor}>
           <event-editor></event-editor>
           <mwc-button slot="primaryAction" dialogAction="save">Spara</mwc-button>
