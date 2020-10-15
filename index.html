@@ -11,42 +11,20 @@
   <script src="/__/firebase/7.20.0/firebase-firestore.js"></script>
   <!-- initialize the SDK after all desired features are loaded -->
   <script src="/__/firebase/init.js"></script>
-  <script src="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.js"></script>
-  <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" />
+  <script src="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.js"></script>
+  <!-- <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" /> -->
   <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
   <script type="module" src="/index.js"></script>
 
   <style media="screen">
     body {
-      background: #9e9e9e;
+      background: white;
       color: rgba(0, 0, 0, 0.87);
       font-family: Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
       padding: 0;
       height: 100%;
     }
-
-    #username {
-      margin: 5px 5px;
-      font-size: 12px;
-    }
-
-    mwc-fab {
-      position: fixed;
-      bottom: 1rem;
-      right: 1rem;
-    }
-
-    #bandList {
-      padding-left: 1rem;
-    }
-
-    #main {
-      max-width: 600px;
-      margin: 0 auto;
-    }
-
-    @media (min-width: 600px) {}
 
     #message {
       padding: 1rem 3rem;
@@ -59,33 +37,7 @@
 </head>
 
 <body>
-  <!-- Event list -->
-  <mwc-drawer id="mainMenuDrawer" type="modal">
-    <div>
-      <div id="bandList"></div>
-      <p id="username"></p>
-    </div>
-    <div slot="appContent">
-      <mwc-top-app-bar-fixed>
-        <mwc-icon-button id="mainMenuButton" icon="menu" slot="navigationIcon"></mwc-icon-button>
-        <div slot="title">Närvarokollen</div>
-        <mwc-icon-button icon="account_circle" slot="actionItems"></mwc-icon-button>
-        <div>
-          <div id="message" style="display: none;"></div>
-          <div id="main">
-            <band-schedule id="band" style="display: none"></band-schedule>
-            <mwc-fab id="fab" icon="add"></mwc-fab>
-            <mwc-dialog id="add-dialog">
-              <event-editor id="add-dialog-editor"></event-editor>
-              <mwc-button slot="primaryAction" id="add-dialog-save">Spara</mwc-button>
-              <mwc-button slot="secondaryAction" dialogAction="cancel">Avbryt</mwc-button>
-            </mwc-dialog>
-            <div id="firebaseui-auth-container" style="display: none;"></div>
-          </div>
-        </div>
-      </mwc-top-app-bar-fixed>
-    </div>
-  </mwc-drawer>
+  <app-main></app-main>
 </body>
 
 </html>

@@ -50,7 +50,7 @@ const data = {
                     aaa: {
                         type: "Rehearsal",
                         location: "Cotton Club",
-                        start: "2020-09-19T20:00",
+                        start: "2021-09-19T20:00",
                         collections: {
                             participants: {
                                 uid_duke: { attending: "yes" }
@@ -61,20 +61,20 @@ const data = {
                         type: "Gig",
                         location: "Cotton Club",
                         description: "Don't get around much anymore.",
-                        start: "2020-09-19T22:00",
-                        stop: "2020-09-20T04:00",
+                        start: "2021-09-19T22:00",
+                        stop: "2021-09-20T04:00",
                     },
                     ccc: {
                         type: "Rehearsal",
                         location: "Cotton Club",
                         cancelled: true,
-                        start: "2020-09-20T20:00",
+                        start: "2021-09-20T20:00",
                     },
                     ccc: {
                         type: "Rehearsal",
                         location: "Cotton Club",
                         proposed: true,
-                        start: "2020-09-21T20:00",
+                        start: "2021-09-21T20:00",
                     },
 
                 }

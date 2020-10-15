@@ -42,7 +42,6 @@ function range(start: string, stop: string): string {
 function single(start: string): string {
   const fmt = (start.indexOf("T") > 0) ? dateTimeFmt : dateFmt;
   const milliseconds = utcDate(start);
-  console.log("Formatting", start, "parsed to", milliseconds, "with", fmt)
   return fmt.format(milliseconds);
 }
 

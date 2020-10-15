@@ -9,6 +9,7 @@ import firebase from "firebase/app";  // HIDE
 import './time-range';
 import './event-card';
 import './mini-roster';
+import { db } from './storage';
 
 interface EventsSnapshot {
   docs: firebase.firestore.DocumentSnapshot[],
@@ -20,8 +21,8 @@ export class BandSchedule extends LitElement {
   @property({ type: String })
   uid: string = "";
 
-  @property({ type: Object, attribute: false })
-  band: firebase.firestore.DocumentSnapshot | null = null
+  @property({ type: String })
+  bandid: string | null = null
 
   @property({ type: Object, attribute: false })
   events: EventsSnapshot = { docs: [], size: 0 }
@@ -40,19 +41,27 @@ export class BandSchedule extends LitElement {
 
   updated(changedProperties: any) {
     changedProperties.forEach((_oldValue: any, propName: string) => {
-      if (propName == 'band' && this.band != null) {
+      if (propName == 'bandid') {
+        if (this.bandid == null) {
+          this.events = { docs: [], size: 0 };
+          this.selected_event = null;
+          this.members = [];
+          return;
+        }
+
         const now = firebase.firestore.Timestamp.now();
         const nowMinus24h = new firebase.firestore.Timestamp(now.seconds - 86400, 0).toDate();
         const yesterday = nowMinus24h.toISOString().split('T')[0];
         console.log('Getting band events and members...', yesterday);
-        this.band.ref.collection('events')
+        const bandref = db.collection('bands').doc(this.bandid);
+        bandref.collection('events')
           .where("start", ">=", yesterday)
           .orderBy('start')
           .onSnapshot((querySnapshot) => {
             this.events = querySnapshot;
             this.loaded = true;
           });
-        this.band!.ref.collection('members').onSnapshot((querySnapshot) => {
+        bandref.collection('members').onSnapshot((querySnapshot) => {
           this.members = querySnapshot.docs.sort((m1, m2) => {
             if (m1.id < m2.id) {
               return -1;
