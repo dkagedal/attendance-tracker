@@ -9,10 +9,10 @@ import firebase from "firebase/app";  // HIDE
 import './time-range';
 import './event-card';
 import './mini-roster';
-import { db } from './storage';
+import { BandEvent, bandEventYear, db } from './storage';
 
 interface EventsSnapshot {
-  docs: firebase.firestore.DocumentSnapshot[],
+  docs: firebase.firestore.DocumentSnapshot<BandEvent>[],
   size: number,
 }
 
@@ -58,7 +58,7 @@ export class BandSchedule extends LitElement {
           .where("start", ">=", yesterday)
           .orderBy('start')
           .onSnapshot((querySnapshot) => {
-            this.events = querySnapshot;
+            this.events = querySnapshot as firebase.firestore.QuerySnapshot<BandEvent>;
             this.loaded = true;
           });
         bandref.collection('members').onSnapshot((querySnapshot) => {
@@ -97,6 +97,16 @@ export class BandSchedule extends LitElement {
   }
 
   render() {
+    const years = [] as any[];
+    let currentYear = { year: "", events: [] };
+    this.events.docs.forEach(e => {
+      const year = bandEventYear(e.data());
+      if (year != currentYear.year) {
+        currentYear = { year: year, events: [] };
+        years.push(year);
+      }
+      currentYear.events.push(e.data());
+    });
     return html`
       <mwc-linear-progress indeterminate ?closed=${this.loaded}></mwc-linear-progress>
       <div class="list">

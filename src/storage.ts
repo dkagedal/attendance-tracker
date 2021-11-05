@@ -17,11 +17,15 @@ export interface Member {
 
 export interface BandEvent {
     type: string,
-    start?: string,
+    start: string,
     stop?: string,
     location?: string,
     description?: string,
     cancelled?: boolean,
+}
+
+export function bandEventYear(event: BandEvent): string {
+    return event.start.split('-', 1)[0];
 }
 
 export type ParticipantResponse = "yes" | "no" | "maybe" | "sub" | null
