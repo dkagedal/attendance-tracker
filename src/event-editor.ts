@@ -11,7 +11,7 @@ import { TextField } from "@material/mwc-textfield";
 @customElement("event-editor")
 export class EventEditor extends LitElement {
   @property({ type: Object, attribute: false })
-  data: BandEvent = { type: "" };
+  data: BandEvent = { type: "", start: "" };
 
   @property({ type: Boolean, reflect: true })
   range: boolean = false;

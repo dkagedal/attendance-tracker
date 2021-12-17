@@ -10,8 +10,8 @@ const copyConfig = {
 const config = {
   input: 'build/index.js',
   output: {
-    dir: 'public',
-    format: 'es',
+    file: 'public/bundle.js',
+    format: 'iife',
   },
   plugins: [
     // minifyHTML(),
