@@ -12,40 +12,52 @@ function createLogger(context: any) {
   return {
     info: (...args: any[]) => {
       functions.logger.info(...args, context);
+    },
+    warn: (...args: any[]) => {
+      functions.logger.warn(...args, context);
     }
   };
 }
 
-async function getBand(bandid:string) {
-  const snapshot = await db.collection("bands").doc(bandid).get();
+async function getBand(bandid: string) {
+  const snapshot = await db
+    .collection("bands")
+    .doc(bandid)
+    .get();
   return snapshot.data()!;
 }
 
-async function getUser(uid:string) {
-  const snapshot = await db.collection("users").doc(uid).get();
+async function getUser(uid: string) {
+  const snapshot = await db
+    .collection("users")
+    .doc(uid)
+    .get();
   return snapshot.data()!;
 }
 
 export const joinRequestCreated = functions.firestore
   .document("bands/{bandId}/join_requests/{userId}")
-  .onCreate(async (snapshot, context): Promise<void> => {
-    const bandId = context.params.bandId;
-    const userId = context.params.userId;
-    const logger = createLogger({ bandId, userId });
-    logger.info("New join request");
-    const band = await getBand(bandId);
-    const user = await getUser(userId);
-    db.collection("mail").add({
-      to: "david@kagedal.org",
-      message: {
-        subject: `Någon vill gå med i ${band.display_name}`,
-        text: `Begäran om om att få bli medlem i ${band.display_name} via ${snapshot.get("url") || "??"}.
+  .onCreate(
+    async (snapshot, context): Promise<void> => {
+      const bandId = context.params.bandId;
+      const userId = context.params.userId;
+      const logger = createLogger({ bandId, userId });
+      logger.info("New join request");
+      const band = await getBand(bandId);
+      const user = await getUser(userId);
+      db.collection("mail").add({
+        to: "david@kagedal.org",
+        message: {
+          subject: `Någon vill gå med i ${band.display_name}`,
+          text: `Begäran om om att få bli medlem i ${band.display_name
+            } via ${snapshot.get("url") || "??"}.
 
 Namn: ${user.display_name}
         `
-      }
-    });
-  });
+        }
+      });
+    }
+  );
 
 export const approval = functions.firestore
   .document("bands/{bandId}/join_requests/{userId}")
@@ -89,57 +101,25 @@ export const approval = functions.firestore
     }
   );
 
-async function migrateUser(uid: string, data: any) {
-  const userDoc = db.collection("users").doc(uid);
-  const existing = await userDoc.get();
-  if (existing.exists) {
-    functions.logger.info("Updating global user", uid);
-    Object.assign(data.bands, existing.data()!.bands);
-  } else {
-    functions.logger.info("Creating global user", uid);
-  }
-  functions.logger.info("Setting global user", uid, data);
-  await userDoc.set(data);
-}
-
-async function migrateMember(
-  doc: FirebaseFirestore.DocumentReference<FirebaseFirestore.DocumentData>,
-  data: any
-) {
-  functions.logger.info("Updating", doc.path, data);
-  await doc.set(data, { merge: true });
-}
-
-export const migrate = functions.https.onRequest((req, resp) => {
-  db.collection("bands")
-    .get()
-    .then(async snap => {
-      const promises: Promise<void>[] = [];
-      const users: any = {};
-      snap.docs.forEach(band => {
-        for (const uid in band.data().users) {
-          if (!(uid in users)) {
-            users[uid] = { display_name: "?", bands: {} };
-          }
-          users[uid].display_name = band.data().users[uid].display_name;
-          users[uid].bands[band.id] = {
-            display_name: band.data().display_name
-          };
-
-          const memberDoc = band.ref.collection("members").doc(uid);
-          promises.push(migrateMember(memberDoc, band.data().users[uid]));
+export const userDeleted = functions.firestore
+  .document("users/{uid}")
+  .onDelete(async (snapshot, context) => {
+    const uid = context.params.uid;
+    const logger = createLogger({ uid });
+    logger.info("User was deleted. Snapshot:", snapshot.data());
+    const deleteDoc = (ref: admin.firestore.DocumentReference<admin.firestore.DocumentData>) => {
+      ref.delete().then(
+        () => {
+          logger.info("Deleted", ref.path);
+        },
+        (error) => {
+          logger.warn("Failed to delete", ref.path, ":", error);
         }
-      });
-      functions.logger.info("Users to migrate", users);
-      Object.entries(users).forEach((elt: any[]) => {
-        promises.push(migrateUser(elt[0], elt[1]));
-      });
-
-      await Promise.all(promises);
-      resp.sendStatus(200);
-    })
-    .catch(reason => {
-      functions.logger.error(reason);
-      resp.sendStatus(500);
-    });
-});
+      );
+    };
+    const bands = await db.collection("bands").listDocuments();
+    for (const bandRef of bands) {
+      deleteDoc(bandRef.collection("members").doc(uid));
+      deleteDoc(bandRef.collection("join_requests").doc(uid));
+    }
+  });
