@@ -45,6 +45,44 @@ async function bandHint(): Promise<string> {
   }
 }
 
+@customElement("error-message")
+export class ErrorMessage extends LitElement {
+  @property({ type: String, reflect: true })
+  message: string = null;
+
+  static styles = css`
+    :host {
+      display: block;
+    }
+
+    div {
+      margin: 4px;
+      padding: 6px;
+      background: #ff8888;
+      color: black;
+      font-weight: 700;
+      border-radius: 6px;
+    }
+
+    :host([message]) {
+      display: block;
+    }
+
+    p {
+      margin: 0;
+      text-align: center;
+    }
+  `
+
+  render() {
+    return html`
+      <div ?hidden=${this.message == null}>
+      <p>${this.message}</p>
+      </div>
+    `;
+  }
+}
+
 @customElement("app-main")
 export class AppMain extends LitElement {
   @property({ type: Object, attribute: false })
@@ -81,6 +119,9 @@ export class AppMain extends LitElement {
 
   @query("#profile-menu")
   profileMenu: Menu;
+
+  @query("error-message")
+  errorMessage: ErrorMessage
 
   auth: Auth = null;
   userUnsubscribe: () => void = null;
@@ -182,10 +223,18 @@ export class AppMain extends LitElement {
     }
   }
 
-  async joinRequest() {
-    await CreateJoinRequest(this.bandid, this.firebaseUser);
-    console.log("Finished registering");
-    this.registered = true;
+  joinRequest() {
+    CreateJoinRequest(this.bandid, this.firebaseUser).then(
+      () => {
+        console.log("Finished registering");
+        this.registered = true;
+      },
+      (error) => {
+        console.info("Failed to create join request:", error);
+        const msg = `Kunde inte ansöka: ${error}`;
+        console.info("Setting error message", this.errorMessage, msg);
+        this.errorMessage.message = msg;
+      });
   }
 
   static styles = css`
@@ -315,10 +364,21 @@ export class AppMain extends LitElement {
     `;
   }
 
-  renderMain() {
-    if (this.loading.size > 0) {
+  isLoading() {
+    return (this.loading.size > 0);
+  }
+
+  renderProgress() {
+    if (this.isLoading()) {
       console.log("[app-main] Still waiting for", this.loading);
       return html`<mwc-linear-progress indeterminate></mwc-linear-progress>`;
+    }
+    return "";
+  }
+
+  renderMain() {
+    if (this.isLoading()) {
+      return "";
     }
     if (this.firebaseUser == null) {
       return html`
@@ -356,7 +416,11 @@ export class AppMain extends LitElement {
               @click=${() => { this.profileMenu.open = !this.profileMenu.open; }}
             ></mwc-icon-button>
             ${this.renderProfileMenu()}
-            <div>${this.renderMain()}</div>
+            <div>
+              ${this.renderProgress()}
+              <error-message></error-message>
+              ${this.renderMain()}
+            </div>
           </mwc-top-app-bar-fixed>
         </div>
       </mwc-drawer>
