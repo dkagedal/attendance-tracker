@@ -1,4 +1,4 @@
-import { FirebaseApp } from "firebase/app";
+import { FirebaseApp, FirebaseError } from "firebase/app";
 import {
   getFirestore,
   connectFirestoreEmulator,
@@ -198,6 +198,18 @@ export interface JoinRequest {
   approved: boolean;
 }
 
+export class JoinRequestError extends Error {
+  readonly name = "JoinRequestError";
+
+  constructor(
+    readonly code: string,
+    message: string,
+    public firebaseError: FirebaseError
+  ) {
+    super(message + ": " + firebaseError.toString());
+  }
+}
+
 export function CreateJoinRequest(bandid: string, user: FirebaseUser): Promise<void> {
   const docRef = doc(
     db,
@@ -212,5 +224,9 @@ export function CreateJoinRequest(bandid: string, user: FirebaseUser): Promise<v
     approved: false
   }
   console.log("Making a join request to", docRef);
-  return setDoc(docRef, joinRequest, { merge: true });
+  return setDoc(docRef, joinRequest, { merge: true }).catch(
+    reason => {
+      throw new JoinRequestError("join/create", `Failed to create join request ${docRef.path}`, reason);
+    }
+  );
 }

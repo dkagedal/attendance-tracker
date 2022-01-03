@@ -17,6 +17,7 @@ import { EventEditor } from "./event-editor";
 import { Menu } from "@material/mwc-menu";
 import { IconButton } from "@material/mwc-icon-button/mwc-icon-button";
 import { ActionDetail } from "@material/mwc-list";
+import { repeat } from "lit/directives/repeat";
 
 interface BandMap {
   [key: string]: UserBand;
@@ -24,6 +25,12 @@ interface BandMap {
 
 interface HostMap {
   [key: string]: string | null;
+}
+
+interface ErrorMessage {
+  id: number;
+  message: string;
+  details: string;
 }
 
 var hostmap = {} as HostMap;
@@ -42,44 +49,6 @@ async function bandHint(): Promise<string> {
   } else {
     const fromHost = await bandFromHostname();
     return fromHost || "";
-  }
-}
-
-@customElement("error-message")
-export class ErrorMessage extends LitElement {
-  @property({ type: String, reflect: true })
-  message: string = null;
-
-  static styles = css`
-    :host {
-      display: block;
-    }
-
-    div {
-      margin: 4px;
-      padding: 6px;
-      background: #ff8888;
-      color: black;
-      font-weight: 700;
-      border-radius: 6px;
-    }
-
-    :host([message]) {
-      display: block;
-    }
-
-    p {
-      margin: 0;
-      text-align: center;
-    }
-  `
-
-  render() {
-    return html`
-      <div ?hidden=${this.message == null}>
-      <p>${this.message}</p>
-      </div>
-    `;
   }
 }
 
@@ -111,6 +80,9 @@ export class AppMain extends LitElement {
   @property({ type: Boolean })
   openAddDialog = false;
 
+  @property({ attribute: false })
+  errorMessages: Array<ErrorMessage> = [];
+
   @query("#add-dialog-editor")
   addDialogEditor: EventEditor;
 
@@ -119,9 +91,6 @@ export class AppMain extends LitElement {
 
   @query("#profile-menu")
   profileMenu: Menu;
-
-  @query("error-message")
-  errorMessage: ErrorMessage
 
   auth: Auth = null;
   userUnsubscribe: () => void = null;
@@ -193,6 +162,12 @@ export class AppMain extends LitElement {
     this.requestUpdate();
   }
 
+  addErrorMessage(message: string, details?: string) {
+    const id = this.errorMessages.length == 0 ? 1 : this.errorMessages[this.errorMessages.length - 1].id;
+    this.errorMessages.push({ id, message, details });
+    this.requestUpdate();
+  }
+
   selectBand(bandId: string) {
     console.log("Selecting band", bandId);
     const schedule = document.getElementById("band")! as BandSchedule;
@@ -218,7 +193,10 @@ export class AppMain extends LitElement {
           console.log("Add successful");
           this.openAddDialog = false;
         },
-        reason => console.log("Add failed:", reason)
+        reason => {
+          console.log("Add failed:", reason);
+          this.addErrorMessage("Kunde inte lägga till händelse", reason);
+        }
       );
     }
   }
@@ -231,9 +209,7 @@ export class AppMain extends LitElement {
       },
       (error) => {
         console.info("Failed to create join request:", error);
-        const msg = `Kunde inte ansöka: ${error}`;
-        console.info("Setting error message", this.errorMessage, msg);
-        this.errorMessage.message = msg;
+        this.addErrorMessage("Kunde inte ansöka", error);
       });
   }
 
@@ -261,6 +237,25 @@ export class AppMain extends LitElement {
       display: flex;
       justify-content: center;
       align-content: center;
+    }
+
+    .error {
+      margin: 4px;
+      padding: 6px;
+      background: #ff8888;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .errormsg {
+      display: block;
+      color: black;
+      font-weight: 700;
+    }
+
+    .errordetail {
+      color: #444;
+      font-family: monospace;
     }
   `;
 
@@ -418,7 +413,11 @@ export class AppMain extends LitElement {
             ${this.renderProfileMenu()}
             <div>
               ${this.renderProgress()}
-              <error-message></error-message>
+              ${repeat(this.errorMessages, ({ id, message, details }: ErrorMessage) => html`
+                <div class="error" id="error-${id}">
+                  <span class="errormsg">${message}</span>
+                  <span class="errordetail">${details || ""}</span>
+                </div>`)}
               ${this.renderMain()}
             </div>
           </mwc-top-app-bar-fixed>
