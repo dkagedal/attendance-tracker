@@ -27,9 +27,10 @@ export class MiniRoster extends LitElement {
     return css`
       :host {
         display: flex;
+        flex-wrap: wrap;
       }
       span {
-        flex: 1 1 8px;
+        flex: 0 0 5em;
         height: 1.2em;
         margin: 1px;
         border: inset 1px;
