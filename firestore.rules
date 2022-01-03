@@ -1,4 +1,4 @@
-rules_version = '2'
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     function isUser(uid) {
@@ -35,9 +35,12 @@ service cloud.firestore {
       match /join_requests/{user} {
         allow list: if isAdmin(request.auth.uid);
         allow get: if request.auth.uid == user || isAdmin(request.auth.uid);
-        allow create: if request.resource.id == request.auth.uid && !isMember(request.auth.uid) && isUser(request.auth.uid) && !request.resource.data.approved;
+        allow create: if (request.resource.id == request.auth.uid 
+                          && !isMember(request.auth.uid)
+                          && isUser(request.auth.uid)
+                          && !request.resource.data.approved);
         allow update: if isAdmin(request.auth.uid);
-        allow delete: if false;
+        allow delete: if isAdmin(request.auth.uid);
       }
 
       match /members/{member} {

@@ -1,4 +1,4 @@
-import resolve from '@rollup/plugin-node-resolve'
+import nodeResolve from '@rollup/plugin-node-resolve'
 import copy from 'rollup-plugin-copy';
 
 const copyConfig = {
@@ -16,7 +16,7 @@ const config = {
   plugins: [
     // minifyHTML(),
     copy(copyConfig),
-    resolve(),
+    nodeResolve(),
   ],
 
   // Voodoo from https://github.com/WebReflection/hyperHTML/issues/304

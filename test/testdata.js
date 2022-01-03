@@ -1,10 +1,10 @@
-const assert = require('assert');
-const firebase = require('@firebase/testing');
-const { promises } = require('dns');
+import assert from 'assert';
+import { initializeAdminApp, clearFirestoreData } from '@firebase/testing';
+import { promises } from 'dns';
 
 const PROJECT_ID = "attendance-tracker-b8e9f";
 
-const admin = firebase.initializeAdminApp({ projectId: PROJECT_ID }).firestore();
+const admin = initializeAdminApp({ projectId: PROJECT_ID }).firestore();
 
 const bands = {
     ellington: {
@@ -104,16 +104,16 @@ async function walkTestData(data, parent) {
 }
 
 function createTestData() {
-    firebase.clearFirestoreData({ projectId: PROJECT_ID }).then((result) => {
-        return walkTestData(data, admin);
-    }).then((result) => {
-        console.log("Done.");
-    }).catch((reason) => {
-        console.log("Failed", reason);
-        process.exit(1);
-    }).finally(() => {
-        process.exit();
-    })
+    // clearFirestoreData({ projectId: PROJECT_ID }).then((result) => {
+    //     return walkTestData(data, admin);
+    // }).then((result) => {
+    //     console.log("Done.");
+    // }).catch((reason) => {
+    //     console.log("Failed", reason);
+    //     process.exit(1);
+    // }).finally(() => {
+    //     process.exit();
+    // })
 }
 
-createTestData();
+// createTestData();

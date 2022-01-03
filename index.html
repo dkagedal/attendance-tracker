@@ -1,23 +1,44 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="sv">
 
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Närvarokoll</title>
 
-  <script src="/__/firebase/7.20.0/firebase-app.js"></script>
-  <script src="/__/firebase/7.20.0/firebase-auth.js"></script>
-  <script src="/__/firebase/7.20.0/firebase-firestore.js"></script>
-  <!-- initialize the SDK after all desired features are loaded -->
-  <script src="/__/firebase/init.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/ui/4.6.1/firebase-ui-auth.js"></script>
-  <!-- <link type="text/css" rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/3.5.2/firebaseui.css" /> -->
+  <!-- Disable tap highlight on IE -->
+  <meta name="msapplication-tap-highlight" content="no">
+  <link rel="icon" href="images/favicon.ico">
+
+  <!-- Web Application Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Add to homescreen for Chrome on Android -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="application-name" content="Närvarokoll">
+  <meta name="theme-color" content="#4285F4">
+
+  <!-- Add to homescreen for Safari on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Närvarokoll">
+  <meta name="apple-mobile-web-app-status-bar-style" content="#4285F4">
+
+  <!-- Tile icon for Win8 -->
+  <!-- <meta name="msapplication-TileColor" content="#3372DF">
+  <meta name="msapplication-navbutton-color" content="#303F9F"> -->
+
   <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
-  <script type="module" src="/index.js"></script>
+
+  <!-- From https://github.com/material-components/material-web -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
+<script type="module" src="/bundle.js"></script>
 
   <style media="screen">
-    body {
+    html, body {
       background: white;
       color: rgba(0, 0, 0, 0.87);
       font-family: Roboto, Helvetica, Arial, sans-serif;

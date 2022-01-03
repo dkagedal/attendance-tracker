@@ -1,19 +1,31 @@
-import { LitElement, html, css, property, customElement } from 'lit-element';
-import { repeat } from 'lit-html/directives/repeat';
-import '@material/mwc-icon';
-import '@material/mwc-button';
-import '@material/mwc-linear-progress';
-import '@material/mwc-list/mwc-list';
-import '@material/mwc-list/mwc-list-item';
-import firebase from "firebase/app";  // HIDE
-import './time-range';
-import './event-card';
-import './mini-roster';
-import { BandEvent, bandEventYear, db } from './storage';
+
+import "@material/mwc-linear-progress/mwc-linear-progress"; import "@material/mwc-icon";
+import "@material/mwc-button";
+import "@material/mwc-linear-progress";
+import "@material/mwc-list/mwc-list";
+import "@material/mwc-list/mwc-list-item";
+import "./time-range";
+import "./event-card";
+import "./mini-roster";
+import { BandEvent, bandEventYear, db, Member, memberConverter } from "./storage";
+import {
+  collection,
+  doc,
+  DocumentSnapshot,
+  onSnapshot,
+  orderBy,
+  query,
+  QueryDocumentSnapshot,
+  Timestamp,
+  where
+} from "firebase/firestore";
+import { css, html, LitElement } from "lit";
+import { customElement, property } from "lit/decorators";
+import { repeat } from "lit/directives/repeat";
 
 interface EventsSnapshot {
-  docs: firebase.firestore.DocumentSnapshot<BandEvent>[],
-  size: number,
+  docs: DocumentSnapshot<BandEvent>[];
+  size: number;
 }
 
 @customElement("band-schedule")
@@ -22,26 +34,26 @@ export class BandSchedule extends LitElement {
   uid: string = "";
 
   @property({ type: String })
-  bandid: string | null = null
+  bandid: string | null = null;
 
   @property({ type: Object, attribute: false })
-  events: EventsSnapshot = { docs: [], size: 0 }
+  events: EventsSnapshot = { docs: [], size: 0 };
 
   @property({ type: Boolean })
-  loaded = false
+  loaded = false;
 
   @property({ type: Object })
-  selected_event = null
+  selected_event = null;
 
   @property({ type: Boolean })
-  event_expanded = false
+  event_expanded = false;
 
   @property({ type: Array, attribute: false })
-  members: firebase.firestore.QueryDocumentSnapshot<firebase.firestore.DocumentData>[] = []
+  members: QueryDocumentSnapshot<Member>[] = [];
 
   updated(changedProperties: any) {
     changedProperties.forEach((_oldValue: any, propName: string) => {
-      if (propName == 'bandid') {
+      if (propName == "bandid") {
         if (this.bandid == null) {
           this.events = { docs: [], size: 0 };
           this.selected_event = null;
@@ -49,19 +61,23 @@ export class BandSchedule extends LitElement {
           return;
         }
 
-        const now = firebase.firestore.Timestamp.now();
-        const nowMinus24h = new firebase.firestore.Timestamp(now.seconds - 86400, 0).toDate();
-        const yesterday = nowMinus24h.toISOString().split('T')[0];
-        console.log('Getting band events and members...', yesterday);
-        const bandref = db.collection('bands').doc(this.bandid);
-        bandref.collection('events')
-          .where("start", ">=", yesterday)
-          .orderBy('start')
-          .onSnapshot((querySnapshot) => {
-            this.events = querySnapshot as firebase.firestore.QuerySnapshot<BandEvent>;
-            this.loaded = true;
-          });
-        bandref.collection('members').onSnapshot((querySnapshot) => {
+        const now = Timestamp.now();
+        const nowMinus24h = new Timestamp(now.seconds - 86400, 0).toDate();
+        const yesterday = nowMinus24h.toISOString().split("T")[0];
+        console.log("Getting band events and members...", yesterday);
+        const bandref = doc(db, "bands", this.bandid);
+        const eventQuery = query(
+          collection(bandref, "events"),
+          where("start", ">=", yesterday),
+          orderBy("start")
+        );
+        onSnapshot(eventQuery, (querySnapshot): void => {
+          this.events = (querySnapshot as unknown) as EventsSnapshot;
+          this.loaded = true;
+        });
+        const memberQuery = query(collection(bandref, "members"))
+          .withConverter(memberConverter);
+        onSnapshot(memberQuery, (querySnapshot): void => {
           this.members = querySnapshot.docs.sort((m1, m2) => {
             if (m1.id < m2.id) {
               return -1;
@@ -73,7 +89,7 @@ export class BandSchedule extends LitElement {
           });
         });
       }
-    })
+    });
   }
 
   static get styles() {
@@ -82,8 +98,12 @@ export class BandSchedule extends LitElement {
         display: flex;
         flex-direction: column;
       }
-      .type { font-weight: 600; }
-      time-range { color: rgba(0,0,0,0.7); }
+      .type {
+        font-weight: 600;
+      }
+      time-range {
+        color: rgba(0, 0, 0, 0.7);
+      }
       @media (max-width: 600px) {
         div.schedule {
           padding: 16px 16px;
@@ -108,12 +128,29 @@ export class BandSchedule extends LitElement {
       currentYear.events.push(e.data());
     });
     return html`
-      <mwc-linear-progress indeterminate ?closed=${this.loaded}></mwc-linear-progress>
+      <mwc-linear-progress
+        indeterminate
+        ?closed=${this.loaded}
+      ></mwc-linear-progress>
       <div class="list">
-        ${repeat(this.events.docs, (e) => e.id, (e: firebase.firestore.DocumentSnapshot) => html`
-          <event-card selfuid=${this.uid} .members=${this.members} .event=${e}></event-card>
-          `)}
-          <div style="display: ${this.loaded && this.events.size == 0 ? "block" : "none"}">Inget planerat</div>
+        ${repeat(
+          this.events.docs,
+          e => e.id,
+          (e: DocumentSnapshot<BandEvent>) => html`
+            <event-card
+              selfuid=${this.uid}
+              .members=${this.members}
+              .event=${e}
+            ></event-card>
+          `
+        )}
+        <div
+          style="display: ${this.loaded && this.events.size == 0
+        ? "block"
+        : "none"}"
+        >
+          Inget planerat
+        </div>
       </div>
     `;
   }
@@ -126,7 +163,7 @@ export class BandSchedule extends LitElement {
     let event = new CustomEvent("select-event", {
       detail: {
         item: listItem,
-        gig: gig,
+        gig: gig
       }
     });
     this.dispatchEvent(event);
@@ -135,6 +172,6 @@ export class BandSchedule extends LitElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'band-schedule': BandSchedule;
+    "band-schedule": BandSchedule;
   }
 }

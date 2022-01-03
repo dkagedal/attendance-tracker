@@ -1,12 +1,17 @@
-import { css, customElement, html, LitElement, property, query } from "lit-element";
-import { ifDefined } from 'lit-html/directives/if-defined';
-import '@material/mwc-textfield';
+import {
+  css,
+  html,
+  LitElement,
+} from "lit";
+import { ifDefined } from "lit/directives/if-defined";
+import "@material/mwc-textfield";
 import "@material/mwc-icon-button";
 import "@material/mwc-button";
 import { BandEvent } from "./storage";
 import "./datetime-input";
 import { DatetimeInput } from "./datetime-input";
 import { TextField } from "@material/mwc-textfield";
+import { customElement, property, query } from "lit/decorators";
 
 @customElement("event-editor")
 export class EventEditor extends LitElement {
@@ -16,19 +21,19 @@ export class EventEditor extends LitElement {
   @property({ type: Boolean, reflect: true })
   range: boolean = false;
 
-  @query('#type')
+  @query("#type")
   typeInput: TextField;
 
-  @query('#location')
+  @query("#location")
   locationInput: TextField;
 
-  @query('#desc')
+  @query("#desc")
   descriptionInput: TextField;
 
-  @query('#start')
+  @query("#start")
   startInput: DatetimeInput;
 
-  @query('#stop')
+  @query("#stop")
   stopInput: DatetimeInput;
 
   static styles = css`
@@ -44,22 +49,51 @@ export class EventEditor extends LitElement {
     :host([range]) .notranged {
       display: none;
     }
-`;
+  `;
 
   render() {
     return html`
-          <mwc-textfield label="Typ" id="type" type="text" required
-            value="${this.data.type}"></mwc-textfield>
-          <mwc-textfield label="Plats" id="location" type="text"
-            value="${ifDefined(this.data.location)}"></mwc-textfield>
-          <mwc-textfield label="Beskrivning" id="desc" type="text"
-            value="${ifDefined(this.data.description)}"></mwc-textfield>
-          <datetime-input id="start" required initial_value="${ifDefined(this.data.start)}"></datetime-input>
-          <span class="ranged">-</span>
-          <datetime-input id="stop" class="ranged" initial_value="${ifDefined(this.data.stop)}"></datetime-input>
-          <mwc-icon-button icon="delete" class="ranged" @click=${() => { this.range = false }}></mwc-icon-button>
-          <mwc-button icon="add" class="notranged" @click=${this.addStop}>Lägg till sluttid</mwc-button>
-          `;
+      <mwc-textfield
+        label="Typ"
+        id="type"
+        type="text"
+        required
+        value="${this.data.type}"
+      ></mwc-textfield>
+      <mwc-textfield
+        label="Plats"
+        id="location"
+        type="text"
+        value="${ifDefined(this.data.location)}"
+      ></mwc-textfield>
+      <mwc-textfield
+        label="Beskrivning"
+        id="desc"
+        type="text"
+        value="${ifDefined(this.data.description)}"
+      ></mwc-textfield>
+      <datetime-input
+        id="start"
+        required
+        initial_value="${ifDefined(this.data.start)}"
+      ></datetime-input>
+      <span class="ranged">-</span>
+      <datetime-input
+        id="stop"
+        class="ranged"
+        initial_value="${ifDefined(this.data.stop)}"
+      ></datetime-input>
+      <mwc-icon-button
+        icon="delete"
+        class="ranged"
+        @click=${() => {
+          this.range = false;
+        }}
+      ></mwc-icon-button>
+      <mwc-button icon="add" class="notranged" @click=${this.addStop}
+        >Lägg till sluttid</mwc-button
+      >
+    `;
   }
 
   addStop() {
@@ -83,9 +117,7 @@ export class EventEditor extends LitElement {
       // Don't even look at stopInput when range is false.
       if (this.range) {
         const stop = this.stopInput.value;
-        if (stop &&
-          start != stop &&
-          start.indexOf("T") == stop.indexOf("T")) {
+        if (stop && start != stop && start.indexOf("T") == stop.indexOf("T")) {
           this.data.stop = stop;
         }
       }
@@ -98,17 +130,24 @@ export class EventEditor extends LitElement {
     }
     if (this.range) {
       // Check that stop is after start.
-      if (!this.stopInput.checkValidity() || this.stopInput.value < this.startInput.value) {
-        console.log('Stop time is before start time');
+      if (
+        !this.stopInput.checkValidity() ||
+        this.stopInput.value < this.startInput.value
+      ) {
+        console.log("Stop time is before start time");
         return false;
       }
     }
-    return this.typeInput.checkValidity() && this.locationInput.checkValidity() && this.descriptionInput.checkValidity();
+    return (
+      this.typeInput.checkValidity() &&
+      this.locationInput.checkValidity() &&
+      this.descriptionInput.checkValidity()
+    );
   }
 }
 
 declare global {
   interface HTMLElementTagNameMap {
-    'event-editor': EventEditor;
+    "event-editor": EventEditor;
   }
 }
