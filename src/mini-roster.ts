@@ -1,4 +1,5 @@
-import { BandEvent, ParticipantResponse } from "./storage";
+
+import "./response-chip";import { BandEvent, ParticipantResponse } from "./storage";
 import { DocumentSnapshot, QueryDocumentSnapshot } from "firebase/firestore";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators";
@@ -29,34 +30,6 @@ export class MiniRoster extends LitElement {
         display: flex;
         flex-wrap: wrap;
       }
-      span {
-        flex: 0 0 5em;
-        height: 1.2em;
-        margin: 1px;
-        border: inset 1px;
-        box-shadow: inset 0 0 2px 1px rgba(0, 0, 0, 0.3);
-        cursor: pointer;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: clip;
-        font-size: 0.7rem;
-        color: rgba(0, 0, 0, 0.54);
-      }
-      .yes {
-        background: rgb(139 195 74);
-      }
-      .maybe {
-        background: lightgray;
-      }
-      .unknown {
-        background: white;
-      }
-      .no {
-        background: rgb(255, 87, 34);
-      }
-      .sub {
-        background: rgb(255 235 59);
-      }
       .cancelled {
         background: rgb(255, 87, 34);
         color: white;
@@ -79,17 +52,7 @@ export class MiniRoster extends LitElement {
       ${repeat(
         this.members,
         member => member.id,
-        member => {
-          const data = member.data();
-          return html`
-            <span
-              title=${data.display_name}
-              class=${this.responses[member.id] || "unknown"}
-              @click=${() => this.clickOne(member.id)}
-              >${data.display_name}</span
-            >
-          `;
-        }
+        member => html`<response-chip response=${this.responses[member.id]}>${member.data().display_name}</response-chip>`
       )}
     `;
   }

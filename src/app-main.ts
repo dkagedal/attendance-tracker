@@ -413,7 +413,9 @@ export class AppMain extends LitElement {
             ${this.renderProfileMenu()}
             <div>
               ${this.renderProgress()}
-              ${repeat(this.errorMessages, ({ id, message, details }: ErrorMessage) => html`
+              ${repeat(this.errorMessages,
+                (em: ErrorMessage) => em.id,
+                ({ id, message, details }: ErrorMessage) => html`
                 <div class="error" id="error-${id}">
                   <span class="errormsg">${message}</span>
                   <span class="errordetail">${details || ""}</span>
