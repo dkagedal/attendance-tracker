@@ -91,9 +91,11 @@ export type UID = string;
 export var db: Firestore;
 export var auth: Auth;
 
-var loginStateCallback = null
-export function onLoginStateChanged(callback: (authUser: FirebaseUser) => Promise<void>) {
-  loginStateCallback = callback
+var loginStateCallback = null;
+export function onLoginStateChanged(
+  callback: (authUser: FirebaseUser) => Promise<void>
+) {
+  loginStateCallback = callback;
 }
 
 export function initDB(app: FirebaseApp, useEmulator: boolean) {
@@ -108,10 +110,10 @@ export function initDB(app: FirebaseApp, useEmulator: boolean) {
   auth.languageCode = "sv";
   if (useEmulator) {
     console.log("Connecting to Auth emulator");
-    connectAuthEmulator(auth, "http://localhost:9099")
+    connectAuthEmulator(auth, "http://localhost:9099");
   }
   if (loginStateCallback) {
-    onAuthStateChanged(auth, loginStateCallback)
+    onAuthStateChanged(auth, loginStateCallback);
   }
 }
 
@@ -159,7 +161,9 @@ const memberSettingsDefaults: MemberSettings = {
   reminders: {},
   calendar: false
 };
-export async function getMemberSettings(memberRef: DocumentReference): Promise<MemberSettings> {
+export async function getMemberSettings(
+  memberRef: DocumentReference
+): Promise<MemberSettings> {
   const settingsRef = doc(memberRef, "settings", "general");
   const snapshot = await getDoc(settingsRef);
   if (!snapshot.exists) {
@@ -210,23 +214,22 @@ export class JoinRequestError extends Error {
   }
 }
 
-export function CreateJoinRequest(bandid: string, user: FirebaseUser): Promise<void> {
-  const docRef = doc(
-    db,
-    "bands",
-    bandid,
-    "join_requests",
-    user.uid
-  );
+export function CreateJoinRequest(
+  bandid: string,
+  user: FirebaseUser
+): Promise<void> {
+  const docRef = doc(db, "bands", bandid, "join_requests", user.uid);
   const joinRequest: JoinRequest = {
     display_name: user.displayName || "Utan Namn",
     url: location.href,
     approved: false
-  }
+  };
   console.log("Making a join request to", docRef);
-  return setDoc(docRef, joinRequest, { merge: true }).catch(
-    reason => {
-      throw new JoinRequestError("join/create", `Failed to create join request ${docRef.path}`, reason);
-    }
-  );
+  return setDoc(docRef, joinRequest, { merge: true }).catch(reason => {
+    throw new JoinRequestError(
+      "join/create",
+      `Failed to create join request ${docRef.path}`,
+      reason
+    );
+  });
 }

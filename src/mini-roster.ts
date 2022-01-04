@@ -1,9 +1,9 @@
-
-import "./response-chip";import { BandEvent, ParticipantResponse } from "./storage";
+import "./response-chip";
+import { BandEvent, ParticipantResponse } from "./storage";
 import { DocumentSnapshot, QueryDocumentSnapshot } from "firebase/firestore";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators";
-import {repeat} from 'lit/directives/repeat';
+import { repeat } from "lit/directives/repeat";
 
 interface Member {
   display_name: string;
@@ -29,6 +29,7 @@ export class MiniRoster extends LitElement {
       :host {
         display: flex;
         flex-wrap: wrap;
+        align-content: flex-start;
       }
       .cancelled {
         background: rgb(255, 87, 34);
@@ -53,10 +54,12 @@ export class MiniRoster extends LitElement {
         this.members,
         member => member.id,
         member => html`
-          <response-chip 
+          <response-chip
             response=${this.responses[member.id]}
             @click=${() => this.clickOne(member.id)}
-          >${member.data().display_name}</response-chip>`
+            >${member.data().display_name}</response-chip
+          >
+        `
       )}
     `;
   }

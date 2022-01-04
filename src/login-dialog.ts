@@ -1,11 +1,16 @@
-
 import "@material/mwc-textfield/mwc-textfield";
-import "@material/mwc-button/mwc-button"; import { css, html, LitElement } from "lit";
+import "@material/mwc-button/mwc-button";
+import { css, html, LitElement } from "lit";
 import { customElement, property, query } from "lit/decorators";
-import { createUserWithEmailAndPassword, getAuth, GoogleAuthProvider, signInWithEmailAndPassword, signInWithPopup } from "firebase/auth";
+import {
+  createUserWithEmailAndPassword,
+  getAuth,
+  GoogleAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup
+} from "firebase/auth";
 import { FirebaseApp } from "firebase/app";
 import { TextField } from "@material/mwc-textfield/mwc-textfield";
-
 
 @customElement("login-dialog")
 export class AppMain extends LitElement {
@@ -15,14 +20,14 @@ export class AppMain extends LitElement {
   @property({ type: String })
   state: null | "login" | "create" = null;
 
-  @property({ type: String})
+  @property({ type: String })
   errormsg: string = null;
 
   @query("#email")
-  emailField: TextField
+  emailField: TextField;
 
   @query("#pwd")
-  pwdField: TextField
+  pwdField: TextField;
 
   static styles = css`
     #top {
@@ -48,33 +53,48 @@ export class AppMain extends LitElement {
   render() {
     return html`
       <div id="top">
-        <mwc-button raised @click=${this.loginWithGoogle}>Logga in med Google</mwc-button>
+        <mwc-button raised @click=${this.loginWithGoogle}
+          >Logga in med Google</mwc-button
+        >
         <p class="sep">eller</p>
         <mwc-textfield id="email" type="email" label="Epost"></mwc-textfield>
         <mwc-textfield
-          id="pwd" type="password" label="Lösenord"
-          style=${this.state == null ? "display: none" : undefined}></mwc-textfield>
+          id="pwd"
+          type="password"
+          label="Lösenord"
+          style=${this.state == null ? "display: none" : undefined}
+        ></mwc-textfield>
         <p>
-          <mwc-button 
-            raised @click=${this.loginWithPassword.bind(this)}
-            style=${this.state == "create" ? "display: none" : undefined}
-            >Logga in</mwc-button>
           <mwc-button
-            raised @click=${this.createPasswordUser.bind(this)}
+            raised
+            @click=${this.loginWithPassword.bind(this)}
+            style=${this.state == "create" ? "display: none" : undefined}
+            >Logga in</mwc-button
+          >
+          <mwc-button
+            raised
+            @click=${this.createPasswordUser.bind(this)}
             style=${this.state == "login" ? "display: none" : undefined}
-            >Ny inloggning</mwc-button>
+            >Ny inloggning</mwc-button
+          >
         </p>
-        ${this.errormsg ? html`<p class="error">${this.errormsg}</p>`: ""}
-      </div>`;
+        ${this.errormsg
+          ? html`
+              <p class="error">${this.errormsg}</p>
+            `
+          : ""}
+      </div>
+    `;
   }
 
   loginWithGoogle() {
     const provider = new GoogleAuthProvider();
     signInWithPopup(getAuth(this.app), provider)
-      .then((result) => {
+      .then(result => {
         console.log("[google login] Success:", result);
-      }).catch((error) => {
-        console.log("[google login] Failure:", error)
+      })
+      .catch(error => {
+        console.log("[google login] Failure:", error);
       });
   }
 
@@ -84,12 +104,16 @@ export class AppMain extends LitElement {
       return;
     }
 
-    signInWithEmailAndPassword(getAuth(this.app), this.emailField.value, this.pwdField.value)
-      .then((userCredential) => {
-        console.log("[pw login] Success:", userCredential)
+    signInWithEmailAndPassword(
+      getAuth(this.app),
+      this.emailField.value,
+      this.pwdField.value
+    )
+      .then(userCredential => {
+        console.log("[pw login] Success:", userCredential);
       })
-      .catch((error) => {
-        console.log("[pw login] Failure:", error)
+      .catch(error => {
+        console.log("[pw login] Failure:", error);
         this.errormsg = error.message;
       });
   }
@@ -100,14 +124,17 @@ export class AppMain extends LitElement {
       return;
     }
 
-    createUserWithEmailAndPassword(getAuth(this.app), this.emailField.value, this.pwdField.value)
-    .then((userCredential) => {
-      console.log("[pw create] Success:", userCredential)
-    })
-    .catch((error) => {
-      console.log("[pw create] Failure:", error);
-      this.errormsg = error.message;
-    });
-  
+    createUserWithEmailAndPassword(
+      getAuth(this.app),
+      this.emailField.value,
+      this.pwdField.value
+    )
+      .then(userCredential => {
+        console.log("[pw create] Success:", userCredential);
+      })
+      .catch(error => {
+        console.log("[pw create] Failure:", error);
+        this.errormsg = error.message;
+      });
   }
 }

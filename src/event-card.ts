@@ -1,9 +1,5 @@
 import "./event-editor";
-import {
-  LitElement,
-  html,
-  css,
-} from "lit";
+import { LitElement, html, css } from "lit";
 import { repeat } from "lit/directives/repeat";
 import { ifDefined } from "lit/directives/if-defined";
 import "@material/mwc-dialog";
@@ -21,7 +17,7 @@ import {
   BandEvent,
   hasResponded,
   Member,
-  ParticipantResponse,
+  ParticipantResponse
 } from "./storage";
 import { Dialog } from "@material/mwc-dialog";
 import { EventEditor } from "./event-editor";
@@ -147,45 +143,35 @@ export class EventCard extends LitElement {
 
   static styles = css`
     :host {
-      margin: 4px;
-      padding: 0 20px;
-      border-bottom: solid #ddd 1px;
-      background: white;
-    }
-    #top {
-      position: absolute;
-      left: 0;
-      height: 100%;
-      width: 100%;
       display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      box-shadow: 3px 3px 8px 1px rgba(0, 0, 0, 0.4);
+      flex: row;
+    }
+    #main {
+      flex-grow: 1;
+      padding: 16px 20px;
+      display: flex;
+      flex-flow: row wrap;
+      justify-content: space-between;
+    }
+    #desc {
+      min-width: 300px;
     }
     #head {
       display: flex;
+      gap: 0.5em;
     }
-    :host(:not([cancelled])) #head {
-      margin-bottom: -16px;
-    }
-    #head span {
-      margin: 16px 10px 16px 0;
+    span.chip {
+      border-radius: 0.5em;
+      padding: 0 0.5em;
     }
     span.cancelled {
       background: rgba(200 0 0 / 30%);
-      border-radius: 3px;
-      padding: 0 0.3em;
-    }
-    .push-right {
-      margin-left: auto;
-      margin-right: -10px;
     }
     .event-type {
       font-weight: 600;
     }
     time-range {
       color: rgba(0, 0, 0, 0.7);
-      margin: 16px 10px 16px 0;
     }
     .info {
       padding: 0 0 10px 0;
@@ -379,51 +365,42 @@ export class EventCard extends LitElement {
     `;
   }
 
-  render() {
-    const data = this.event!.data()! as BandEvent;
+  renderHead() {
+    const data = this.event!.data()!;
     return html`
-      <div id="head">
-        <span class="event-type">${data.type}</span>
-        <time-range
-          start=${ifDefined(data.start)}
-          stop=${ifDefined(data.stop)}
-        ></time-range>
-        ${this.cancelled ? html`<span class="cancelled">Inställt</span>` : ""}
-        <div class="push-right" style="position: relative">
-          <mwc-icon-button
-            id="menu-button"
-            icon="more_vert"
-            @click=${() => this.menu.show()}
-          ></mwc-icon-button>
-          <mwc-menu
-            id="menu"
-            corner="TOP_END"
-            menuCorner="END"
-            .anchor=${this.menuButton}
-            @action=${this.menuAction}
-          >
-            <mwc-list-item>Redigera</mwc-list-item>
-            <mwc-list-item
-              >${this.cancelled ? "Ångra ställ in" : "Ställ in"}</mwc-list-item
+      <div id="desc">
+        <div id="head">
+          <span class="event-type">${data.type}</span>
+          <time-range
+            start=${ifDefined(data.start)}
+            stop=${ifDefined(data.stop)}
+          ></time-range>
+          ${this.cancelled
+            ? html`
+                <span class="chip cancelled">Inställt</span>
+              `
+            : ""}
+          <mwc-dialog id="event-editor-dialog" @closing=${this.closingEditor}>
+            <event-editor></event-editor>
+            <mwc-button slot="primaryAction" dialogAction="save"
+              >Spara</mwc-button
             >
-            <mwc-list-item>Ändra svar</mwc-list-item>
-          </mwc-menu>
+            <mwc-button slot="secondaryAction" dialogAction="cancel"
+              >Avbryt</mwc-button
+            >
+          </mwc-dialog>
         </div>
-        <mwc-dialog id="event-editor-dialog" @closing=${this.closingEditor}>
-          <event-editor></event-editor>
-          <mwc-button slot="primaryAction" dialogAction="save"
-            >Spara</mwc-button
-          >
-          <mwc-button slot="secondaryAction" dialogAction="cancel"
-            >Avbryt</mwc-button
-          >
-        </mwc-dialog>
+        <div class="info">
+          <p>${data.location}</p>
+          <p>${data.description}</p>
+        </div>
       </div>
-      ${this.cancelled ? "" : html`
-      <div class="info">
-        <p>${data.location}</p>
-        <p>${data.description}</p>
-      </div>
+    `;
+  }
+
+  renderResponses() {
+    const data = this.event!.data()!;
+    return html`
       ${repeat(
         this.members,
         member => member.id,
@@ -436,7 +413,35 @@ export class EventCard extends LitElement {
         .event=${this.event}
         .responses=${this.responses}
         @click-participant=${e => this.openResponseDialog(e.detail.uid)}
-      ></mini-roster>`}
+      ></mini-roster>
+    `;
+  }
+
+  render() {
+    return html`
+      <div id="main">
+        ${this.renderHead()} ${this.cancelled ? "" : this.renderResponses()}
+      </div>
+      <div style="position: relative">
+        <mwc-icon-button
+          id="menu-button"
+          icon="more_vert"
+          @click=${() => this.menu.show()}
+        ></mwc-icon-button>
+        <mwc-menu
+          id="menu"
+          corner="TOP_END"
+          menuCorner="END"
+          .anchor=${this.menuButton}
+          @action=${this.menuAction}
+        >
+          <mwc-list-item>Redigera</mwc-list-item>
+          <mwc-list-item
+            >${this.cancelled ? "Ångra ställ in" : "Ställ in"}</mwc-list-item
+          >
+          <mwc-list-item>Ändra svar</mwc-list-item>
+        </mwc-menu>
+      </div>
     `;
   }
 

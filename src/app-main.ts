@@ -1,15 +1,32 @@
-
 import { LitElement, html, css } from "lit";
-import { customElement, property, query } from 'lit/decorators.js';
+import { customElement, property, query } from "lit/decorators.js";
 import "@material/mwc-button/mwc-button";
 import "@material/mwc-drawer/mwc-drawer";
 import "@material/mwc-fab/mwc-fab";
 import "@material/mwc-icon-button/mwc-icon-button";
 import "@material/mwc-top-app-bar-fixed/mwc-top-app-bar-fixed";
 import { FirebaseApp } from "firebase/app";
-import { addDoc, collection, DocumentSnapshot, onSnapshot } from "firebase/firestore";
-import { Auth, getAuth, onAuthStateChanged, signOut, User as FirebaseUser } from "firebase/auth";
-import { CreateJoinRequest, db, ensureUserExists, getHostBand, User, UserBand } from "./storage";
+import {
+  addDoc,
+  collection,
+  DocumentSnapshot,
+  onSnapshot
+} from "firebase/firestore";
+import {
+  Auth,
+  getAuth,
+  onAuthStateChanged,
+  signOut,
+  User as FirebaseUser
+} from "firebase/auth";
+import {
+  CreateJoinRequest,
+  db,
+  ensureUserExists,
+  getHostBand,
+  User,
+  UserBand
+} from "./storage";
 import "./login-dialog";
 import "./band-schedule";
 import { EventEditor } from "./event-editor";
@@ -42,7 +59,9 @@ async function bandFromHostname(): Promise<string | null> {
 
 async function bandHint(): Promise<string> {
   const fromUrl =
-    location.hash != "" ? location.hash.substring(1) : location.pathname.substring(1);
+    location.hash != ""
+      ? location.hash.substring(1)
+      : location.pathname.substring(1);
   if (fromUrl.length > 0) {
     return fromUrl;
   } else {
@@ -99,14 +118,14 @@ export class AppMain extends LitElement {
     console.log("[app-main] Constructed");
   }
 
-  updated(changedProperties: { [x: string]: any; }) {
+  updated(changedProperties: { [x: string]: any }) {
     if (changedProperties.has("app") && this.app) {
       console.log("[app-main] Connected to app", this.app);
       this.auth = getAuth(this.app);
-      this.auth.useDeviceLanguage()
+      this.auth.useDeviceLanguage();
       onAuthStateChanged(this.auth, this.authStateChanged.bind(this));
-      bandHint().then((bandid) => {
-        console.log("[app-main] Band hint:", bandid)
+      bandHint().then(bandid => {
+        console.log("[app-main] Band hint:", bandid);
         if (!this.bandid) {
           this.bandid = bandid;
         }
@@ -124,7 +143,7 @@ export class AppMain extends LitElement {
       try {
         this.userUnsubscribe();
       } catch (error) {
-        console.log("Failed to unsubscribe from user updates:", error)
+        console.log("Failed to unsubscribe from user updates:", error);
       }
       this.userUnsubscribe = null;
     }
@@ -139,7 +158,10 @@ export class AppMain extends LitElement {
     if (this.firebaseUser) {
       this.loading.add("bands");
       const userRef = await ensureUserExists(this.firebaseUser);
-      this.userUnsubscribe = onSnapshot(userRef, this.currentUserDocChanged.bind(this));
+      this.userUnsubscribe = onSnapshot(
+        userRef,
+        this.currentUserDocChanged.bind(this)
+      );
     }
     this.requestUpdate();
   }
@@ -162,7 +184,10 @@ export class AppMain extends LitElement {
   }
 
   addErrorMessage(message: string, details?: string) {
-    const id = this.errorMessages.length == 0 ? 1 : this.errorMessages[this.errorMessages.length - 1].id;
+    const id =
+      this.errorMessages.length == 0
+        ? 1
+        : this.errorMessages[this.errorMessages.length - 1].id;
     this.errorMessages.push({ id, message, details });
     this.requestUpdate();
   }
@@ -205,10 +230,11 @@ export class AppMain extends LitElement {
         console.log("Finished registering");
         this.registered = true;
       },
-      (error) => {
+      error => {
         console.info("Failed to create join request:", error);
         this.addErrorMessage("Kunde inte ansöka", error);
-      });
+      }
+    );
   }
 
   static styles = css`
@@ -225,7 +251,6 @@ export class AppMain extends LitElement {
 
     band-schedule {
       flex: 1;
-      max-width: 800px;
     }
 
     .application {
@@ -261,9 +286,17 @@ export class AppMain extends LitElement {
     const bands = this.bands != null ? Object.entries(this.bands) : [];
     return html`
       <mwc-list @action=${(e: CustomEvent) => this.bandListAction(e)}>
-        ${repeat(bands,
-          ([bandid, band]) => html`<mwc-list-item data-bandid=${bandid}><span>${band.display_name}</span></mwc-list-item>`)}
-      </mwc-list>`;
+        ${repeat(
+          bands,
+          ([bandid, band]) =>
+            html`
+              <mwc-list-item data-bandid=${bandid}
+                ><span>${band.display_name}</span></mwc-list-item
+              >
+            `
+        )}
+      </mwc-list>
+    `;
   }
 
   bandListAction(e: CustomEvent) {
@@ -277,33 +310,45 @@ export class AppMain extends LitElement {
   renderProfileMenu() {
     // If there is no display name, use the email address only.
     const displayName = this.firebaseUser
-      ? (this.firebaseUser.displayName || this.firebaseUser.email)
+      ? this.firebaseUser.displayName || this.firebaseUser.email
       : "Inte inloggad";
-    const secondary = this.firebaseUser?.displayName ? this.firebaseUser.email : null;
+    const secondary = this.firebaseUser?.displayName
+      ? this.firebaseUser.email
+      : null;
     return html`
-      <mwc-menu id="profile-menu"
+      <mwc-menu
+        id="profile-menu"
         corner="TOP_END"
         menuCorner="END"
         .anchor=${this.profileIcon}
-        @action=${(e) => {
-        const detail = e.detail as ActionDetail;
-        console.log("[profile-menu]", detail);
-        if (detail.index == 0) {
-          signOut(this.auth);
-        }
-      }}
+        @action=${e => {
+          const detail = e.detail as ActionDetail;
+          console.log("[profile-menu]", detail);
+          if (detail.index == 0) {
+            signOut(this.auth);
+          }
+        }}
       >
-        <mwc-list-item graphic="avatar" ?twoline=${secondary != null} noninteractive>
+        <mwc-list-item
+          graphic="avatar"
+          ?twoline=${secondary != null}
+          noninteractive
+        >
           <mwc-icon slot="graphic">account_circle</mwc-icon>
           <span>${displayName}</span>
-          ${secondary != null ? html`<span slot="secondary">${secondary}</span>`: ""}
+          ${secondary != null
+            ? html`
+                <span slot="secondary">${secondary}</span>
+              `
+            : ""}
         </mwc-list-item>
         <li divider role="separator"></li>
         <mwc-list-item graphic="icon">
           <mwc-icon slot="graphic">exit_to_app</mwc-icon>
           <span>Logga ut</span>
         </mwc-list-item>
-      </mwc-menu>`;
+      </mwc-menu>
+    `;
   }
 
   renderSchedule() {
@@ -320,8 +365,8 @@ export class AppMain extends LitElement {
         id="fab"
         icon="add"
         @click=${() => {
-        this.openAddDialog = true;
-      }}
+          this.openAddDialog = true;
+        }}
       >
       </mwc-fab>
       <mwc-dialog id="add-dialog" ?open=${this.openAddDialog}>
@@ -360,13 +405,15 @@ export class AppMain extends LitElement {
   }
 
   isLoading() {
-    return (this.loading.size > 0);
+    return this.loading.size > 0;
   }
 
   renderProgress() {
     if (this.isLoading()) {
       console.log("[app-main] Still waiting for", this.loading);
-      return html`<mwc-linear-progress indeterminate></mwc-linear-progress>`;
+      return html`
+        <mwc-linear-progress indeterminate></mwc-linear-progress>
+      `;
     }
     return "";
   }
@@ -379,7 +426,8 @@ export class AppMain extends LitElement {
       return html`
         <div class="application">
           <login-dialog .app=${this.app}></login-dialog>
-        </div>`;
+        </div>
+      `;
     }
     if (!(this.bandid in this.bands)) {
       if (this.registered) {
@@ -401,25 +449,32 @@ export class AppMain extends LitElement {
               id="mainMenuButton"
               icon="menu"
               slot="navigationIcon"
-              @click=${() => { this.openDrawer = !this.openDrawer; }}
+              @click=${() => {
+                this.openDrawer = !this.openDrawer;
+              }}
             ></mwc-icon-button>
             <div slot="title">Närvarokollen</div>
             <mwc-icon-button
               id="profile"
               icon="account_circle"
               slot="actionItems"
-              @click=${() => { this.profileMenu.open = !this.profileMenu.open; }}
+              @click=${() => {
+                this.profileMenu.open = !this.profileMenu.open;
+              }}
             ></mwc-icon-button>
             ${this.renderProfileMenu()}
             <div>
               ${this.renderProgress()}
-              ${repeat(this.errorMessages,
+              ${repeat(
+                this.errorMessages,
                 (em: ErrorMessage) => em.id,
                 ({ id, message, details }: ErrorMessage) => html`
-                <div class="error" id="error-${id}">
-                  <span class="errormsg">${message}</span>
-                  <span class="errordetail">${details || ""}</span>
-                </div>`)}
+                  <div class="error" id="error-${id}">
+                    <span class="errormsg">${message}</span>
+                    <span class="errordetail">${details || ""}</span>
+                  </div>
+                `
+              )}
               ${this.renderMain()}
             </div>
           </mwc-top-app-bar-fixed>

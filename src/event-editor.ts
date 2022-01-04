@@ -1,8 +1,4 @@
-import {
-  css,
-  html,
-  LitElement,
-} from "lit";
+import { css, html, LitElement } from "lit";
 import { ifDefined } from "lit/directives/if-defined";
 import "@material/mwc-textfield";
 import "@material/mwc-icon-button";

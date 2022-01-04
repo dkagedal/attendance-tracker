@@ -24,27 +24,29 @@ export class ResponseChip extends LitElement {
         color: rgba(0, 0, 0, 0.54);
       }
 
-      :host([response=yes]) {
-          background: rgba(0 200 0 / 50%);
-          border-width: 2px;
-          padding: 0;
+      :host([response="yes"]) {
+        background: rgba(0 200 0 / 50%);
+        border-width: 2px;
+        padding: 0;
       }
 
-      :host([response=no]) {
-          background: rgb(200 0 0 / 50%);
-          border-width: 2px;
-          padding: 0;
+      :host([response="no"]) {
+        background: rgb(200 0 0 / 50%);
+        border-width: 2px;
+        padding: 0;
       }
 
-      :host([response=sub]) {
-          background: rgb(0 0 0 / 20%);
-          border-width: 2px;
-          padding: 0;
+      :host([response="sub"]) {
+        background: rgb(0 0 0 / 20%);
+        border-width: 2px;
+        padding: 0;
       }
     `;
   }
 
   render() {
-    return html`<slot></slot>`;
+    return html`
+      <slot></slot>
+    `;
   }
 }

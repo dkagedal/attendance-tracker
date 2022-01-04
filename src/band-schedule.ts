@@ -1,5 +1,5 @@
-
-import "@material/mwc-linear-progress/mwc-linear-progress"; import "@material/mwc-icon";
+import "@material/mwc-linear-progress/mwc-linear-progress";
+import "@material/mwc-icon";
 import "@material/mwc-button";
 import "@material/mwc-linear-progress";
 import "@material/mwc-list/mwc-list";
@@ -7,7 +7,13 @@ import "@material/mwc-list/mwc-list-item";
 import "./time-range";
 import "./event-card";
 import "./mini-roster";
-import { BandEvent, bandEventYear, db, Member, memberConverter } from "./storage";
+import {
+  BandEvent,
+  bandEventYear,
+  db,
+  Member,
+  memberConverter
+} from "./storage";
 import {
   collection,
   doc,
@@ -75,8 +81,9 @@ export class BandSchedule extends LitElement {
           this.events = (querySnapshot as unknown) as EventsSnapshot;
           this.loaded = true;
         });
-        const memberQuery = query(collection(bandref, "members"))
-          .withConverter(memberConverter);
+        const memberQuery = query(collection(bandref, "members")).withConverter(
+          memberConverter
+        );
         onSnapshot(memberQuery, (querySnapshot): void => {
           this.members = querySnapshot.docs.sort((m1, m2) => {
             if (m1.id < m2.id) {
@@ -146,8 +153,8 @@ export class BandSchedule extends LitElement {
         )}
         <div
           style="display: ${this.loaded && this.events.size == 0
-        ? "block"
-        : "none"}"
+            ? "block"
+            : "none"}"
         >
           Inget planerat
         </div>
