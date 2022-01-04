@@ -19,6 +19,7 @@ export class ResponseChip extends LitElement {
         cursor: pointer;
         white-space: nowrap;
         overflow: hidden;
+        text-align: center;
         text-overflow: clip;
         color: rgba(0, 0, 0, 0.54);
       }

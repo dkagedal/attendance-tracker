@@ -225,7 +225,7 @@ export class AppMain extends LitElement {
 
     band-schedule {
       flex: 1;
-      max-width: 600px;
+      max-width: 800px;
     }
 
     .application {

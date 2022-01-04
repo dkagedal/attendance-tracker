@@ -80,6 +80,9 @@ export class EventCard extends LitElement {
   @property({ type: String })
   responseuid: string = "";
 
+  @property({ type: Boolean, reflect: true })
+  cancelled: boolean = false;
+
   @query("#menu-button")
   menuButton: IconButton;
 
@@ -137,6 +140,7 @@ export class EventCard extends LitElement {
     changedProperties.forEach((_oldValue: any, propName: string) => {
       if (propName == "event") {
         this.fetchParticipants();
+        this.cancelled = this.event.data().cancelled;
       }
     });
   }
@@ -145,7 +149,6 @@ export class EventCard extends LitElement {
     :host {
       margin: 4px;
       padding: 0 20px;
-      //border-radius: 5px;
       border-bottom: solid #ddd 1px;
       background: white;
     }
@@ -161,10 +164,17 @@ export class EventCard extends LitElement {
     }
     #head {
       display: flex;
+    }
+    :host(:not([cancelled])) #head {
       margin-bottom: -16px;
     }
-    #head .event-type {
+    #head span {
       margin: 16px 10px 16px 0;
+    }
+    span.cancelled {
+      background: rgba(200 0 0 / 30%);
+      border-radius: 3px;
+      padding: 0 0.3em;
     }
     .push-right {
       margin-left: auto;
@@ -175,7 +185,7 @@ export class EventCard extends LitElement {
     }
     time-range {
       color: rgba(0, 0, 0, 0.7);
-      margin: 16px 0;
+      margin: 16px 10px 16px 0;
     }
     .info {
       padding: 0 0 10px 0;
@@ -378,6 +388,7 @@ export class EventCard extends LitElement {
           start=${ifDefined(data.start)}
           stop=${ifDefined(data.stop)}
         ></time-range>
+        ${this.cancelled ? html`<span class="cancelled">Inställt</span>` : ""}
         <div class="push-right" style="position: relative">
           <mwc-icon-button
             id="menu-button"
@@ -393,7 +404,7 @@ export class EventCard extends LitElement {
           >
             <mwc-list-item>Redigera</mwc-list-item>
             <mwc-list-item
-              >${data.cancelled ? "Ångra ställ in" : "Ställ in"}</mwc-list-item
+              >${this.cancelled ? "Ångra ställ in" : "Ställ in"}</mwc-list-item
             >
             <mwc-list-item>Ändra svar</mwc-list-item>
           </mwc-menu>
@@ -408,6 +419,7 @@ export class EventCard extends LitElement {
           >
         </mwc-dialog>
       </div>
+      ${this.cancelled ? "" : html`
       <div class="info">
         <p>${data.location}</p>
         <p>${data.description}</p>
@@ -417,16 +429,14 @@ export class EventCard extends LitElement {
         member => member.id,
         member => this.renderComment(member)
       )}
-      ${this.needsResponse && !data.cancelled
-        ? this.renderResponsePrompt()
-        : ""}
+      ${this.needsResponse ? this.renderResponsePrompt() : ""}
       ${this.renderResponseDialog(data)}
       <mini-roster
         .members=${this.members}
         .event=${this.event}
         .responses=${this.responses}
         @click-participant=${e => this.openResponseDialog(e.detail.uid)}
-      ></mini-roster>
+      ></mini-roster>`}
     `;
   }
 
