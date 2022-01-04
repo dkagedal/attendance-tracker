@@ -12,11 +12,10 @@ import { Auth, getAuth, onAuthStateChanged, signOut, User as FirebaseUser } from
 import { CreateJoinRequest, db, ensureUserExists, getHostBand, User, UserBand } from "./storage";
 import "./login-dialog";
 import "./band-schedule";
-import { BandSchedule } from "./band-schedule";
 import { EventEditor } from "./event-editor";
 import { Menu } from "@material/mwc-menu";
 import { IconButton } from "@material/mwc-icon-button/mwc-icon-button";
-import { ActionDetail } from "@material/mwc-list";
+import { ActionDetail, List } from "@material/mwc-list";
 import { repeat } from "lit/directives/repeat";
 
 interface BandMap {
@@ -170,8 +169,7 @@ export class AppMain extends LitElement {
 
   selectBand(bandId: string) {
     console.log("Selecting band", bandId);
-    const schedule = document.getElementById("band")! as BandSchedule;
-    schedule.bandid = bandId;
+    this.bandid = bandId;
     // TODO: send event
     bandFromHostname().then(canon => {
       const urlPath = canon == bandId ? "/" : `/${bandId}`;
@@ -260,18 +258,20 @@ export class AppMain extends LitElement {
   `;
 
   renderDrawer() {
-    let bandlist = html``;
-    if (this.bands != null) {
-      const bands = Object.entries(this.bands);
-      bandlist = html`
-      <ul id="bandList">
-        ${bands.map(([id, band]) =>
-        html`<li @click=${() => this.selectBand(id)}>${band.display_name}</li>`
-      )}
-      </ul>`;
-    }
+    const bands = this.bands != null ? Object.entries(this.bands) : [];
     return html`
-      ${bandlist}`;
+      <mwc-list @action=${(e: CustomEvent) => this.bandListAction(e)}>
+        ${repeat(bands,
+          ([bandid, band]) => html`<mwc-list-item data-bandid=${bandid}><span>${band.display_name}</span></mwc-list-item>`)}
+      </mwc-list>`;
+  }
+
+  bandListAction(e: CustomEvent) {
+    const list = e.target as List;
+    const selectedItem = list.selected as HTMLElement;
+    const bandid = selectedItem.dataset["bandid"];
+    this.openDrawer = false;
+    this.selectBand(bandid);
   }
 
   renderProfileMenu() {
