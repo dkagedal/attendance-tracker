@@ -387,20 +387,19 @@ export class AppMain extends LitElement {
 
   renderRegister() {
     return html`
-      <div class="application">
-        <div>
-          <p>Du verkar inte vara registrerad.</p>
-          <mwc-button raised @click=${this.joinRequest}>Ansök</mwc-button>
-        </div>
-      </div>
-    `;
-  }
-
-  renderRegistered() {
-    return html`
-      <div class="application">
-        <p>Registrering inskickad.</p>
-      </div>
+      <mwc-dialog open heading="Välkommen">
+        <p>
+          ${this.registered
+            ? "Ansökan skickad"
+            : "Du verkar inte vara medlem än."}
+        </p>
+        <mwc-button
+          ?disabled=${this.registered}
+          slot="primaryAction"
+          @click=${this.joinRequest}
+          >Ansök</mwc-button
+        >
+      </mwc-dialog>
     `;
   }
 
@@ -419,22 +418,25 @@ export class AppMain extends LitElement {
   }
 
   renderMain() {
+    if (!this.bandid) {
+      return html`
+        <mwc-dialog open heading="Konfigurationsfel">
+          <p>Okänd organisation.</p>
+        </mwc-dialog>
+      `;
+    }
     if (this.isLoading()) {
       return "";
     }
     if (this.firebaseUser == null) {
       return html`
-        <div class="application">
+        <mwc-dialog open heading="Välkommen">
           <login-dialog .app=${this.app}></login-dialog>
-        </div>
+        </mwc-dialog>
       `;
     }
     if (!(this.bandid in this.bands)) {
-      if (this.registered) {
-        return this.renderRegistered();
-      } else {
-        return this.renderRegister();
-      }
+      return this.renderRegister();
     }
     return this.renderSchedule();
   }

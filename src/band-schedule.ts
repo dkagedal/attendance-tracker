@@ -116,9 +116,12 @@ export class BandSchedule extends LitElement {
           padding: 16px 16px;
         }
       }
-      mini-roster {
-        margin-left: 72px;
-        margin-right: 16px;
+      event-card {
+        margin: 0 8px;
+        border-top: 1px solid rgba(0, 0, 0, 0.3);
+      }
+      event-card:first-of-type {
+        border-top: none;
       }
     `;
   }

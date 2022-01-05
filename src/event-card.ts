@@ -148,7 +148,9 @@ export class EventCard extends LitElement {
     }
     #main {
       flex-grow: 1;
-      padding: 16px 20px;
+      padding: 10px 10px;
+    }
+    .hstack {
       display: flex;
       flex-flow: row wrap;
       justify-content: space-between;
@@ -178,6 +180,9 @@ export class EventCard extends LitElement {
       color: rgba(0, 0, 0, 0.54);
       font-size: 0.875rem;
       font-weight: 400;
+    }
+    .comments {
+      margin-bottom: 10px;
     }
     .comment {
       margin: 0 20px;
@@ -341,15 +346,25 @@ export class EventCard extends LitElement {
     );
   }
 
-  renderComment(member) {
-    const data = member.data();
-    return member.id in this.comments
-      ? html`
-          <p class="comment">
-            <b>${data.display_name}</b> ${this.comments[member.id]}
-          </p>
-        `
-      : "";
+  renderComments() {
+    return html`
+      <div class="comments">
+        ${repeat(
+          this.members,
+          member => member.id,
+          member => {
+            const data = member.data();
+            return member.id in this.comments
+              ? html`
+                  <p class="comment">
+                    <b>${data.display_name} —</b> ${this.comments[member.id]}
+                  </p>
+                `
+              : "";
+          }
+        )}
+      </div>
+    `;
   }
 
   renderResponsePrompt() {
@@ -394,6 +409,7 @@ export class EventCard extends LitElement {
           <p>${data.location}</p>
           <p>${data.description}</p>
         </div>
+        ${this.needsResponse ? this.renderResponsePrompt() : ""}
       </div>
     `;
   }
@@ -401,12 +417,6 @@ export class EventCard extends LitElement {
   renderResponses() {
     const data = this.event!.data()!;
     return html`
-      ${repeat(
-        this.members,
-        member => member.id,
-        member => this.renderComment(member)
-      )}
-      ${this.needsResponse ? this.renderResponsePrompt() : ""}
       ${this.renderResponseDialog(data)}
       <mini-roster
         .members=${this.members}
@@ -420,7 +430,10 @@ export class EventCard extends LitElement {
   render() {
     return html`
       <div id="main">
+      <div class="hstack">
         ${this.renderHead()} ${this.cancelled ? "" : this.renderResponses()}
+      </div>
+      ${this.renderComments()}
       </div>
       <div style="position: relative">
         <mwc-icon-button

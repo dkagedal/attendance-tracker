@@ -1,8 +1,15 @@
 {
   "projects": {
-    "default": "kommer-staging",
     "staging": "kommer-staging",
     "prod": "attendance-tracker-b8e9f"
   },
-  "targets": {}
+  "targets": {
+    "attendance-tracker-b8e9f": {
+      "hosting": {
+        "kommer": [
+          "attendance-tracker-b8e9f"
+        ]
+      }
+    }
+  }
 }

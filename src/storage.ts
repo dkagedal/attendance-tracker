@@ -208,16 +208,19 @@ export class JoinRequestError extends Error {
   constructor(
     readonly code: string,
     message: string,
-    public firebaseError: FirebaseError
+    public firebaseError?: FirebaseError
   ) {
-    super(message + ": " + firebaseError.toString());
+    super(firebaseError ? message + ": " + firebaseError.toString() : message);
   }
 }
 
-export function CreateJoinRequest(
+export async function CreateJoinRequest(
   bandid: string,
   user: FirebaseUser
 ): Promise<void> {
+  if (!bandid) {
+    throw new JoinRequestError("join/create", "No bandid given");
+  }
   const docRef = doc(db, "bands", bandid, "join_requests", user.uid);
   const joinRequest: JoinRequest = {
     display_name: user.displayName || "Utan Namn",
@@ -225,11 +228,13 @@ export function CreateJoinRequest(
     approved: false
   };
   console.log("Making a join request to", docRef);
-  return setDoc(docRef, joinRequest, { merge: true }).catch(reason => {
+  try {
+    return await setDoc(docRef, joinRequest, { merge: true });
+  } catch (reason) {
     throw new JoinRequestError(
       "join/create",
       `Failed to create join request ${docRef.path}`,
       reason
     );
-  });
+  }
 }

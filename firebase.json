@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "target": "kommer",
     "public": "public",
     "ignore": [
       "firebase.json",
