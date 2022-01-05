@@ -174,8 +174,12 @@ export class AppMain extends LitElement {
         onSnapshot(userRef, this.currentUserDocChanged.bind(this)
         ));
       this.unsubscribeFuncs.push(
-        onJoinRequestSnapshot(this.bandid, (snapshot: QuerySnapshot<JoinRequest>) => {
+        onJoinRequestSnapshot(this.bandid,
+          (snapshot: QuerySnapshot<JoinRequest>) => {
           this.joinRequests = snapshot.docs;
+          },
+          () => {
+            console.log("[join request] Failed to listen for join requests");
         }));
     }
     this.requestUpdate();

@@ -9,7 +9,8 @@ import {
   Firestore,
   collection,
   onSnapshot,
-  QuerySnapshot
+  QuerySnapshot,
+  FirestoreError
 } from "firebase/firestore";
 import {
   Auth,
@@ -251,7 +252,11 @@ export async function CreateJoinRequest(
   }
 }
 
-export function onJoinRequestSnapshot(bandid: string, observer: (snapshot: QuerySnapshot<JoinRequest>) => void) {
+export function onJoinRequestSnapshot(
+  bandid: string,
+  onNext: (snapshot: QuerySnapshot<JoinRequest>) => void,
+  onError?: (error: FirestoreError) => void
+) {
   const ref = collection(db, "bands", bandid, "join_requests").withConverter(joinRequestConverter);
-  return onSnapshot(ref, observer);
+  return onSnapshot(ref, onNext, onError);
 }
