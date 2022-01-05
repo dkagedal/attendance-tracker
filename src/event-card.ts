@@ -347,6 +347,9 @@ export class EventCard extends LitElement {
   }
 
   renderComments() {
+    if (this.cancelled) {
+      return "";
+    }
     return html`
       <div class="comments">
         ${repeat(

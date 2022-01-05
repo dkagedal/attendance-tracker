@@ -6,7 +6,10 @@ import {
   getDoc,
   setDoc,
   DocumentReference,
-  Firestore
+  Firestore,
+  collection,
+  onSnapshot,
+  QuerySnapshot
 } from "firebase/firestore";
 import {
   Auth,
@@ -202,6 +205,15 @@ export interface JoinRequest {
   approved: boolean;
 }
 
+export const joinRequestConverter = {
+  toFirestore: (joinRequest: JoinRequest) => {
+    return joinRequest;
+  },
+  fromFirestore: (snapshot, options) => {
+    return snapshot.data(options) as JoinRequest;
+  }
+};
+
 export class JoinRequestError extends Error {
   readonly name = "JoinRequestError";
 
@@ -237,4 +249,9 @@ export async function CreateJoinRequest(
       reason
     );
   }
+}
+
+export function onJoinRequestSnapshot(bandid: string, observer: (snapshot: QuerySnapshot<JoinRequest>) => void) {
+  const ref = collection(db, "bands", bandid, "join_requests").withConverter(joinRequestConverter);
+  return onSnapshot(ref, observer);
 }

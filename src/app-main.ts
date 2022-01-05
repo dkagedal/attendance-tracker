@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "lit";
-import { customElement, property, query } from "lit/decorators.js";
+import { customElement, property, query, state } from "lit/decorators.js";
 import "@material/mwc-button/mwc-button";
 import "@material/mwc-drawer/mwc-drawer";
 import "@material/mwc-fab/mwc-fab";
@@ -9,8 +9,12 @@ import { FirebaseApp } from "firebase/app";
 import {
   addDoc,
   collection,
+  deleteDoc,
   DocumentSnapshot,
-  onSnapshot
+  onSnapshot,
+  QueryDocumentSnapshot,
+  QuerySnapshot,
+  setDoc
 } from "firebase/firestore";
 import {
   Auth,
@@ -24,6 +28,8 @@ import {
   db,
   ensureUserExists,
   getHostBand,
+  JoinRequest,
+  onJoinRequestSnapshot,
   User,
   UserBand
 } from "./storage";
@@ -101,6 +107,12 @@ export class AppMain extends LitElement {
   @property({ attribute: false })
   errorMessages: Array<ErrorMessage> = [];
 
+  @state()
+  joinRequests: QueryDocumentSnapshot<JoinRequest>[] = [];
+
+  @state()
+  viewingJoinRequest: string = null;
+
   @query("#add-dialog-editor")
   addDialogEditor: EventEditor;
 
@@ -111,7 +123,7 @@ export class AppMain extends LitElement {
   profileMenu: Menu;
 
   auth: Auth = null;
-  userUnsubscribe: () => void = null;
+  unsubscribeFuncs: Array<() => void> = [];
 
   constructor() {
     super();
@@ -139,13 +151,13 @@ export class AppMain extends LitElement {
   async authStateChanged(authUser: FirebaseUser | null) {
     console.log("[app-main] Login state changed:", authUser);
     // First, stop tracking any previously logged in user.
-    if (this.userUnsubscribe) {
+    for (const f of this.unsubscribeFuncs) {
       try {
-        this.userUnsubscribe();
+        f();
       } catch (error) {
-        console.log("Failed to unsubscribe from user updates:", error);
+        console.log("Failed to unsubscribe:", error);
       }
-      this.userUnsubscribe = null;
+      this.unsubscribeFuncs = [];
     }
     this.bands = null;
     this.registered = false;
@@ -158,10 +170,13 @@ export class AppMain extends LitElement {
     if (this.firebaseUser) {
       this.loading.add("bands");
       const userRef = await ensureUserExists(this.firebaseUser);
-      this.userUnsubscribe = onSnapshot(
-        userRef,
-        this.currentUserDocChanged.bind(this)
-      );
+      this.unsubscribeFuncs.push(
+        onSnapshot(userRef, this.currentUserDocChanged.bind(this)
+        ));
+      this.unsubscribeFuncs.push(
+        onJoinRequestSnapshot(this.bandid, (snapshot: QuerySnapshot<JoinRequest>) => {
+          this.joinRequests = snapshot.docs;
+        }));
     }
     this.requestUpdate();
   }
@@ -262,12 +277,20 @@ export class AppMain extends LitElement {
       align-content: center;
     }
 
-    .error {
+    .toast {
       margin: 4px;
       padding: 6px;
-      background: #ff8888;
+      border: 1px solid rgba(0 0 0 / 20%);
       border-radius: 6px;
       text-align: center;
+    }
+
+    .joinreq {
+      background: #ffdd88;
+    }
+
+    .error {
+      background: #ff8888;
     }
 
     .errormsg {
@@ -417,16 +440,45 @@ export class AppMain extends LitElement {
     return "";
   }
 
+  renderJoinRequest(snapshot: QueryDocumentSnapshot<JoinRequest>) {
+    return html`
+      <div class="joinreq toast">
+        ${snapshot.data().display_name} har sökt medlemsskap
+        <button @click=${() => { this.viewingJoinRequest = snapshot.id; }}>Visa</button>
+      </div>
+      <mwc-dialog heading="Begäran att gå med" ?open=${snapshot.id == this.viewingJoinRequest}
+        @closed=${async e => {
+        this.viewingJoinRequest = null;
+        const action = e.detail.action;
+        console.log("[join request] Action:", action);
+        try {
+          if (action == "accept") {
+            await setDoc(snapshot.ref, { approved: true }, { merge: true });
+          } else if (action == "reject") {
+            await deleteDoc(snapshot.ref);
+          }
+        } catch (e) {
+          console.log("Failed to", action,":", e);
+          this.addErrorMessage("Kunde inte svara på ansökan", e);
+        }
+      }}>
+        <p><b>Namn:</b> ${snapshot.data().display_name}</p>
+        <p>Vill du acceptera?</p>
+        <mwc-button slot="primaryAction" dialogAction="accept" label="Ja"></mwc-button>
+        <mwc-button slot="secondaryAction" dialogAction="reject" label="Nej"></mwc-button>
+      </mwc-dialog>`;
+  }
+
   renderMain() {
+    if (this.isLoading()) {
+      return "";
+    }
     if (!this.bandid) {
       return html`
         <mwc-dialog open heading="Konfigurationsfel">
           <p>Okänd organisation.</p>
         </mwc-dialog>
       `;
-    }
-    if (this.isLoading()) {
-      return "";
     }
     if (this.firebaseUser == null) {
       return html`
@@ -471,11 +523,16 @@ export class AppMain extends LitElement {
                 this.errorMessages,
                 (em: ErrorMessage) => em.id,
                 ({ id, message, details }: ErrorMessage) => html`
-                  <div class="error" id="error-${id}">
+                  <div class="error toast" id="error-${id}">
                     <span class="errormsg">${message}</span>
                     <span class="errordetail">${details || ""}</span>
                   </div>
                 `
+              )}
+              ${repeat(
+                this.joinRequests,
+                snapshot => snapshot.id,
+                snapshot => this.renderJoinRequest(snapshot)
               )}
               ${this.renderMain()}
             </div>
