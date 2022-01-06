@@ -94,7 +94,7 @@ export class AppMain extends LitElement {
   bandid: string | null;
 
   @property({ type: Object, attribute: false })
-  bands: BandMap | null = null;
+  bands: BandMap = {};
 
   @property({ type: Boolean })
   openDrawer = false;
@@ -145,10 +145,8 @@ export class AppMain extends LitElement {
     }
   }
 
-  // Callback when the Firebase login stat changed.
-  async authStateChanged(authUser: FirebaseUser | null) {
-    console.log("[app-main] Login state changed:", authUser);
-    // First, stop tracking any previously logged in user.
+  // Clean up stuff that depends on the logged-in user.
+  clearAuthDependencies() {
     for (const f of this.unsubscribeFuncs) {
       try {
         f();
@@ -157,8 +155,16 @@ export class AppMain extends LitElement {
       }
       this.unsubscribeFuncs = [];
     }
-    this.bands = null;
+    this.bands = {};
     this.registered = false;
+    this.joinRequests = [];
+  }
+
+  // Callback when the Firebase login stat changed.
+  async authStateChanged(authUser: FirebaseUser | null) {
+    console.log("[app-main] Login state changed:", authUser);
+    // First, stop tracking any previously logged in user.
+    this.clearAuthDependencies();
 
     // Remember the new user.
     this.firebaseUser = authUser;
@@ -306,7 +312,7 @@ export class AppMain extends LitElement {
   `;
 
   renderDrawer() {
-    const bands = this.bands != null ? Object.entries(this.bands) : [];
+    const bands = Object.entries(this.bands);
     return html`
       <mwc-list @action=${(e: CustomEvent) => this.bandListAction(e)}>
         ${repeat(

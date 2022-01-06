@@ -28,7 +28,10 @@ async function getBand(bandid: string) {
 }
 
 async function getBandAdmins(bandid: string) {
-  return await db.collection("bands").doc(bandid).collection("members")
+  return await db
+    .collection("bands")
+    .doc(bandid)
+    .collection("members")
     .where("admin", "==", true)
     .where("email", "!=", "")
     .get();
@@ -42,6 +45,43 @@ async function getUser(uid: string) {
   return snapshot.data()!;
 }
 
+async function approve(
+  joinRequestSnapshot: functions.firestore.QueryDocumentSnapshot,
+  options: { makeAdmin?: boolean } = {}
+) {
+  const bandRef = joinRequestSnapshot.ref.parent.parent!;
+  const uid = joinRequestSnapshot.id;
+  const logger = createLogger({ bandId: bandRef.id, uid });
+  const memberDocRef = bandRef.collection("members").doc(uid);
+  const userDocRef = db.collection("users").doc(uid);
+  const bandSnapshot = await bandRef.get();
+  const userData = (await userDocRef.get()).data()!;
+  if (userData.bands === undefined) {
+    logger.warn("Missing 'bands' field in", userDocRef.path);
+    userData.bands = {};
+  }
+  let bandName = bandSnapshot.data()?.display_name;
+  if (!bandName) {
+    logger.warn("Missing 'display_name' in", bandRef.path);
+    bandName = "??";
+  }
+  // Update user and band information.
+  userData.bands[bandRef.id] = { display_name: bandName };
+  const memberData = {
+    display_name: joinRequestSnapshot.data().display_name,
+    admin: !!options.makeAdmin
+  };
+  logger.info("Updating", userDocRef.path, "to", userData);
+  logger.info("Updating", memberDocRef.path, "to", memberData);
+  await Promise.all([
+    userDocRef.set(userData),
+    memberDocRef.set(memberData),
+    joinRequestSnapshot.ref.delete()
+  ]);
+  logger.info("Done");
+  return "OK";
+}
+
 export const joinRequestCreated = functions.firestore
   .document("bands/{bandId}/join_requests/{userId}")
   .onCreate(
@@ -50,6 +90,18 @@ export const joinRequestCreated = functions.firestore
       const userId = context.params.userId;
       const logger = createLogger({ bandId, userId });
       logger.info("New join request");
+      // If this is the first user to apply, auto-accept and make them admin.
+      const members = await db
+        .collection("bands")
+        .doc(bandId)
+        .collection("members")
+        .get();
+      if (members.docs.length == 0) {
+        logger.info("Auto-accepting first member");
+        await approve(snapshot, { makeAdmin: true });
+        return;
+      }
+      // Otherwise, notify admins.
       const band = await getBand(bandId);
       const user = await getUser(userId);
       const admins = await getBandAdmins(bandId);
@@ -57,8 +109,9 @@ export const joinRequestCreated = functions.firestore
         to: admins.docs.map(snap => snap.data().email),
         message: {
           subject: `Någon vill gå med i ${band.display_name}`,
-          text: `Begäran om om att få bli medlem i ${band.display_name
-            } via ${snapshot.get("url") || "??"}.
+          text: `Begäran om om att få bli medlem i ${
+            band.display_name
+          } via ${snapshot.get("url") || "??"}.
 
 Namn: ${user.display_name}
         `
@@ -81,48 +134,28 @@ export const approval = functions.firestore
       }
       const joinRequest = change.after.data();
       logger.info("Approving join request for", userId, ":", joinRequest);
-      const bandDocRef = change.after.ref.parent.parent!;
-      const memberDocRef = bandDocRef.collection("members").doc(userId);
-      const userDocRef = db.collection("users").doc(userId);
-      const bandSnapshot = await bandDocRef.get();
-      const userSnapshot = await userDocRef.get();
-      const userData = userSnapshot.data()!;
-      if (userData.bands === undefined) {
-        userData.bands = {};
-      }
-      userData.bands[bandId] = {
-        display_name: bandSnapshot.data()?.display_name || "??"
-      };
-      const memberData = {
-        display_name: joinRequest.display_name,
-        admin: false
-      };
-      logger.info("Updating", userDocRef.path, "to", userData);
-      logger.info("Updating", memberDocRef.path, "to", memberData);
-      await Promise.all([
-        userDocRef.set(userData),
-        memberDocRef.set(memberData),
-        change.after.ref.delete()
-      ]);
-      logger.info("Done");
-      return "OK";
+      return approve(change.after);
     }
   );
 
-export const authUserCreated = functions.auth.user().onCreate(
-  async user => {
-    const logger = createLogger({ uid: user.uid });
-    logger.info("New auth user");
-    await db.collection("users").doc(user.uid).set({ bands: {} });
-  });
+export const authUserCreated = functions.auth.user().onCreate(async user => {
+  const logger = createLogger({ uid: user.uid });
+  logger.info("New auth user");
+  await db
+    .collection("users")
+    .doc(user.uid)
+    .set({ bands: {} });
+});
 
-export const authUserDeleted = functions.auth.user().onDelete(
-  async user => {
-    const logger = createLogger({ uid: user.uid });
-    logger.info("Deleted auth user");
-    // This should trigger userDeleted below as well.
-    await db.collection("users").doc(user.uid).delete();
-  });
+export const authUserDeleted = functions.auth.user().onDelete(async user => {
+  const logger = createLogger({ uid: user.uid });
+  logger.info("Deleted auth user");
+  // This should trigger userDeleted below as well.
+  await db
+    .collection("users")
+    .doc(user.uid)
+    .delete();
+});
 
 export const userDeleted = functions.firestore
   .document("users/{uid}")
@@ -130,12 +163,14 @@ export const userDeleted = functions.firestore
     const uid = context.params.uid;
     const logger = createLogger({ uid });
     logger.info("User was deleted. Snapshot:", snapshot.data());
-    const deleteDoc = (ref: admin.firestore.DocumentReference<admin.firestore.DocumentData>) => {
+    const deleteDoc = (
+      ref: admin.firestore.DocumentReference<admin.firestore.DocumentData>
+    ) => {
       ref.delete().then(
         () => {
           logger.info("Deleted", ref.path);
         },
-        (error) => {
+        error => {
           logger.warn("Failed to delete", ref.path, ":", error);
         }
       );
