@@ -10,7 +10,8 @@ import {
   collection,
   onSnapshot,
   QuerySnapshot,
-  FirestoreError
+  FirestoreError,
+  FirestoreDataConverter
 } from "firebase/firestore";
 import {
   Auth,
@@ -20,39 +21,40 @@ import {
   User as FirebaseUser
 } from "firebase/auth";
 
-export interface UserBand {
-  display_name: string;
-}
-
 // TODO: https://firebase.google.com/docs/firestore/query-data/get-data?authuser=0#custom_objects
-export interface User {
+export class User {
   uid: string;
   display_name: string;
   bands: {
-    [id: string]: UserBand;
+    [id: string]: { display_name: string; };
   };
-}
 
-export const userConverter = {
-  toFirestore: (user: User) => {
-    return {
-      display_name: user.display_name,
-      bands: user.bands
-    };
-  },
-  fromFirestore: (snapshot, options) => {
-    const data = snapshot.data(options);
-    return {
-      uid: snapshot.id,
-      display_name: data.display_name,
-      bands: data.bands
-    } as User;
+  static converter: FirestoreDataConverter<User> = {
+    toFirestore: (user: User) => {
+      return {
+        display_name: user.display_name,
+        bands: user.bands
+      };
+    },
+    fromFirestore: (snapshot, options) => {
+      const data = snapshot.data(options);
+      return {
+        uid: snapshot.id,
+        display_name: data.display_name,
+        bands: data.bands
+      } as User;
+    }
+  };
+
+  static ref(uid: string): DocumentReference<User> {
+    return doc(db, "users", uid).withConverter(User.converter);
   }
-};
+}
 
 export interface Member {
   display_name: string;
   admin: boolean;
+  email?: string;
 }
 
 export const memberConverter = {
@@ -121,14 +123,10 @@ export function initDB(app: FirebaseApp, useEmulator: boolean) {
   }
 }
 
-function userRef(uid: string): DocumentReference<User> {
-  return doc(db, "users", uid).withConverter(userConverter);
-}
-
 export async function ensureUserExists(
   user: FirebaseUser
 ): Promise<DocumentReference<User>> {
-  const docRef = userRef(user.uid);
+  const docRef = User.ref(user.uid);
   const snapshot = await getDoc(docRef);
   if (!snapshot.exists()) {
     const data: User = {
@@ -142,9 +140,8 @@ export async function ensureUserExists(
   return docRef;
 }
 
-async function getUser(uid: UID): Promise<User> {
-  const docRef = userRef(uid);
-  const snapshot = await getDoc(docRef);
+async function getUserOrNull(uid: UID): Promise<User> {
+  const snapshot = await getDoc(User.ref(uid));
   if (snapshot.exists) {
     console.log("Found user", snapshot.data());
     return snapshot.data();
@@ -171,7 +168,7 @@ export async function getMemberSettings(
   const settingsRef = doc(memberRef, "settings", "general");
   const snapshot = await getDoc(settingsRef);
   if (!snapshot.exists) {
-    const user = await getUser(memberRef.id as UID);
+    const user = await getUserOrNull(memberRef.id as UID);
     const settings = Object.assign(
       { display_name: user.display_name },
       memberSettingsDefaults

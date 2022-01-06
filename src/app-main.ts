@@ -31,7 +31,6 @@ import {
   JoinRequest,
   onJoinRequestSnapshot,
   User,
-  UserBand
 } from "./storage";
 import "./login-dialog";
 import "./band-schedule";
@@ -42,7 +41,7 @@ import { ActionDetail, List } from "@material/mwc-list";
 import { repeat } from "lit/directives/repeat";
 
 interface BandMap {
-  [key: string]: UserBand;
+  [key: string]: { display_name: string; }
 }
 
 interface HostMap {
@@ -270,15 +269,6 @@ export class AppMain extends LitElement {
 
     band-schedule {
       flex: 1;
-    }
-
-    .application {
-      width: 100%;
-      height: 100%;
-      background: white;
-      display: flex;
-      justify-content: center;
-      align-content: center;
     }
 
     .toast {

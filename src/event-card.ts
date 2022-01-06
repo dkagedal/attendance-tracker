@@ -156,7 +156,7 @@ export class EventCard extends LitElement {
       justify-content: space-between;
     }
     #desc {
-      min-width: 300px;
+      flex: 1 1 400px;
     }
     #head {
       display: flex;
@@ -191,6 +191,7 @@ export class EventCard extends LitElement {
       font-weight: 400;
     }
     mini-roster {
+      flex: 5 1 400px;
       margin: 6px 0;
     }
     .summary {

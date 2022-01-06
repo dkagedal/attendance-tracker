@@ -27,6 +27,13 @@ async function getBand(bandid: string) {
   return snapshot.data()!;
 }
 
+async function getBandAdmins(bandid: string) {
+  return await db.collection("bands").doc(bandid).collection("members")
+    .where("admin", "==", true)
+    .where("email", "!=", "")
+    .get();
+}
+
 async function getUser(uid: string) {
   const snapshot = await db
     .collection("users")
@@ -45,8 +52,9 @@ export const joinRequestCreated = functions.firestore
       logger.info("New join request");
       const band = await getBand(bandId);
       const user = await getUser(userId);
+      const admins = await getBandAdmins(bandId);
       db.collection("mail").add({
-        to: "david@kagedal.org",
+        to: admins.docs.map(snap => snap.data().email),
         message: {
           subject: `Någon vill gå med i ${band.display_name}`,
           text: `Begäran om om att få bli medlem i ${band.display_name
@@ -100,6 +108,21 @@ export const approval = functions.firestore
       return "OK";
     }
   );
+
+export const authUserCreated = functions.auth.user().onCreate(
+  async user => {
+    const logger = createLogger({ uid: user.uid });
+    logger.info("New auth user");
+    await db.collection("users").doc(user.uid).set({ bands: {} });
+  });
+
+export const authUserDeleted = functions.auth.user().onDelete(
+  async user => {
+    const logger = createLogger({ uid: user.uid });
+    logger.info("Deleted auth user");
+    // This should trigger userDeleted below as well.
+    await db.collection("users").doc(user.uid).delete();
+  });
 
 export const userDeleted = functions.firestore
   .document("users/{uid}")
