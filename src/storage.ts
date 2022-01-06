@@ -21,28 +21,21 @@ import {
   User as FirebaseUser
 } from "firebase/auth";
 
-// TODO: https://firebase.google.com/docs/firestore/query-data/get-data?authuser=0#custom_objects
 export class User {
-  uid: string;
-  display_name: string;
-  bands: {
-    [id: string]: { display_name: string; };
-  };
+  constructor(
+    public uid: string,
+    public bands: { [id: string]: { display_name: string } }
+  ) { }
 
   static converter: FirestoreDataConverter<User> = {
     toFirestore: (user: User) => {
       return {
-        display_name: user.display_name,
         bands: user.bands
       };
     },
     fromFirestore: (snapshot, options) => {
       const data = snapshot.data(options);
-      return {
-        uid: snapshot.id,
-        display_name: data.display_name,
-        bands: data.bands
-      } as User;
+      return new User(snapshot.id, data.bands);
     }
   };
 
@@ -131,22 +124,12 @@ export async function ensureUserExists(
   if (!snapshot.exists()) {
     const data: User = {
       uid: user.uid,
-      display_name: user.displayName || "??",
       bands: {}
     };
-    console.log("Creating user record for", user.displayName);
+    console.log("Creating user record for", user.uid);
     await setDoc(docRef, data, { merge: true });
   }
   return docRef;
-}
-
-async function getUserOrNull(uid: UID): Promise<User> {
-  const snapshot = await getDoc(User.ref(uid));
-  if (snapshot.exists) {
-    console.log("Found user", snapshot.data());
-    return snapshot.data();
-  }
-  return null;
 }
 
 export interface MemberSettings {
@@ -154,36 +137,6 @@ export interface MemberSettings {
   email?: string;
   reminders?: any;
   calendar?: boolean;
-}
-
-const memberSettingsDefaults: MemberSettings = {
-  display_name: "",
-  email: "",
-  reminders: {},
-  calendar: false
-};
-export async function getMemberSettings(
-  memberRef: DocumentReference
-): Promise<MemberSettings> {
-  const settingsRef = doc(memberRef, "settings", "general");
-  const snapshot = await getDoc(settingsRef);
-  if (!snapshot.exists) {
-    const user = await getUserOrNull(memberRef.id as UID);
-    const settings = Object.assign(
-      { display_name: user.display_name },
-      memberSettingsDefaults
-    ) as MemberSettings;
-    // Don't wait for settings to be set
-    setDoc(settingsRef, settings).catch(reason =>
-      console.log("Failed to set settings:", reason)
-    );
-    return settings;
-  }
-  return Object.assign(
-    {},
-    memberSettingsDefaults,
-    snapshot.data()
-  ) as MemberSettings;
 }
 
 export async function getHostBand(

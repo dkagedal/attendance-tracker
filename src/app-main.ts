@@ -26,7 +26,6 @@ import {
 import {
   CreateJoinRequest,
   db,
-  ensureUserExists,
   getHostBand,
   JoinRequest,
   onJoinRequestSnapshot,
@@ -168,9 +167,12 @@ export class AppMain extends LitElement {
     // If the user is logged in, make sure they exist in our user database.
     if (this.firebaseUser) {
       this.loading.add("bands");
-      const userRef = await ensureUserExists(this.firebaseUser);
+      // const userRef = await ensureUserExists(this.firebaseUser);
+      const userRef = User.ref(this.firebaseUser.uid);
       this.unsubscribeFuncs.push(
-        onSnapshot(userRef, this.currentUserDocChanged.bind(this)
+        onSnapshot(userRef,
+          snapshot => this.currentUserDocChanged(userRef.id, snapshot),
+          error => this.addErrorMessage("Internt fel", error)
         ));
       this.unsubscribeFuncs.push(
         onJoinRequestSnapshot(this.bandid,
@@ -186,7 +188,11 @@ export class AppMain extends LitElement {
 
   // Callback when the /users/* doc for the currently logged in user changes.
   // This can for example be if they are added to a new band.
-  async currentUserDocChanged(snapshot: DocumentSnapshot<User>) {
+  async currentUserDocChanged(uid: string, snapshot: DocumentSnapshot<User>) {
+    if (!snapshot.exists()) {
+      console.log("[app-main] User", uid, "doesn't exist yet. Waiting for cloud function.");
+      return;
+    }
     console.log("[app-main]", snapshot.ref.path, "snapshot:", snapshot);
     const user = snapshot.data();
     console.log("[app-main] New information for user:", user);
@@ -201,7 +207,7 @@ export class AppMain extends LitElement {
     this.requestUpdate();
   }
 
-  addErrorMessage(message: string, details?: string) {
+  addErrorMessage(message: string, details?: any) {
     const id =
       this.errorMessages.length == 0
         ? 1
