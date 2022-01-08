@@ -181,3 +181,10 @@ export const userDeleted = functions.firestore
       deleteDoc(bandRef.collection("join_requests").doc(uid));
     }
   });
+
+export const scheduled = functions.pubsub
+  .schedule("0,10,20,30,40 * * * *")
+  .timeZone("Europe/Stockholm")
+  .onRun(context => {
+    functions.logger.info("Scheduled run");
+  });
