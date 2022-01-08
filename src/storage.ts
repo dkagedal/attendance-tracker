@@ -23,9 +23,9 @@ import {
 
 export class User {
   constructor(
-    public uid: string,
-    public bands: { [id: string]: { display_name: string } }
-  ) { }
+    public readonly uid: string,
+    public readonly bands: { [id: string]: { display_name: string } }
+  ) {}
 
   static converter: FirestoreDataConverter<User> = {
     toFirestore: (user: User) => {
@@ -44,20 +44,28 @@ export class User {
   }
 }
 
-export interface Member {
-  display_name: string;
-  admin: boolean;
-  email?: string;
-}
+export class Member {
+  constructor(
+    public readonly display_name: string,
+    public readonly admin: boolean,
+    public readonly email?: string
+  ) {}
 
-export const memberConverter = {
-  toFirestore: (member: Member) => {
-    return member;
-  },
-  fromFirestore: (snapshot, options) => {
-    return snapshot.data(options) as Member;
+  static converter = {
+    toFirestore: (member: Member) => {
+      return member;
+    },
+    fromFirestore: (snapshot, options) => {
+      return snapshot.data(options) as Member;
+    }
+  };
+
+  static ref(bandid: string, uid: string): DocumentReference<Member> {
+    return doc(db, "bands", bandid, "members", uid).withConverter(
+      Member.converter
+    );
   }
-};
+}
 
 export interface BandEvent {
   type: string;
@@ -207,6 +215,8 @@ export function onJoinRequestSnapshot(
   onNext: (snapshot: QuerySnapshot<JoinRequest>) => void,
   onError?: (error: FirestoreError) => void
 ) {
-  const ref = collection(db, "bands", bandid, "join_requests").withConverter(joinRequestConverter);
+  const ref = collection(db, "bands", bandid, "join_requests").withConverter(
+    joinRequestConverter
+  );
   return onSnapshot(ref, onNext, onError);
 }

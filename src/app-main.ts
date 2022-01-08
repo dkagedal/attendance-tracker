@@ -29,7 +29,7 @@ import {
   getHostBand,
   JoinRequest,
   onJoinRequestSnapshot,
-  User,
+  User
 } from "./storage";
 import "./login-dialog";
 import "./band-schedule";
@@ -40,11 +40,7 @@ import { ActionDetail, List } from "@material/mwc-list";
 import { repeat } from "lit/directives/repeat";
 
 interface BandMap {
-  [key: string]: { display_name: string; }
-}
-
-interface HostMap {
-  [key: string]: string | null;
+  [key: string]: { display_name: string };
 }
 
 interface ErrorMessage {
@@ -53,25 +49,27 @@ interface ErrorMessage {
   details: string;
 }
 
-var hostmap = {} as HostMap;
+var hostBand = undefined;
 async function bandFromHostname(): Promise<string | null> {
-  if (!(location.hostname in hostmap)) {
-    hostmap[location.hostname] = await getHostBand(location.hostname);
+  if (hostBand === undefined) {
+    hostBand = await getHostBand(location.hostname);
   }
-  return hostmap[location.hostname];
+  return hostBand;
 }
 
-async function bandHint(): Promise<string> {
-  const fromUrl =
-    location.hash != ""
-      ? location.hash.substring(1)
-      : location.pathname.substring(1);
-  if (fromUrl.length > 0) {
-    return fromUrl;
-  } else {
-    const fromHost = await bandFromHostname();
-    return fromHost || "";
+// Returns the URL path for accessing a given band.
+async function bandUrlPath(bandId: string): Promise<string> {
+  const isDefault = (await bandFromHostname()) == bandId;
+  return isDefault ? "/" : `/${bandId}`;
+}
+
+// Figure out the current band id, based on URL and default host mappingin the database.
+async function extractBandId(): Promise<string | null> {
+  const s = location.pathname.split("/")[1];
+  if (s.length > 0 && s != "_") {
+    return s;
   }
+  return await bandFromHostname();
 }
 
 @customElement("app-main")
@@ -134,8 +132,11 @@ export class AppMain extends LitElement {
       this.auth = getAuth(this.app);
       this.auth.useDeviceLanguage();
       onAuthStateChanged(this.auth, this.authStateChanged.bind(this));
-      bandHint().then(bandid => {
-        console.log("[app-main] Band hint:", bandid);
+      extractBandId().then(bandid => {
+        console.log("[app-main] Band id:", bandid);
+        if (!bandid) {
+          return;
+        }
         if (!this.bandid) {
           this.bandid = bandid;
         }
@@ -176,18 +177,23 @@ export class AppMain extends LitElement {
       // const userRef = await ensureUserExists(this.firebaseUser);
       const userRef = User.ref(this.firebaseUser.uid);
       this.unsubscribeFuncs.push(
-        onSnapshot(userRef,
+        onSnapshot(
+          userRef,
           snapshot => this.currentUserDocChanged(userRef.id, snapshot),
           error => this.addErrorMessage("Internt fel", error)
-        ));
+        )
+      );
       this.unsubscribeFuncs.push(
-        onJoinRequestSnapshot(this.bandid,
+        onJoinRequestSnapshot(
+          this.bandid,
           (snapshot: QuerySnapshot<JoinRequest>) => {
-          this.joinRequests = snapshot.docs;
+            this.joinRequests = snapshot.docs;
           },
           () => {
             console.log("[join request] Failed to listen for join requests");
-        }));
+          }
+        )
+      );
     }
     this.requestUpdate();
   }
@@ -196,7 +202,11 @@ export class AppMain extends LitElement {
   // This can for example be if they are added to a new band.
   async currentUserDocChanged(uid: string, snapshot: DocumentSnapshot<User>) {
     if (!snapshot.exists()) {
-      console.log("[app-main] User", uid, "doesn't exist yet. Waiting for cloud function.");
+      console.log(
+        "[app-main] User",
+        uid,
+        "doesn't exist yet. Waiting for cloud function."
+      );
       return;
     }
     console.log("[app-main]", snapshot.ref.path, "snapshot:", snapshot);
@@ -222,16 +232,14 @@ export class AppMain extends LitElement {
     this.requestUpdate();
   }
 
-  selectBand(bandId: string) {
+  async selectBand(bandId: string) {
     console.log("Selecting band", bandId);
     this.bandid = bandId;
     // TODO: send event
-    bandFromHostname().then(canon => {
-      const urlPath = canon == bandId ? "/" : `/${bandId}`;
-      if (location.pathname != urlPath) {
-        history.replaceState({}, "", urlPath);
-      }
-    });
+    const urlPath = bandUrlPath(bandId);
+    if (location.pathname != urlPath) {
+      history.replaceState({}, "", urlPath);
+    }
   }
 
   saveNewEvent(): void {
@@ -265,6 +273,10 @@ export class AppMain extends LitElement {
         this.addErrorMessage("Kunde inte ansöka", error);
       }
     );
+  }
+
+  editProfile() {
+    console.log("[app-main] Opening profile editor");
   }
 
   static styles = css`
@@ -353,8 +365,13 @@ export class AppMain extends LitElement {
         @action=${e => {
           const detail = e.detail as ActionDetail;
           console.log("[profile-menu]", detail);
-          if (detail.index == 0) {
-            signOut(this.auth);
+          switch (detail.index) {
+            case 0:
+              this.editProfile();
+              break;
+            case 1:
+              signOut(this.auth);
+              break;
           }
         }}
       >
@@ -372,6 +389,9 @@ export class AppMain extends LitElement {
             : ""}
         </mwc-list-item>
         <li divider role="separator"></li>
+        <mwc-list-item graphic="icon">
+          <span>Redigera profil...</span>
+        </mwc-list-item>
         <mwc-list-item graphic="icon">
           <mwc-icon slot="graphic">exit_to_app</mwc-icon>
           <span>Logga ut</span>
@@ -450,29 +470,47 @@ export class AppMain extends LitElement {
     return html`
       <div class="joinreq toast">
         ${snapshot.data().display_name} har sökt medlemsskap
-        <button @click=${() => { this.viewingJoinRequest = snapshot.id; }}>Visa</button>
+        <button
+          @click=${() => {
+            this.viewingJoinRequest = snapshot.id;
+          }}
+        >
+          Visa
+        </button>
       </div>
-      <mwc-dialog heading="Begäran att gå med" ?open=${snapshot.id == this.viewingJoinRequest}
+      <mwc-dialog
+        heading="Begäran att gå med"
+        ?open=${snapshot.id == this.viewingJoinRequest}
         @closed=${async e => {
-        this.viewingJoinRequest = null;
-        const action = e.detail.action;
-        console.log("[join request] Action:", action);
-        try {
-          if (action == "accept") {
-            await setDoc(snapshot.ref, { approved: true }, { merge: true });
-          } else if (action == "reject") {
-            await deleteDoc(snapshot.ref);
+          this.viewingJoinRequest = null;
+          const action = e.detail.action;
+          console.log("[join request] Action:", action);
+          try {
+            if (action == "accept") {
+              await setDoc(snapshot.ref, { approved: true }, { merge: true });
+            } else if (action == "reject") {
+              await deleteDoc(snapshot.ref);
+            }
+          } catch (e) {
+            console.log("Failed to", action, ":", e);
+            this.addErrorMessage("Kunde inte svara på ansökan", e);
           }
-        } catch (e) {
-          console.log("Failed to", action,":", e);
-          this.addErrorMessage("Kunde inte svara på ansökan", e);
-        }
-      }}>
+        }}
+      >
         <p><b>Namn:</b> ${snapshot.data().display_name}</p>
         <p>Vill du acceptera?</p>
-        <mwc-button slot="primaryAction" dialogAction="accept" label="Ja"></mwc-button>
-        <mwc-button slot="secondaryAction" dialogAction="reject" label="Nej"></mwc-button>
-      </mwc-dialog>`;
+        <mwc-button
+          slot="primaryAction"
+          dialogAction="accept"
+          label="Ja"
+        ></mwc-button>
+        <mwc-button
+          slot="secondaryAction"
+          dialogAction="reject"
+          label="Nej"
+        ></mwc-button>
+      </mwc-dialog>
+    `;
   }
 
   renderMain() {

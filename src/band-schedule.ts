@@ -7,13 +7,7 @@ import "@material/mwc-list/mwc-list-item";
 import "./time-range";
 import "./event-card";
 import "./mini-roster";
-import {
-  BandEvent,
-  bandEventYear,
-  db,
-  Member,
-  memberConverter
-} from "./storage";
+import { BandEvent, bandEventYear, db, Member } from "./storage";
 import {
   collection,
   doc,
@@ -82,7 +76,7 @@ export class BandSchedule extends LitElement {
           this.loaded = true;
         });
         const memberQuery = query(collection(bandref, "members")).withConverter(
-          memberConverter
+          Member.converter
         );
         onSnapshot(memberQuery, (querySnapshot): void => {
           this.members = querySnapshot.docs.sort((m1, m2) => {

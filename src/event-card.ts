@@ -434,10 +434,10 @@ export class EventCard extends LitElement {
   render() {
     return html`
       <div id="main">
-      <div class="hstack">
-        ${this.renderHead()} ${this.cancelled ? "" : this.renderResponses()}
-      </div>
-      ${this.renderComments()}
+        <div class="hstack">
+          ${this.renderHead()} ${this.cancelled ? "" : this.renderResponses()}
+        </div>
+        ${this.renderComments()}
       </div>
       <div style="position: relative">
         <mwc-icon-button
