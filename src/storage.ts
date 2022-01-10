@@ -10,8 +10,7 @@ import {
   collection,
   onSnapshot,
   QuerySnapshot,
-  FirestoreError,
-  FirestoreDataConverter
+  FirestoreError
 } from "firebase/firestore";
 import {
   Auth,
@@ -20,52 +19,7 @@ import {
   onAuthStateChanged,
   User as FirebaseUser
 } from "firebase/auth";
-
-export class User {
-  constructor(
-    public readonly uid: string,
-    public readonly bands: { [id: string]: { display_name: string } }
-  ) {}
-
-  static converter: FirestoreDataConverter<User> = {
-    toFirestore: (user: User) => {
-      return {
-        bands: user.bands
-      };
-    },
-    fromFirestore: (snapshot, options) => {
-      const data = snapshot.data(options);
-      return new User(snapshot.id, data.bands);
-    }
-  };
-
-  static ref(uid: string): DocumentReference<User> {
-    return doc(db, "users", uid).withConverter(User.converter);
-  }
-}
-
-export class Member {
-  constructor(
-    public readonly display_name: string,
-    public readonly admin: boolean,
-    public readonly email?: string
-  ) {}
-
-  static converter = {
-    toFirestore: (member: Member) => {
-      return member;
-    },
-    fromFirestore: (snapshot, options) => {
-      return snapshot.data(options) as Member;
-    }
-  };
-
-  static ref(bandid: string, uid: string): DocumentReference<Member> {
-    return doc(db, "bands", bandid, "members", uid).withConverter(
-      Member.converter
-    );
-  }
-}
+import { User } from "./datamodel";
 
 export interface BandEvent {
   type: string;
@@ -127,7 +81,7 @@ export function initDB(app: FirebaseApp, useEmulator: boolean) {
 export async function ensureUserExists(
   user: FirebaseUser
 ): Promise<DocumentReference<User>> {
-  const docRef = User.ref(user.uid);
+  const docRef = User.ref(db, user.uid);
   const snapshot = await getDoc(docRef);
   if (!snapshot.exists()) {
     const data: User = {

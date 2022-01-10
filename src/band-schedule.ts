@@ -7,7 +7,7 @@ import "@material/mwc-list/mwc-list-item";
 import "./time-range";
 import "./event-card";
 import "./mini-roster";
-import { BandEvent, bandEventYear, db, Member } from "./storage";
+import { BandEvent, bandEventYear, db } from "./storage";
 import {
   collection,
   doc,
@@ -22,6 +22,7 @@ import {
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
+import { Member } from "./datamodel";
 
 interface EventsSnapshot {
   docs: DocumentSnapshot<BandEvent>[];

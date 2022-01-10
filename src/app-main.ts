@@ -1,3 +1,4 @@
+import "./profile-editor";
 import { LitElement, html, css } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import "@material/mwc-button/mwc-button";
@@ -28,8 +29,7 @@ import {
   db,
   getHostBand,
   JoinRequest,
-  onJoinRequestSnapshot,
-  User
+  onJoinRequestSnapshot
 } from "./storage";
 import "./login-dialog";
 import "./band-schedule";
@@ -38,6 +38,8 @@ import { Menu } from "@material/mwc-menu";
 import { IconButton } from "@material/mwc-icon-button/mwc-icon-button";
 import { ActionDetail, List } from "@material/mwc-list";
 import { repeat } from "lit/directives/repeat";
+import { Member, User } from "./datamodel";
+import { ProfileEditor } from "./profile-editor";
 
 interface BandMap {
   [key: string]: { display_name: string };
@@ -81,7 +83,7 @@ export class AppMain extends LitElement {
   @property({ attribute: false })
   loading: Set<string> = new Set(["auth", "bandid"]);
 
-  @property({ type: Object, attribute: false })
+  @state()
   firebaseUser: FirebaseUser | null = null;
 
   // Has a join request been filed?
@@ -109,6 +111,9 @@ export class AppMain extends LitElement {
   @state()
   viewingJoinRequest: string = null;
 
+  @state()
+  membership: Member = null;
+
   @query("#add-dialog-editor")
   addDialogEditor: EventEditor;
 
@@ -118,15 +123,20 @@ export class AppMain extends LitElement {
   @query("#profile-menu")
   profileMenu: Menu;
 
+  @query("#editprofile")
+  profileEditor: ProfileEditor;
+
   auth: Auth = null;
-  unsubscribeFuncs: Array<() => void> = [];
+  unsubscribeUserUpdates: () => void = null;
+  unsubscribeMemberUpdates: () => void = null;
+  unsubscribeJoinRequestUpdates: () => void = null;
 
   constructor() {
     super();
     console.log("[app-main] Constructed");
   }
 
-  updated(changedProperties: { [x: string]: any }) {
+  updated(changedProperties: Map<string, any>) {
     if (changedProperties.has("app") && this.app) {
       console.log("[app-main] Connected to app", this.app);
       this.auth = getAuth(this.app);
@@ -144,62 +154,73 @@ export class AppMain extends LitElement {
         this.requestUpdate();
       });
     }
-  }
 
-  // Clean up stuff that depends on the logged-in user.
-  clearAuthDependencies() {
-    for (const f of this.unsubscribeFuncs) {
-      try {
-        f();
-      } catch (error) {
-        console.log("Failed to unsubscribe:", error);
+    if (changedProperties.has("firebaseUser")) {
+      this.loading.delete("auth");
+      if (this.unsubscribeUserUpdates) {
+        this.unsubscribeUserUpdates();
+        this.unsubscribeUserUpdates = null;
       }
-      this.unsubscribeFuncs = [];
+      this.bands = {};
+
+      if (this.firebaseUser) {
+        // The user is logged in, let's find out what bands the're member of.
+        this.loading.add("bands");
+        this.unsubscribeUserUpdates =
+          onSnapshot(
+            User.ref(db, this.firebaseUser.uid),
+            snapshot => this.currentUserDocChanged(this.firebaseUser.uid, snapshot),
+            error => this.addErrorMessage("Internt fel", error)
+          );
+      }
     }
-    this.bands = {};
-    this.registered = false;
-    this.joinRequests = [];
+
+    if (changedProperties.has("firebaseUser") || changedProperties.has("bandid")) {
+      // When the user/band pair changes, we need to reevaluate the member status.
+      if (this.unsubscribeMemberUpdates) {
+        this.unsubscribeMemberUpdates();
+        this.unsubscribeMemberUpdates = null;
+      }
+      this.joinRequests = [];
+      this.registered = false;
+
+      if (this.firebaseUser && this.bandid) {
+        this.unsubscribeMemberUpdates =
+          onSnapshot(
+            Member.ref(db, this.bandid, this.firebaseUser.uid),
+            snapshot => { this.membership = snapshot.data(); },
+            error => this.addErrorMessage("Internt fel", error)
+          );
+      }
+    }
+
+    if (changedProperties.has("membership")) {
+      if (this.unsubscribeJoinRequestUpdates) {
+        this.unsubscribeJoinRequestUpdates();
+        this.unsubscribeJoinRequestUpdates = null;
+      }
+
+      if (this.membership?.admin) {
+        this.unsubscribeJoinRequestUpdates =
+          onJoinRequestSnapshot(
+            this.bandid,
+            (snapshot: QuerySnapshot<JoinRequest>) => {
+              this.joinRequests = snapshot.docs;
+            },
+            error => this.addErrorMessage("Internt fel [join-request]", error)
+          );
+      }
+    }
   }
 
   // Callback when the Firebase login stat changed.
   async authStateChanged(authUser: FirebaseUser | null) {
     console.log("[app-main] Login state changed:", authUser);
-    // First, stop tracking any previously logged in user.
-    this.clearAuthDependencies();
-
-    // Remember the new user.
     this.firebaseUser = authUser;
-    this.loading.delete("auth");
-
-    // If the user is logged in, make sure they exist in our user database.
-    if (this.firebaseUser) {
-      this.loading.add("bands");
-      // const userRef = await ensureUserExists(this.firebaseUser);
-      const userRef = User.ref(this.firebaseUser.uid);
-      this.unsubscribeFuncs.push(
-        onSnapshot(
-          userRef,
-          snapshot => this.currentUserDocChanged(userRef.id, snapshot),
-          error => this.addErrorMessage("Internt fel", error)
-        )
-      );
-      this.unsubscribeFuncs.push(
-        onJoinRequestSnapshot(
-          this.bandid,
-          (snapshot: QuerySnapshot<JoinRequest>) => {
-            this.joinRequests = snapshot.docs;
-          },
-          () => {
-            console.log("[join request] Failed to listen for join requests");
-          }
-        )
-      );
-    }
-    this.requestUpdate();
   }
 
   // Callback when the /users/* doc for the currently logged in user changes.
-  // This can for example be if they are added to a new band.
+  // This can for example be if they are added to a new band, or on initial load.
   async currentUserDocChanged(uid: string, snapshot: DocumentSnapshot<User>) {
     if (!snapshot.exists()) {
       console.log(
@@ -212,15 +233,15 @@ export class AppMain extends LitElement {
     console.log("[app-main]", snapshot.ref.path, "snapshot:", snapshot);
     const user = snapshot.data();
     console.log("[app-main] New information for user:", user);
-    this.bands = {};
+    let bands = {};
     for (const bandId in user.bands) {
       const band = user.bands[bandId];
       console.log("Found band", bandId, band);
-      this.bands[bandId] = Object.assign({}, band);
+      bands[bandId] = Object.assign({}, band);
     }
-    console.log("[app-main] Bands:", this.bands);
+    console.log("[app-main] Bands:", bands);
     this.loading.delete("bands");
-    this.requestUpdate();
+    this.bands = bands;
   }
 
   addErrorMessage(message: string, details?: any) {
@@ -236,7 +257,7 @@ export class AppMain extends LitElement {
     console.log("Selecting band", bandId);
     this.bandid = bandId;
     // TODO: send event
-    const urlPath = bandUrlPath(bandId);
+    const urlPath = await bandUrlPath(bandId);
     if (location.pathname != urlPath) {
       history.replaceState({}, "", urlPath);
     }
@@ -277,6 +298,7 @@ export class AppMain extends LitElement {
 
   editProfile() {
     console.log("[app-main] Opening profile editor");
+    this.profileEditor.show();
   }
 
   static styles = css`
@@ -534,7 +556,15 @@ export class AppMain extends LitElement {
     if (!(this.bandid in this.bands)) {
       return this.renderRegister();
     }
-    return this.renderSchedule();
+    return html`
+      ${this.renderSchedule()}
+      <profile-editor
+        id="editprofile"
+        bandid=${this.bandid}
+        uid=${this.firebaseUser.uid}
+        ?admin=${this.membership?.admin}
+      ></profile-editor>
+    `;
   }
 
   render() {

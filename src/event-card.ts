@@ -13,12 +13,7 @@ import "./mini-roster";
 import { Menu } from "@material/mwc-menu";
 import { IconButton } from "@material/mwc-icon-button";
 import { SelectedDetail } from "@material/mwc-list/mwc-list-foundation";
-import {
-  BandEvent,
-  hasResponded,
-  Member,
-  ParticipantResponse
-} from "./storage";
+import { BandEvent, hasResponded, ParticipantResponse } from "./storage";
 import { Dialog } from "@material/mwc-dialog";
 import { EventEditor } from "./event-editor";
 import { TextField } from "@material/mwc-textfield";
@@ -32,6 +27,7 @@ import {
   setDoc
 } from "firebase/firestore";
 import { customElement, property, query } from "lit/decorators";
+import { Member } from "./datamodel";
 
 // const responseIcons = {
 //   yes: "thumb_up",

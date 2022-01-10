@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@material/mwc-button": "^0.25.3",
+    "@material/mwc-checkbox": "^0.25.3",
     "@material/mwc-dialog": "^0.25.3",
     "@material/mwc-drawer": "^0.25.3",
     "@material/mwc-fab": "^0.25.3",
@@ -26,6 +27,7 @@
     "@material/mwc-list": "^0.25.3",
     "@material/mwc-menu": "^0.25.3",
     "@material/mwc-radio": "^0.25.3",
+    "@material/mwc-switch": "^0.25.3",
     "@material/mwc-textfield": "^0.25.3",
     "@material/mwc-top-app-bar-fixed": "^0.25.3",
     "firebase": "^9.6.1",

@@ -43,9 +43,19 @@ service cloud.firestore {
         allow delete: if isAdmin(request.auth.uid);
       }
 
-      match /members/{member} {
+      match /members/{uid} {
         allow read: if isMember(request.auth.uid);
-        allow write: if false;
+        allow create, delete: if false;
+
+        // Allow a user to change their own display name
+        allow update: if (request.auth.uid == uid
+                          && request.resource.data.diff(resource.data).affectedKeys()
+                              .hasOnly(['display_name']));
+
+        match /private/settings {
+          allow read: if request.auth.uid == uid;
+          allow write: if request.auth.uid == uid;
+        }
       }
 
     	match /events/{event} {
