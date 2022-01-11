@@ -40,6 +40,7 @@ import { ActionDetail, List } from "@material/mwc-list";
 import { repeat } from "lit/directives/repeat";
 import { Member, User } from "./datamodel";
 import { ProfileEditor } from "./profile-editor";
+import { Dialog } from "@material/mwc-dialog";
 
 interface BandMap {
   [key: string]: { display_name: string };
@@ -123,8 +124,11 @@ export class AppMain extends LitElement {
   @query("#profile-menu")
   profileMenu: Menu;
 
-  @query("#editprofile")
+  @query("profile-editor")
   profileEditor: ProfileEditor;
+
+  @query("mwc-dialog#settings")
+  profileEditorDialog: Dialog;
 
   auth: Auth = null;
   subscriptions: Map<string, () => void> = new Map();
@@ -327,6 +331,7 @@ export class AppMain extends LitElement {
   editProfile() {
     console.log("[app-main] Opening profile editor");
     this.profileEditor.show();
+    this.profileEditorDialog.show();
   }
 
   static styles = css`
@@ -586,12 +591,25 @@ export class AppMain extends LitElement {
     }
     return html`
       ${this.renderSchedule()}
-      <profile-editor
-        id="editprofile"
-        bandid=${this.bandid}
-        uid=${this.firebaseUser.uid}
-        .membership=${this.membership}
-      ></profile-editor>
+      <mwc-dialog id="settings" heading="Inställningar för ${this.bandid}">
+        <profile-editor
+          bandid=${this.bandid}
+          uid=${this.firebaseUser.uid}
+          .membership=${this.membership}
+        ></profile-editor>
+        <mwc-button
+          slot="primaryAction"
+          @click=${async () => {
+            if (await this.profileEditor.save()) {
+              this.profileEditorDialog.close();
+            }
+          }}
+          >OK</mwc-button
+        >
+        <mwc-button slot="secondaryAction" dialogAction="cancel"
+          >Avbryt</mwc-button
+        >
+      </mwc-dialog>
     `;
   }
 

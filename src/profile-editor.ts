@@ -42,7 +42,6 @@ export class ProfileEditor extends LitElement {
           }
         }
         this.requestUpdate();
-        this.dialog.show();
       },
       error => {
         console.log("[profile-editor] Failed to read settings:", error);
@@ -71,72 +70,48 @@ export class ProfileEditor extends LitElement {
   render() {
     const classes = { admin: !!this.membership?.admin };
     return html`
-      <mwc-dialog
-        heading="Inställningar för ${this.bandid}"
-        @closed=${() => {
-          this.settings = MemberSettings.DEFAULT;
-        }}
-      >
-        <div id="contents" class=${classMap(classes)}>
-          <mwc-textfield
-            id="display_name"
-            label="Namn"
-            type="text"
-            placeholder="Ditt namn som det syns för andra"
-            required
-            value=${this.membership?.display_name}
-          ></mwc-textfield>
-          <p>Notifieringar</p>
-          <mwc-textfield
-            id="email"
-            label="E-post"
-            type="email"
-            value=${this.settings.email}
-          ></mwc-textfield>
-          <div id="notify">
-            <mwc-formfield alignEnd spaceBetween label="Nya händelser">
-              <mwc-switch
-                id="new_event"
-                ?selected=${this.settings.notify.new_event}
-              ></mwc-switch>
-            </mwc-formfield>
-            <mwc-formfield
-              alignEnd
-              spaceBetween
-              label="Ny ansökning om medlemskap"
-              class="admin"
-            >
-              <mwc-switch
-                id="new_join_request"
-                ?selected=${this.settings.notify.new_join_request}
-              ></mwc-switch>
-            </mwc-formfield>
-            <mwc-formfield
-              alignEnd
-              spaceBetween
-              label="Ny medlem"
-              class="admin"
-            >
-              <mwc-switch
-                id="new_member"
-                ?selected=${this.settings.notify.new_member}
-              ></mwc-switch>
-            </mwc-formfield>
-          </div>
+      <div id="contents" class=${classMap(classes)}>
+        <mwc-textfield
+          id="display_name"
+          label="Namn"
+          type="text"
+          placeholder="Ditt namn som det syns för andra"
+          required
+          value=${this.membership?.display_name}
+        ></mwc-textfield>
+        <p>Notifieringar</p>
+        <mwc-textfield
+          id="email"
+          label="E-post"
+          type="email"
+          value=${this.settings.email}
+        ></mwc-textfield>
+        <div id="notify">
+          <mwc-formfield alignEnd spaceBetween label="Nya händelser">
+            <mwc-switch
+              id="new_event"
+              ?selected=${this.settings.notify.new_event}
+            ></mwc-switch>
+          </mwc-formfield>
+          <mwc-formfield
+            alignEnd
+            spaceBetween
+            label="Ny ansökning om medlemskap"
+            class="admin"
+          >
+            <mwc-switch
+              id="new_join_request"
+              ?selected=${this.settings.notify.new_join_request}
+            ></mwc-switch>
+          </mwc-formfield>
+          <mwc-formfield alignEnd spaceBetween label="Ny medlem" class="admin">
+            <mwc-switch
+              id="new_member"
+              ?selected=${this.settings.notify.new_member}
+            ></mwc-switch>
+          </mwc-formfield>
         </div>
-        <mwc-button
-          slot="primaryAction"
-          @click=${async () => {
-            if (await this.save()) {
-              this.dialog.close();
-            }
-          }}
-          >OK</mwc-button
-        >
-        <mwc-button slot="secondaryAction" dialogAction="cancel"
-          >Avbryt</mwc-button
-        >
-      </mwc-dialog>
+      </div>
     `;
   }
 
