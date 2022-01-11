@@ -590,7 +590,7 @@ export class AppMain extends LitElement {
         id="editprofile"
         bandid=${this.bandid}
         uid=${this.firebaseUser.uid}
-        ?admin=${this.membership?.admin}
+        .membership=${this.membership}
       ></profile-editor>
     `;
   }

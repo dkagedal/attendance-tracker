@@ -4,12 +4,14 @@ import "@material/mwc-textfield/mwc-textfield";
 import "@material/mwc-dialog/mwc-dialog";
 import "@material/mwc-switch/mwc-switch";
 import { LitElement, html, css } from "lit";
-import { customElement, property, state } from "lit/decorators";
+import { customElement, property, query, state } from "lit/decorators";
 import { TextField } from "@material/mwc-textfield/mwc-textfield";
 import { Member, MemberSettings } from "./datamodel";
 import { getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./storage";
 import { Switch } from "@material/mwc-switch/mwc-switch";
+import { classMap } from "lit/directives/class-map";
+import { Dialog } from "@material/mwc-dialog/mwc-dialog";
 
 @customElement("profile-editor")
 export class ProfileEditor extends LitElement {
@@ -19,32 +21,16 @@ export class ProfileEditor extends LitElement {
   @property()
   uid: string = null;
 
-  // Enable UI for admin access.
-  @property({ type: Boolean })
-  admin: boolean = false;
-
   @state()
   settings: MemberSettings = MemberSettings.DEFAULT;
 
-  @state()
-  member: Member = null;
+  @property({ type: Object, attribute: false })
+  membership: Member = null;
 
-  @state()
-  settingsLoaded = false;
-
-  loaded() {
-    return this.settingsLoaded && this.member != null;
-  }
+  @query("mwc-dialog")
+  dialog: Dialog;
 
   show() {
-    getDoc(Member.ref(db, this.bandid, this.uid)).then(
-      snapshot => {
-        this.member = snapshot.data();
-      },
-      error => {
-        console.log("[profile-editor] Failed to read member:", error);
-      }
-    );
     getDoc(MemberSettings.ref(db, this.bandid, this.uid)).then(
       snapshot => {
         if (snapshot.exists()) {
@@ -55,7 +41,8 @@ export class ProfileEditor extends LitElement {
             this.settings.email = auth.currentUser.email;
           }
         }
-        this.settingsLoaded = true;
+        this.requestUpdate();
+        this.dialog.show();
       },
       error => {
         console.log("[profile-editor] Failed to read settings:", error);
@@ -69,6 +56,9 @@ export class ProfileEditor extends LitElement {
       flex-direction: column;
       width: 300px;
     }
+    #contents:not(.admin) .admin {
+      display: none;
+    }
     #notify {
       padding: 1em;
     }
@@ -76,30 +66,25 @@ export class ProfileEditor extends LitElement {
       width: 100%;
       padding: 8px 0;
     }
-    :host(:not([admin])) .admin {
-      display: none;
-    }
   `;
 
   render() {
+    const classes = { admin: !!this.membership?.admin };
     return html`
       <mwc-dialog
         heading="Inställningar för ${this.bandid}"
-        ?open=${this.loaded()}
         @closed=${() => {
           this.settings = MemberSettings.DEFAULT;
-          this.settingsLoaded = false;
-          this.member = null;
         }}
       >
-        <div id="contents">
+        <div id="contents" class=${classMap(classes)}>
           <mwc-textfield
             id="display_name"
             label="Namn"
             type="text"
             placeholder="Ditt namn som det syns för andra"
             required
-            value=${this.member ? this.member.display_name : ""}
+            value=${this.membership?.display_name}
           ></mwc-textfield>
           <p>Notifieringar</p>
           <mwc-textfield
@@ -139,7 +124,13 @@ export class ProfileEditor extends LitElement {
             </mwc-formfield>
           </div>
         </div>
-        <mwc-button slot="primaryAction" @click=${() => this.save()}
+        <mwc-button
+          slot="primaryAction"
+          @click=${async () => {
+            if (await this.save()) {
+              this.dialog.close();
+            }
+          }}
           >OK</mwc-button
         >
         <mwc-button slot="secondaryAction" dialogAction="cancel"
@@ -149,17 +140,17 @@ export class ProfileEditor extends LitElement {
     `;
   }
 
-  async save() {
-    const dialog = this.shadowRoot.querySelector("mwc-dialog");
+  // Returns true if valid settings were successfully saved, and false if there was a validation problem.
+  async save(): Promise<boolean> {
     const nameField: TextField = this.shadowRoot.querySelector("#display_name");
     const emailField: TextField = this.shadowRoot.querySelector("#email");
     nameField.reportValidity();
     emailField.reportValidity();
     if (!nameField.checkValidity() || !emailField.checkValidity()) {
-      return;
+      return false;
     }
 
-    if (nameField.value != this.member.display_name) {
+    if (nameField.value != this.membership.display_name) {
       console.log("[profile-editor] New display name:", nameField.value);
       await setDoc(
         Member.ref(db, this.bandid, this.uid),
@@ -178,6 +169,6 @@ export class ProfileEditor extends LitElement {
     console.log("[profile-editor] New member settings:", settings);
     await setDoc(MemberSettings.ref(db, this.bandid, this.uid), settings);
 
-    dialog.close();
+    return true;
   }
 }
