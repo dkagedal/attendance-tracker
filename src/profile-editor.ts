@@ -8,7 +8,7 @@ import { customElement, property, state } from "lit/decorators";
 import { TextField } from "@material/mwc-textfield/mwc-textfield";
 import { Member, MemberSettings } from "./datamodel";
 import { getDoc, setDoc } from "firebase/firestore";
-import { db } from "./storage";
+import { auth, db } from "./storage";
 import { Switch } from "@material/mwc-switch/mwc-switch";
 
 @customElement("profile-editor")
@@ -47,7 +47,14 @@ export class ProfileEditor extends LitElement {
     );
     getDoc(MemberSettings.ref(db, this.bandid, this.uid)).then(
       snapshot => {
-        this.settings = snapshot.data();
+        if (snapshot.exists()) {
+          this.settings = snapshot.data();
+        } else {
+          this.settings = MemberSettings.DEFAULT;
+          if (this.uid == auth.currentUser?.uid) {
+            this.settings.email = auth.currentUser.email;
+          }
+        }
         this.settingsLoaded = true;
       },
       error => {
@@ -80,10 +87,10 @@ export class ProfileEditor extends LitElement {
         heading="Inställningar för ${this.bandid}"
         ?open=${this.loaded()}
         @closed=${() => {
-        this.settings = MemberSettings.DEFAULT;
-        this.settingsLoaded = false;
-        this.member = null;
-      }}
+          this.settings = MemberSettings.DEFAULT;
+          this.settingsLoaded = false;
+          this.member = null;
+        }}
       >
         <div id="contents">
           <mwc-textfield
@@ -103,17 +110,30 @@ export class ProfileEditor extends LitElement {
           ></mwc-textfield>
           <div id="notify">
             <mwc-formfield alignEnd spaceBetween label="Nya händelser">
-              <mwc-switch id="new_event"
+              <mwc-switch
+                id="new_event"
                 ?selected=${this.settings.notify.new_event}
               ></mwc-switch>
             </mwc-formfield>
-            <mwc-formfield alignEnd spaceBetween label="Ny ansökning om medlemskap" class="admin">
-              <mwc-switch id="new_join_request"
+            <mwc-formfield
+              alignEnd
+              spaceBetween
+              label="Ny ansökning om medlemskap"
+              class="admin"
+            >
+              <mwc-switch
+                id="new_join_request"
                 ?selected=${this.settings.notify.new_join_request}
               ></mwc-switch>
             </mwc-formfield>
-            <mwc-formfield alignEnd spaceBetween label="Ny medlem" class="admin">
-              <mwc-switch id="new_member"
+            <mwc-formfield
+              alignEnd
+              spaceBetween
+              label="Ny medlem"
+              class="admin"
+            >
+              <mwc-switch
+                id="new_member"
                 ?selected=${this.settings.notify.new_member}
               ></mwc-switch>
             </mwc-formfield>
@@ -141,17 +161,20 @@ export class ProfileEditor extends LitElement {
 
     if (nameField.value != this.member.display_name) {
       console.log("[profile-editor] New display name:", nameField.value);
-      await setDoc(Member.ref(db, this.bandid, this.uid), { display_name: nameField.value }, { merge: true });
+      await setDoc(
+        Member.ref(db, this.bandid, this.uid),
+        { display_name: nameField.value },
+        { merge: true }
+      );
     }
 
-    const getSwitch = (id:string) => this.shadowRoot.querySelector("#" + id) as Switch;
-    const settings = new MemberSettings(
-      emailField.value,
-       { 
-         new_event: getSwitch("new_event").selected,
-         new_join_request: getSwitch("new_join_request").selected,
-         new_member: getSwitch("new_member").selected
-       });
+    const getSwitch = (id: string) =>
+      this.shadowRoot.querySelector("#" + id) as Switch;
+    const settings = new MemberSettings(emailField.value, {
+      new_event: getSwitch("new_event").selected,
+      new_join_request: getSwitch("new_join_request").selected,
+      new_member: getSwitch("new_member").selected
+    });
     console.log("[profile-editor] New member settings:", settings);
     await setDoc(MemberSettings.ref(db, this.bandid, this.uid), settings);
 

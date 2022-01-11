@@ -60,15 +60,19 @@ export class Member {
 // Private settings for a band member, stored in /bands/{bandid}/members/{uid}/private/settings, readable by the member and an admin.
 export class MemberSettings {
   constructor(
-    public readonly email: string,
-    public readonly notify: {
+    public email: string,
+    public notify: {
       new_event: boolean;
       new_join_request: boolean;
       new_member: boolean;
     }
   ) {}
 
-  static DEFAULT = new MemberSettings("", { new_event: true, new_join_request: true, new_member: true });
+  static DEFAULT = new MemberSettings("", {
+    new_event: true,
+    new_join_request: true,
+    new_member: true
+  });
 
   static converter = {
     toFirestore: (settings: MemberSettings): object => {

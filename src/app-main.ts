@@ -80,7 +80,7 @@ export class AppMain extends LitElement {
   app: FirebaseApp = null;
 
   // The things we're waiting for initial values for.
-  @property({ attribute: false })
+  @state()
   loading: Set<string> = new Set(["auth", "bandid"]);
 
   @state()
@@ -127,9 +127,18 @@ export class AppMain extends LitElement {
   profileEditor: ProfileEditor;
 
   auth: Auth = null;
-  unsubscribeUserUpdates: () => void = null;
-  unsubscribeMemberUpdates: () => void = null;
-  unsubscribeJoinRequestUpdates: () => void = null;
+  subscriptions: Map<string, () => void> = new Map();
+
+  subscribe(key: string, fn: () => void) {
+    this.subscriptions[key] = fn;
+  }
+
+  unsubscribe(key: string) {
+    if (this.subscriptions.has(key)) {
+      this.subscriptions[key]();
+      this.subscriptions.delete(key);
+    }
+  }
 
   constructor() {
     super();
@@ -157,58 +166,76 @@ export class AppMain extends LitElement {
 
     if (changedProperties.has("firebaseUser")) {
       this.loading.delete("auth");
-      if (this.unsubscribeUserUpdates) {
-        this.unsubscribeUserUpdates();
-        this.unsubscribeUserUpdates = null;
-      }
+      this.unsubscribe("user");
+      this.unsubscribe("member");
+      this.unsubscribe("join-request");
       this.bands = {};
 
       if (this.firebaseUser) {
         // The user is logged in, let's find out what bands the're member of.
         this.loading.add("bands");
-        this.unsubscribeUserUpdates =
+        this.subscribe(
+          "user",
           onSnapshot(
             User.ref(db, this.firebaseUser.uid),
-            snapshot => this.currentUserDocChanged(this.firebaseUser.uid, snapshot),
-            error => this.addErrorMessage("Internt fel", error)
-          );
+            snapshot =>
+              this.currentUserDocChanged(this.firebaseUser.uid, snapshot),
+            error => {
+              if (error.code != "permission-denied") {
+                this.addErrorMessage("Internt fel [user]", error);
+              }
+            }
+          )
+        );
       }
     }
 
-    if (changedProperties.has("firebaseUser") || changedProperties.has("bandid")) {
+    if (
+      changedProperties.has("firebaseUser") ||
+      changedProperties.has("bandid")
+    ) {
       // When the user/band pair changes, we need to reevaluate the member status.
-      if (this.unsubscribeMemberUpdates) {
-        this.unsubscribeMemberUpdates();
-        this.unsubscribeMemberUpdates = null;
-      }
+      this.unsubscribe("member");
+      this.unsubscribe("join-request");
       this.joinRequests = [];
       this.registered = false;
 
       if (this.firebaseUser && this.bandid) {
-        this.unsubscribeMemberUpdates =
+        this.subscribe(
+          "member",
           onSnapshot(
             Member.ref(db, this.bandid, this.firebaseUser.uid),
-            snapshot => { this.membership = snapshot.data(); },
-            error => this.addErrorMessage("Internt fel", error)
-          );
+            snapshot => {
+              this.membership = snapshot.data();
+            },
+            error => {
+              if (error.code != "permission-denied") {
+                this.addErrorMessage("Internt fel [member]", error);
+              }
+            }
+          )
+        );
       }
     }
 
     if (changedProperties.has("membership")) {
-      if (this.unsubscribeJoinRequestUpdates) {
-        this.unsubscribeJoinRequestUpdates();
-        this.unsubscribeJoinRequestUpdates = null;
-      }
+      this.unsubscribe("join-request");
 
       if (this.membership?.admin) {
-        this.unsubscribeJoinRequestUpdates =
+        this.subscribe(
+          "join-request",
           onJoinRequestSnapshot(
             this.bandid,
             (snapshot: QuerySnapshot<JoinRequest>) => {
               this.joinRequests = snapshot.docs;
             },
-            error => this.addErrorMessage("Internt fel [join-request]", error)
-          );
+            error => {
+              if (error.code != "permission-denied") {
+                this.addErrorMessage("Internt fel [join-request]", error);
+              }
+            }
+          )
+        );
       }
     }
   }
@@ -245,6 +272,7 @@ export class AppMain extends LitElement {
   }
 
   addErrorMessage(message: string, details?: any) {
+    console.log("Displaying error message:", message, details);
     const id =
       this.errorMessages.length == 0
         ? 1
