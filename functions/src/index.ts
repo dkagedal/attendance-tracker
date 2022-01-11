@@ -37,14 +37,6 @@ async function getBandAdmins(bandid: string) {
     .get();
 }
 
-async function getUser(uid: string) {
-  const snapshot = await db
-    .collection("users")
-    .doc(uid)
-    .get();
-  return snapshot.data()!;
-}
-
 async function approve(
   joinRequestSnapshot: functions.firestore.QueryDocumentSnapshot,
   options: { makeAdmin?: boolean } = {}
@@ -103,7 +95,7 @@ export const joinRequestCreated = functions.firestore
       }
       // Otherwise, notify admins.
       const band = await getBand(bandId);
-      const user = await getUser(userId);
+      const user = await admin.auth().getUser(userId);
       const admins = await getBandAdmins(bandId);
       db.collection("mail").add({
         to: admins.docs.map(snap => snap.data().email),
@@ -111,10 +103,10 @@ export const joinRequestCreated = functions.firestore
           subject: `Någon vill gå med i ${band.display_name}`,
           text: `Begäran om om att få bli medlem i ${
             band.display_name
-          } via ${snapshot.get("url") || "??"}.
+          } via ${snapshot.get("url") || "??"}:
 
-Namn: ${user.display_name}
-        `
+  ${user.displayName ? user.displayName : " "} <${user.email}>
+`
         }
       });
     }
