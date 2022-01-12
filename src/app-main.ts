@@ -341,6 +341,38 @@ export class AppMain extends LitElement {
       right: 1rem;
     }
 
+    @media (max-width: 599px) {
+      #body {
+        margin: 0 16px;
+      }
+    }
+
+    @media (min-width: 600px) and (max-width: 904px) {
+      #body {
+        margin: 0 32px;
+      }
+    }
+
+    @media (min-width: 905px) and (max-width: 1239px) {
+      #body {
+        margin: 0 auto;
+        width: 840px;
+      }
+    }
+
+    @media (min-width: 1240px) and (max-width: 1493px) {
+      #body {
+        margin: 0 200px;
+      }
+    }
+
+    @media (min-width: 1440px) {
+      #body {
+        margin: 0 auto;
+        width: 1040px;
+      }
+    }
+
     #schedule {
       display: flex;
       justify-content: center;
@@ -637,7 +669,7 @@ export class AppMain extends LitElement {
               }}
             ></mwc-icon-button>
             ${this.renderProfileMenu()}
-            <div>
+            <div id="body">
               ${this.renderProgress()}
               ${repeat(
                 this.errorMessages,
