@@ -75,12 +75,12 @@ async function approve(
 }
 
 export const joinRequestCreated = functions.firestore
-  .document("bands/{bandId}/join_requests/{userId}")
+  .document("bands/{bandId}/join_requests/{uid}")
   .onCreate(
     async (snapshot, context): Promise<void> => {
       const bandId = context.params.bandId;
-      const userId = context.params.userId;
-      const logger = createLogger({ bandId, userId });
+      const uid = context.params.uid;
+      const logger = createLogger({ bandId, uid });
       logger.info("New join request");
       // If this is the first user to apply, auto-accept and make them admin.
       const members = await db
@@ -95,11 +95,12 @@ export const joinRequestCreated = functions.firestore
       }
       // Otherwise, notify admins.
       const band = await getBand(bandId);
-      const user = await admin.auth().getUser(userId);
+      const user = await admin.auth().getUser(uid);
       const admins = await getBandAdmins(bandId);
       db.collection("mail").add({
         to: admins.docs.map(snap => snap.data().email),
         message: {
+          messageId: uid + "-joinreq",
           subject: `Någon vill gå med i ${band.display_name}`,
           text: `Begäran om om att få bli medlem i ${
             band.display_name
@@ -112,20 +113,63 @@ export const joinRequestCreated = functions.firestore
     }
   );
 
+  export const memberCreated = functions.firestore
+  .document("bands/{bandId}/members/{uid}")
+  .onCreate(
+    async (snapshot, context): Promise<void> => {
+      const bandId = context.params.bandId;
+      const uid = context.params.uid;
+      const logger = createLogger({ bandId, uid });
+      logger.info("New member");
+      // Notify admins.
+      const band = await getBand(bandId);
+      const user = await admin.auth().getUser(uid);
+      const admins = await getBandAdmins(bandId);
+      db.collection("mail").add({
+        to: admins.docs.map(snap => snap.data().email),
+        message: {
+          messageId: uid + "-join",
+          subject: `Ny medlem i ${band.display_name}`,
+          text: `Ny medlem i ${band.display_name}:
+
+  ${snapshot.get("display_name")}
+
+Inloggad som:
+
+  ${user.displayName ? user.displayName : " "} <${user.email}>
+`
+        }
+      });
+    }
+  );
+
 export const approval = functions.firestore
-  .document("bands/{bandId}/join_requests/{userId}")
+  .document("bands/{bandId}/join_requests/{uid}")
   .onUpdate(
     async (change, context): Promise<string> => {
       const bandId = context.params.bandId;
-      const userId = context.params.userId;
-      const logger = createLogger({ bandId, userId });
-      logger.info("Join request for", userId, "was updated");
+      const uid = context.params.uid;
+      const logger = createLogger({ bandId, uid });
+      logger.info("Join request for", uid, "was updated");
       if (change.before.get("approved") || !change.after.get("approved")) {
         logger.info("Not approved, nothing to do");
         return "OK";
       }
       const joinRequest = change.after.data();
-      logger.info("Approving join request for", userId, ":", joinRequest);
+      logger.info("Approving join request for", uid, ":", joinRequest);
+      const band = await getBand(bandId);
+      const admins = await getBandAdmins(bandId);
+      db.collection("mail").add({
+        to: admins.docs.map(snap => snap.data().email),
+        Headers: {
+          "In-Reply-To": uid + "-joinreq"
+        },
+        message: {
+          messageId: uid + "-approved",
+          subject: `Någon vill gå med i ${band.display_name}`,
+          text: `Insläppt.`
+        }
+      });
       return approve(change.after);
     }
   );
