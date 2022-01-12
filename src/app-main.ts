@@ -101,9 +101,6 @@ export class AppMain extends LitElement {
   @property({ type: Object, attribute: false })
   bands: BandMap = {};
 
-  @property({ type: Boolean })
-  openAddDialog = false;
-
   @property({ attribute: false })
   errorMessages: Array<ErrorMessage> = [];
 
@@ -115,6 +112,9 @@ export class AppMain extends LitElement {
 
   @state()
   membership: Member = null;
+
+  @query("mwc-dialog#add-dialog")
+  addDialog: Dialog;
 
   @query("#add-dialog-editor")
   addDialogEditor: EventEditor;
@@ -307,11 +307,12 @@ export class AppMain extends LitElement {
       addDoc(collection(db, "bands", this.bandid, "events"), data).then(
         () => {
           console.log("Add successful");
-          this.openAddDialog = false;
+          this.addDialog.close();
         },
         reason => {
           console.log("Add failed:", reason);
           this.addErrorMessage("Kunde inte lägga till händelse", reason);
+          this.addDialog.close();
         }
       );
     }
@@ -433,7 +434,7 @@ export class AppMain extends LitElement {
     const list = e.target as List;
     const selectedItem = list.selected as HTMLElement;
     const bandid = selectedItem.dataset["bandid"];
-    this.openDrawer = false;
+    this.addDialog.close();
     this.selectBand(bandid);
   }
 
@@ -496,19 +497,15 @@ export class AppMain extends LitElement {
           id="band"
           bandid=${this.bandid}
           uid=${this.firebaseUser.uid}
-          @loaded=${() => {this.loadingSchedule = false;}}
+          @loaded=${() => {
+            this.loadingSchedule = false;
+          }}
         >
         </band-schedule>
       </div>
-      <mwc-fab
-        id="fab"
-        icon="add"
-        @click=${() => {
-          this.openAddDialog = true;
-        }}
-      >
+      <mwc-fab id="fab" icon="add" @click=${() => this.addDialog.show()}>
       </mwc-fab>
-      <mwc-dialog id="add-dialog" ?open=${this.openAddDialog}>
+      <mwc-dialog id="add-dialog">
         <event-editor id="add-dialog-editor"></event-editor>
         <mwc-button
           slot="primaryAction"
@@ -548,7 +545,11 @@ export class AppMain extends LitElement {
 
   renderProgress() {
     if (this.isLoading() || this.loadingSchedule) {
-      console.log("[app-main] Still waiting for", this.loading, this.loadingSchedule);
+      console.log(
+        "[app-main] Still waiting for",
+        this.loading,
+        this.loadingSchedule
+      );
       return html`
         <mwc-linear-progress indeterminate></mwc-linear-progress>
       `;
@@ -659,7 +660,9 @@ export class AppMain extends LitElement {
               icon="menu"
               slot="navigationIcon"
               @click=${() => {
-                const drawer =  this.shadowRoot.getElementById("mainMenuDrawer") as Drawer;
+                const drawer = this.shadowRoot.getElementById(
+                  "mainMenuDrawer"
+                ) as Drawer;
                 drawer.open = true;
               }}
             ></mwc-icon-button>
