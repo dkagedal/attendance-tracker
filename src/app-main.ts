@@ -41,6 +41,7 @@ import { repeat } from "lit/directives/repeat";
 import { Member, User } from "./datamodel";
 import { ProfileEditor } from "./profile-editor";
 import { Dialog } from "@material/mwc-dialog";
+import { Drawer } from "@material/mwc-drawer/mwc-drawer";
 
 interface BandMap {
   [key: string]: { display_name: string };
@@ -85,6 +86,9 @@ export class AppMain extends LitElement {
   loading: Set<string> = new Set(["auth", "bandid"]);
 
   @state()
+  loadingSchedule: boolean = false;
+
+  @state()
   firebaseUser: FirebaseUser | null = null;
 
   // Has a join request been filed?
@@ -96,9 +100,6 @@ export class AppMain extends LitElement {
 
   @property({ type: Object, attribute: false })
   bands: BandMap = {};
-
-  @property({ type: Boolean })
-  openDrawer = false;
 
   @property({ type: Boolean })
   openAddDialog = false;
@@ -164,6 +165,7 @@ export class AppMain extends LitElement {
           this.bandid = bandid;
         }
         this.loading.delete("bandid");
+        this.loadingSchedule = true;
         this.requestUpdate();
       });
     }
@@ -494,6 +496,7 @@ export class AppMain extends LitElement {
           id="band"
           bandid=${this.bandid}
           uid=${this.firebaseUser.uid}
+          @loaded=${() => {this.loadingSchedule = false;}}
         >
         </band-schedule>
       </div>
@@ -544,8 +547,8 @@ export class AppMain extends LitElement {
   }
 
   renderProgress() {
-    if (this.isLoading()) {
-      console.log("[app-main] Still waiting for", this.loading);
+    if (this.isLoading() || this.loadingSchedule) {
+      console.log("[app-main] Still waiting for", this.loading, this.loadingSchedule);
       return html`
         <mwc-linear-progress indeterminate></mwc-linear-progress>
       `;
@@ -647,7 +650,7 @@ export class AppMain extends LitElement {
 
   render() {
     return html`
-      <mwc-drawer id="mainMenuDrawer" type="modal" ?open=${this.openDrawer}>
+      <mwc-drawer id="mainMenuDrawer" type="modal">
         <div>${this.renderDrawer()}</div>
         <div slot="appContent">
           <mwc-top-app-bar-fixed>
@@ -656,7 +659,8 @@ export class AppMain extends LitElement {
               icon="menu"
               slot="navigationIcon"
               @click=${() => {
-                this.openDrawer = !this.openDrawer;
+                const drawer =  this.shadowRoot.getElementById("mainMenuDrawer") as Drawer;
+                drawer.open = true;
               }}
             ></mwc-icon-button>
             <div slot="title">Närvarokollen</div>
@@ -668,9 +672,8 @@ export class AppMain extends LitElement {
                 this.profileMenu.open = !this.profileMenu.open;
               }}
             ></mwc-icon-button>
-            ${this.renderProfileMenu()}
+            ${this.renderProfileMenu()} ${this.renderProgress()}
             <div id="body">
-              ${this.renderProgress()}
               ${repeat(
                 this.errorMessages,
                 (em: ErrorMessage) => em.id,

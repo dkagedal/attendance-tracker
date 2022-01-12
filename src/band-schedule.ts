@@ -20,7 +20,7 @@ import {
   where
 } from "firebase/firestore";
 import { css, html, LitElement } from "lit";
-import { customElement, property } from "lit/decorators";
+import { customElement, property, state } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
 import { Member } from "./datamodel";
 
@@ -40,7 +40,7 @@ export class BandSchedule extends LitElement {
   @property({ type: Object, attribute: false })
   events: EventsSnapshot = { docs: [], size: 0 };
 
-  @property({ type: Boolean })
+  @state()
   loaded = false;
 
   @property({ type: Object })
@@ -53,45 +53,45 @@ export class BandSchedule extends LitElement {
   members: QueryDocumentSnapshot<Member>[] = [];
 
   updated(changedProperties: any) {
-    changedProperties.forEach((_oldValue: any, propName: string) => {
-      if (propName == "bandid") {
-        if (this.bandid == null) {
-          this.events = { docs: [], size: 0 };
-          this.selected_event = null;
-          this.members = [];
-          return;
-        }
-
-        const now = Timestamp.now();
-        const nowMinus24h = new Timestamp(now.seconds - 86400, 0).toDate();
-        const yesterday = nowMinus24h.toISOString().split("T")[0];
-        console.log("Getting band events and members...", yesterday);
-        const bandref = doc(db, "bands", this.bandid);
-        const eventQuery = query(
-          collection(bandref, "events"),
-          where("start", ">=", yesterday),
-          orderBy("start")
-        );
-        onSnapshot(eventQuery, (querySnapshot): void => {
-          this.events = (querySnapshot as unknown) as EventsSnapshot;
-          this.loaded = true;
-        });
-        const memberQuery = query(collection(bandref, "members")).withConverter(
-          Member.converter
-        );
-        onSnapshot(memberQuery, (querySnapshot): void => {
-          this.members = querySnapshot.docs.sort((m1, m2) => {
-            if (m1.id < m2.id) {
-              return -1;
-            }
-            if (m1.id > m2.id) {
-              return 1;
-            }
-            return 0;
-          });
-        });
+    console.log("[schedule] Updated", changedProperties);
+    if (changedProperties.has("bandid")) {
+      if (this.bandid == null) {
+        this.events = { docs: [], size: 0 };
+        this.selected_event = null;
+        this.members = [];
+        return;
       }
-    });
+
+      const now = Timestamp.now();
+      const nowMinus24h = new Timestamp(now.seconds - 86400, 0).toDate();
+      const yesterday = nowMinus24h.toISOString().split("T")[0];
+      console.log("[schedule] Getting band events and members...", yesterday);
+      const bandref = doc(db, "bands", this.bandid);
+      const eventQuery = query(
+        collection(bandref, "events"),
+        where("start", ">=", yesterday),
+        orderBy("start")
+      );
+      onSnapshot(eventQuery, (querySnapshot): void => {
+        this.events = (querySnapshot as unknown) as EventsSnapshot;
+        this.loaded = true;
+        this.dispatchEvent(new CustomEvent("loaded"));
+      });
+      const memberQuery = query(collection(bandref, "members")).withConverter(
+        Member.converter
+      );
+      onSnapshot(memberQuery, (querySnapshot): void => {
+        this.members = querySnapshot.docs.sort((m1, m2) => {
+          if (m1.id < m2.id) {
+            return -1;
+          }
+          if (m1.id > m2.id) {
+            return 1;
+          }
+          return 0;
+        });
+      });
+    }
   }
 
   static get styles() {
@@ -132,10 +132,6 @@ export class BandSchedule extends LitElement {
       currentYear.events.push(e.data());
     });
     return html`
-      <mwc-linear-progress
-        indeterminate
-        ?closed=${this.loaded}
-      ></mwc-linear-progress>
       <div class="list">
         ${repeat(
           this.events.docs,
@@ -148,13 +144,13 @@ export class BandSchedule extends LitElement {
             ></event-card>
           `
         )}
-        <div
-          style="display: ${this.loaded && this.events.size == 0
-            ? "block"
-            : "none"}"
-        >
-          Inget planerat
-        </div>
+        ${this.loaded
+          ? ""
+          : html`
+              <div>
+                Inget planerat
+              </div>
+            `}
       </div>
     `;
   }
