@@ -2,7 +2,8 @@ import "./response-chip";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
-import { BandEvent, Member, ParticipantResponse } from "./datamodel";
+import { Member, ParticipantResponse } from "./datamodel";
+import { BandEvent } from "./model/bandevent";
 
 interface Responses {
   [uid: string]: ParticipantResponse;
@@ -44,7 +45,6 @@ export class MiniRoster extends LitElement {
         <p class="cancelled">I N S T Ä L L T</p>
       `;
     }
-    console.log("ROSTER", this.members, this.responses);
     return html`
       ${repeat(
         this.members,

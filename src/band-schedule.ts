@@ -19,8 +19,9 @@ import {
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
-import { BandEvent, Member, UID } from "./datamodel";
+import {  Member, UID } from "./datamodel";
 import { db } from "./storage";
+import { BandEvent } from "./model/bandevent";
 
 @customElement("band-schedule")
 export class BandSchedule extends LitElement {
@@ -84,7 +85,6 @@ export class BandSchedule extends LitElement {
           }
           return 0;
         });
-        console.log("SCHEDULE MEMBERS", querySnapshot, this.members);
       });
     }
   }
@@ -151,9 +151,6 @@ export class BandSchedule extends LitElement {
   }
 
   selected(selectEvent: any, gig: Event) {
-    // console.log("band-schedule selected", selectEvent.target);
-    // this.selected_event = gig.id
-
     let listItem = selectEvent.target;
     let event = new CustomEvent("select-event", {
       detail: {

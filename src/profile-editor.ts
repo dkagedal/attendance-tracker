@@ -7,7 +7,7 @@ import { LitElement, html, css } from "lit";
 import { customElement, property, query, state } from "lit/decorators";
 import { TextField } from "@material/mwc-textfield/mwc-textfield";
 import { Member, MemberSettings } from "./datamodel";
-import { getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./storage";
 import { Switch } from "@material/mwc-switch/mwc-switch";
 import { classMap } from "lit/directives/class-map";
@@ -128,7 +128,8 @@ export class ProfileEditor extends LitElement {
     if (nameField.value != this.membership.display_name) {
       console.log("[profile-editor] New display name:", nameField.value);
       await setDoc(
-        Member.ref(db, this.bandid, this.uid),
+        //Member.ref(db, this.bandid, this.uid),
+        doc(db, "bands", this.bandid, "members", this.uid),
         { display_name: nameField.value },
         { merge: true }
       );
@@ -142,7 +143,7 @@ export class ProfileEditor extends LitElement {
       new_member: getSwitch("new_member").selected
     });
     console.log("[profile-editor] New member settings:", settings);
-    await setDoc(MemberSettings.ref(db, this.bandid, this.uid), settings);
+    await setDoc(MemberSettings.ref(db, this.bandid, this.uid).withConverter(MemberSettings.converter), settings);
 
     return true;
   }

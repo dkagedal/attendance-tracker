@@ -38,10 +38,11 @@ import { Menu } from "@material/mwc-menu";
 import { IconButton } from "@material/mwc-icon-button/mwc-icon-button";
 import { ActionDetail, List } from "@material/mwc-list";
 import { repeat } from "lit/directives/repeat";
-import { Member, User } from "./datamodel";
+import {  Member, User } from "./datamodel";
 import { ProfileEditor } from "./profile-editor";
 import { Dialog } from "@material/mwc-dialog";
 import { Drawer } from "@material/mwc-drawer/mwc-drawer";
+import { BandEvent } from "./model/bandevent";
 
 interface BandMap {
   [key: string]: { display_name: string };
@@ -302,9 +303,9 @@ export class AppMain extends LitElement {
     console.log("[app-main] Editor:", editor);
     if (editor.checkValidity()) {
       editor.save();
-      const data = editor.data;
-      console.log("New data:", data);
-      addDoc(collection(db, "bands", this.bandid, "events"), data).then(
+      const event = editor.data;
+      console.log("New data:", event);
+      addDoc(collection(db, "bands", this.bandid, "events"), BandEvent.toFirestore(event)).then(
         () => {
           console.log("Add successful");
           this.addDialog.close();

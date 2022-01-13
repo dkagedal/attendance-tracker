@@ -21,7 +21,6 @@ import { EventEditor } from "./event-editor";
 import { collection, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { customElement, property, query, state } from "lit/decorators";
 import {
-  BandEvent,
   Member,
   Participant,
   ParticipantResponse,
@@ -31,6 +30,7 @@ import {
 import { ResponseSelector } from "./response-selector";
 import { Button } from "@material/mwc-button";
 import { List } from "@material/mwc-list";
+import { BandEvent } from "./model/bandevent";
 
 @customElement("event-card")
 export class EventCard extends LitElement {
@@ -191,9 +191,6 @@ export class EventCard extends LitElement {
     #prompt {
       position: relative;
     }
-    #prompt [mwc-list-item]:not([selected]) [slot="graphic"] {
-      display: none;
-    }
   `;
 
   menuAction(event: CustomEvent): void {
@@ -234,6 +231,7 @@ export class EventCard extends LitElement {
             item.dataset["response"] as ParticipantResponse
           );
         }
+        this.requestUpdate();
     }
   }
 
@@ -246,6 +244,9 @@ export class EventCard extends LitElement {
       return "";
     }
     const member = this.getMemberData(this.responseuid);
+    if (!member) {
+      return "";
+    }
     const participant = this.participants[this.responseuid];
     return html`
       <mwc-dialog
@@ -339,22 +340,23 @@ export class EventCard extends LitElement {
     return html`
       ${repeat(["yes", "no", "sub", "na"], resp => {
         const selected = resp == currentResponse;
-        // console.log(
-        //   "RESPONSE",
-        //   this.event.data().type,
-        //   group,
-        //   resp,
-        //   currentResponse,
-        //   selected
-        // );
+        console.log(
+          "RESPONSE",
+          this.event.type,
+          group,
+          resp,
+          currentResponse,
+          selected
+        );
         return html`
-          <mwc-radio-list-item
+          <mwc-list-item graphic="icon"
             group=${this.event.ref.id + "-" + group}
             data-response=${resp}
             ?selected=${selected}
           >
-            ${responseString(resp as ParticipantResponse)}
-          </mwc-radio-list-item>
+            ${selected ? html`<mwc-icon slot="graphic">check</mwc-icon>` : ""}
+            <span>${responseString(resp as ParticipantResponse)}</span>
+          </mwc-list-item>
         `;
       })}
     `;
@@ -442,7 +444,6 @@ export class EventCard extends LitElement {
     for (const uid in this.participants) {
       responses[uid] = this.participants[uid].response;
     }
-    console.log("RESPONSES", responses);
     return html`
       ${this.renderResponseDialog(this.event)}
       <mini-roster
@@ -475,13 +476,13 @@ export class EventCard extends LitElement {
           .anchor=${this.menuButton}
           @action=${this.menuAction}
         >
-          <mwc-list-item>Redigera</mwc-list-item>
-          <mwc-list-item
+          <mwc-list-item graphic="icon">Redigera</mwc-list-item>
+          <mwc-list-item graphic="icon"
             >${this.cancelled ? "Ångra ställ in" : "Ställ in"}</mwc-list-item
           >
-          <mwc-list-item>Ändra svar</mwc-list-item>
+          <mwc-list-item graphic="icon">Ändra svar</mwc-list-item>
           <li divider role="separator"></li>
-          ${auth.currentUser.uid in this.participants
+          ${!this.cancelled && auth.currentUser.uid in this.participants
             ? this.renderResponseMenuItems(
                 "menu-response",
                 this.participants[auth.currentUser.uid].response
@@ -499,9 +500,9 @@ export class EventCard extends LitElement {
         console.log("Invalid data, not saving");
       }
       this.editor.save();
-      const data = this.editor.data;
-      console.log("New data:", data);
-      setDoc(this.event.ref, data, { merge: false }).then(
+      const event = this.editor.data;
+      console.log("New data:", event);
+      setDoc(this.event.ref, BandEvent.toFirestore(event), { merge: false }).then(
         () => console.log("Update successful"),
         reason => console.log("Update failed:", reason)
       );

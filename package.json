@@ -31,6 +31,7 @@
     "@material/mwc-textfield": "^0.25.3",
     "@material/mwc-top-app-bar-fixed": "^0.25.3",
     "firebase": "^9.6.1",
+    "firebase-admin": "^10.0.1",
     "firebaseui": "^0.600.0",
     "lit": "^2.0.2"
   },

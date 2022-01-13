@@ -7,7 +7,7 @@ import "./datetime-input";
 import { DatetimeInput } from "./datetime-input";
 import { TextField } from "@material/mwc-textfield";
 import { customElement, property, query } from "lit/decorators";
-import { BandEvent } from "./datamodel";
+import { BandEvent } from "./model/bandevent";
 
 @customElement("event-editor")
 export class EventEditor extends LitElement {
