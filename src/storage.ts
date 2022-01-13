@@ -34,21 +34,6 @@ export function bandEventYear(event: BandEvent): string {
   return event.start.split("-", 1)[0];
 }
 
-export type ParticipantResponse = "yes" | "no" | "maybe" | "sub" | null;
-
-export function hasResponded(response: ParticipantResponse): boolean {
-  switch (response) {
-    case "yes":
-    case "no":
-    case "sub":
-      return true;
-    default:
-      return false;
-  }
-}
-
-export type UID = string;
-
 export var db: Firestore;
 export var auth: Auth;
 

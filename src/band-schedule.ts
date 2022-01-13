@@ -15,7 +15,6 @@ import {
   onSnapshot,
   orderBy,
   query,
-  QueryDocumentSnapshot,
   Timestamp,
   where
 } from "firebase/firestore";
@@ -50,7 +49,7 @@ export class BandSchedule extends LitElement {
   event_expanded = false;
 
   @property({ type: Array, attribute: false })
-  members: QueryDocumentSnapshot<Member>[] = [];
+  members: Member[] = [];
 
   updated(changedProperties: any) {
     console.log("[schedule] Updated", changedProperties);
@@ -81,15 +80,17 @@ export class BandSchedule extends LitElement {
         Member.converter
       );
       onSnapshot(memberQuery, (querySnapshot): void => {
-        this.members = querySnapshot.docs.sort((m1, m2) => {
-          if (m1.id < m2.id) {
+        this.members = querySnapshot.docs.map(s => s.data());
+        this.members.sort((m1, m2) => {
+          if (m1.uid < m2.uid) {
             return -1;
           }
-          if (m1.id > m2.id) {
+          if (m1.uid > m2.uid) {
             return 1;
           }
           return 0;
         });
+        console.log("SCHEDULE MEMBERS", querySnapshot, this.members);
       });
     }
   }

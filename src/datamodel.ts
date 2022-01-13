@@ -5,11 +5,36 @@ import {
   FirestoreDataConverter
 } from "firebase/firestore";
 
+export type ParticipantResponse = "yes" | "no" | "sub" | "na";
+export const responseLabels: Map<ParticipantResponse, string> = new Map([
+  ["yes", "Kommer"],
+  ["no", "Kommer inte"],
+  ["sub", "Skickar ersättare"],
+  ["na", "Inget svar"]
+]);
+
+export function responseString(response: ParticipantResponse) {
+  return responseLabels.get(response);
+}
+
+export function hasResponded(response: ParticipantResponse): boolean {
+  switch (response) {
+    case "yes":
+    case "no":
+    case "sub":
+      return true;
+    default:
+      return false;
+  }
+}
+
+export type UID = string;
+
 // Global user data, stored in /users/{uid}. This is not used for much other than as a way
 // to provide a list of bands to switch to in the UI.
 export class User {
   constructor(
-    public readonly uid: string,
+    public readonly uid: UID,
     public readonly bands: { [id: string]: { display_name: string } }
   ) {}
 
@@ -33,16 +58,21 @@ export class User {
 // Non-private band member data, stored in /bands/{bandid}/members/{uid}, visible to all band members.
 export class Member {
   constructor(
+    public readonly uid: UID,
     public readonly display_name: string,
     public readonly admin: boolean
   ) {}
 
   static converter = {
     toFirestore: (member: Member) => {
-      return member;
+      return {
+        display_name: member.display_name,
+        admin: member.admin
+      };
     },
     fromFirestore: (snapshot, options) => {
-      return snapshot.data(options) as Member;
+      const data = snapshot.data(options);
+      return new Member(snapshot.id, data.display_name, data.admin);
     }
   };
 
@@ -100,5 +130,65 @@ export class MemberSettings {
       "private",
       "settings"
     ).withConverter(MemberSettings.converter);
+  }
+}
+
+// A participation record.
+export class Participant {
+  constructor(
+    public uid: UID,
+    public response: ParticipantResponse,
+    public comment: string
+  ) {}
+
+  static DEFAULT = new Participant(null, "na", "");
+
+  static toFirestore(participant: Participant): object {
+    return {
+      attending: participant.response,
+      comment: participant.comment
+    };
+  }
+
+  static fromFirestore(snapshot: any, options: any): Participant {
+    const data = snapshot.data(options);
+    console.log("BEFORE", data);
+    if (["yes", "no", "sub", "na"].indexOf(data.attending) == -1) {
+      data.attending = "na";
+    }
+    console.log("AFTER", data);
+    return new Participant(
+      snapshot.id,
+      data.attending || "na",
+      data.comment || ""
+    );
+  }
+
+  static ref(
+    db: Firestore,
+    bandid: string,
+    eventid: string,
+    uid: UID
+  ): DocumentReference<Participant> {
+    return doc(
+      db,
+      "bands",
+      bandid,
+      "events",
+      eventid,
+      "participants",
+      uid
+    ).withConverter(Participant);
+  }
+
+  hasResponded(): boolean {
+    switch (this.response) {
+      case "yes":
+      case "no":
+      case "sub":
+        return true;
+      default:
+        return false;
+    }
   }
 }

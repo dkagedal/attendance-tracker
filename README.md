@@ -80,10 +80,11 @@ $ firebase deploy
             * Field *start*: Timestamp when the event starts
             * Field *stop*: (optional) timestamp when the event ends
         * Collection *participants*
-            * Document id=user id
-                * Field *attending*: yes/no/maybe/replacement
+            * Document id=uid
+                * Field *attending*: yes/no/sub/na
+                * Field *comment*: a string
     * Collection *users*
-        * Document id=user id
+        * Document id=uid
             * Field *admin*: boolean true if user can manage band config
             * Field *display_name*: Name to use for the user in context of this band
 * Collection *admins*: The site admins

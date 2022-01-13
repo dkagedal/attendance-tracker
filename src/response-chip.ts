@@ -22,6 +22,7 @@ export class ResponseChip extends LitElement {
         text-align: center;
         text-overflow: clip;
         color: rgba(0, 0, 0, 0.54);
+        transition: background 0.4s;
       }
 
       :host([response="yes"]) {

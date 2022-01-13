@@ -1,3 +1,4 @@
+import "./response-selector";
 import "./event-editor";
 import { LitElement, html, css } from "lit";
 import { repeat } from "lit/directives/repeat";
@@ -8,48 +9,36 @@ import "@material/mwc-icon-button";
 import "@material/mwc-menu";
 import "@material/mwc-formfield";
 import "@material/mwc-radio";
+import "@material/mwc-list/mwc-radio-list-item";
 import "./time-range";
 import "./mini-roster";
 import { Menu } from "@material/mwc-menu";
 import { IconButton } from "@material/mwc-icon-button";
-import { SelectedDetail } from "@material/mwc-list/mwc-list-foundation";
-import { BandEvent, hasResponded, ParticipantResponse } from "./storage";
+import { ActionDetail } from "@material/mwc-list/mwc-list-foundation";
+import { BandEvent } from "./storage";
 import { Dialog } from "@material/mwc-dialog";
 import { EventEditor } from "./event-editor";
-import { TextField } from "@material/mwc-textfield";
-import { Radio } from "@material/mwc-radio";
 import {
   collection,
   doc,
   DocumentSnapshot,
   onSnapshot,
-  QueryDocumentSnapshot,
   setDoc
 } from "firebase/firestore";
-import { customElement, property, query } from "lit/decorators";
-import { Member } from "./datamodel";
+import { customElement, property, query, state } from "lit/decorators";
+import {
+  Member,
+  Participant,
+  ParticipantResponse,
+  responseString,
+  UID
+} from "./datamodel";
+import { ResponseSelector } from "./response-selector";
+import { Button } from "@material/mwc-button";
+import { List } from "@material/mwc-list";
 
-// const responseIcons = {
-//   yes: "thumb_up",
-//   no: "thumb_down",
-//   maybe: "thumbs_up_down",
-//   sub: "import_export",
-// }
-
-// const attendances = {
-//   "yes": "Ja",
-//   "no": "Nej",
-//   "maybe": "Återkommer",
-//   "sub": "Vikarie",
-//   "unknown": "",
-// }
-
-interface Responses {
-  [uid: string]: ParticipantResponse;
-}
-
-interface Comments {
-  [uid: string]: string;
+interface Participants {
+  [uid: string]: Participant;
 }
 
 @customElement("event-card")
@@ -58,16 +47,13 @@ export class EventCard extends LitElement {
   selfuid: string = "";
 
   @property({ type: Array, attribute: false })
-  members: QueryDocumentSnapshot<Member>[] = [];
+  members: Member[] = [];
 
   @property({ type: Object, attribute: false })
   event: DocumentSnapshot<BandEvent> | null = null;
 
-  @property({ type: Object, attribute: false })
-  responses = {} as Responses;
-
-  @property({ type: Object, attribute: false })
-  comments = {} as Comments;
+  @state()
+  participants = {} as Participants;
 
   @property({ type: String })
   responseuid: string = "";
@@ -80,6 +66,12 @@ export class EventCard extends LitElement {
 
   @query("#menu")
   menu: Menu;
+
+  @query("#prompt mwc-button")
+  promptButton: Button;
+
+  @query("#prompt mwc-menu")
+  promptMenu: Menu;
 
   @query("#event-editor-dialog")
   editDialog: Dialog;
@@ -94,35 +86,35 @@ export class EventCard extends LitElement {
 
   needsResponse: boolean = false;
 
-  getMemberData(uid: string): Member {
-    for (let i = 0; i < this.members.length; i++) {
-      const member = this.members[i];
-      if (member.id == uid) {
-        return this.members[i].data();
+  getMemberData(uid: UID): Member {
+    for (const member of this.members) {
+      if (member.uid == uid) {
+        return member;
       }
     }
     return null;
   }
 
+  // Returns the participation info for uid, with a default if nothing is stored.
+  getParticipant(uid: UID): Participant {
+    return this.participants[uid] || new Participant(uid, "na", "");
+  }
+
   fetchParticipants() {
     const event = this.event!;
     const ref = event.ref;
-    // console.log(`event-card: Fetching participants ${ref.path}/participants`);
     this.cancelParticipantsListener();
     this.cancelParticipantsListener = onSnapshot(
-      collection(ref, "participants"),
+      collection(ref, "participants").withConverter(Participant),
       snapshot => {
-        this.responses = {};
-        this.comments = {};
+        this.participants = {};
         this.needsResponse = true;
-        snapshot.docs.forEach(p => {
-          if (p.id == this.selfuid) {
-            this.needsResponse = !hasResponded(p.data().attending);
+        snapshot.docs.forEach(doc => {
+          const participant: Participant = doc.data();
+          if (participant.uid == this.selfuid) {
+            this.needsResponse = !participant.hasResponded();
           }
-          this.responses[p.id] = p.data().attending;
-          if (p.data().comment != undefined) {
-            this.comments[p.id] = p.data().comment;
-          }
+          this.participants[participant.uid] = participant;
         });
       }
     );
@@ -206,21 +198,16 @@ export class EventCard extends LitElement {
       font-weight: 600;
       margin-top: 16px;
     }
-    #myresponse {
-      display: flex;
-      flex-direction: column;
+    #prompt {
+      position: relative;
     }
-    .prompt {
-      display: flex;
-      justify-content: center;
-    }
-    .prompt mwc-button {
-      margin: 16px;
+    #prompt [mwc-list-item]:not([selected]) [slot="graphic"] {
+      display: none;
     }
   `;
 
   menuAction(event: CustomEvent): void {
-    const detail = event.detail as SelectedDetail;
+    const detail = event.detail as ActionDetail;
     const data = this.event!.data()! as BandEvent;
     switch (detail.index) {
       case 0: // edit
@@ -242,6 +229,17 @@ export class EventCard extends LitElement {
         return;
       case 2: // change response
         this.openResponseDialog(this.selfuid);
+        return;
+      default:
+        const menu = event.target as Menu;
+        const item = menu.items[detail.index];
+        console.log("[menu action]", item);
+        if (item.group && item.group.endsWith("menu-response")) {
+          this.setResponse(
+            this.selfuid,
+            item.dataset["response"] as ParticipantResponse
+          );
+        }
     }
   }
 
@@ -254,8 +252,7 @@ export class EventCard extends LitElement {
       return "";
     }
     const member = this.getMemberData(this.responseuid);
-    const response = this.responses[this.responseuid];
-    const comment = this.comments[this.responseuid];
+    const participant = this.getParticipant(this.responseuid);
     return html`
       <mwc-dialog
         id="response-dialog"
@@ -274,72 +271,51 @@ export class EventCard extends LitElement {
           <p>${data.location}</p>
           <p>${data.description}</p>
         </div>
-        <div id="myresponse">
-          <mwc-formfield label="Jag kommer">
-            <mwc-radio
-              id="yes"
-              name="response"
-              ?checked=${response == "yes"}
-            ></mwc-radio>
-          </mwc-formfield>
-          <mwc-formfield label="Jag kommer inte">
-            <mwc-radio
-              id="no"
-              name="response"
-              ?checked=${response == "no"}
-            ></mwc-radio>
-          </mwc-formfield>
-          <mwc-formfield label="Jag skickar ersättare">
-            <mwc-radio
-              id="sub"
-              name="response"
-              ?checked=${response == "sub"}
-            ></mwc-radio>
-          </mwc-formfield>
-          <mwc-formfield label="Inget svar">
-            <mwc-radio
-              id="maybe"
-              name="response"
-              ?checked=${!hasResponded(response)}
-            ></mwc-radio>
-          </mwc-formfield>
-          <mwc-textfield
-            id="mycomment"
-            label="Kommentar"
-            value=${ifDefined(comment)}
-          ></mwc-textfield>
-        </div>
+        <response-selector
+          id="myresponse"
+          uid=${this.responseuid}
+          response=${participant.response}
+          comment=${participant.comment}
+        ></response-selector>
         <mwc-button slot="primaryAction" dialogAction="ok">OK</mwc-button>
       </mwc-dialog>
     `;
   }
 
+  setResponse(uid: UID, response?: ParticipantResponse, comment?: string) {
+    const participantRef = doc(
+      this.event.ref,
+      "participants",
+      uid
+    ).withConverter(Participant);
+    const participant = this.participants[uid];
+    if (response != undefined) {
+      participant.response = response;
+    }
+    if (comment != undefined) {
+      participant.comment = comment;
+    }
+    console.log("New data:", participantRef.path, participant);
+    setDoc(participantRef, participant, { merge: false }).then(
+      () => console.log("Update successful"),
+      reason => console.log("Update failed:", reason)
+    );
+  }
+
   sendResponse(event: CustomEvent): void {
-    const uid = this.responseuid;
     this.responseuid = "";
     if (event.detail.action != "ok") {
       return;
     }
     console.log("Sending response");
     const dialog = event.target as Dialog;
-    const data: any = {};
-    console.log("Radio buttons:");
-    dialog
-      .querySelectorAll("mwc-radio[name=response]")
-      .forEach((radio: Radio) => {
-        if (radio.checked) {
-          data.attending = radio.id;
-        }
-      });
-    const commentField = dialog.querySelector("#mycomment")! as TextField;
-    if (commentField.value) {
-      data.comment = commentField.value;
-    }
-    const participantRef = doc(this.event.ref, "participants", uid);
-    console.log("New data:", participantRef.path, data);
-    setDoc(participantRef, data, { merge: false }).then(
-      () => console.log("Update successful"),
-      reason => console.log("Update failed:", reason)
+    const selector = dialog.querySelector(
+      "response-selector"
+    ) as ResponseSelector;
+    this.setResponse(
+      this.responseuid,
+      selector.getResponse(),
+      selector.getComment()
     );
   }
 
@@ -351,13 +327,13 @@ export class EventCard extends LitElement {
       <div class="comments">
         ${repeat(
           this.members,
-          member => member.id,
+          member => member.uid,
           member => {
-            const data = member.data();
-            return member.id in this.comments
+            const participant = this.participants[member.uid];
+            return participant && participant.comment
               ? html`
                   <p class="comment">
-                    <b>${data.display_name} —</b> ${this.comments[member.id]}
+                    <b>${member.display_name} —</b> ${participant.comment}
                   </p>
                 `
               : "";
@@ -367,15 +343,71 @@ export class EventCard extends LitElement {
     `;
   }
 
-  renderResponsePrompt() {
+  renderResponseMenuItems(group: string, currentResponse: ParticipantResponse) {
     return html`
-      <div class="prompt">
+      ${repeat(["yes", "no", "sub", "na"], resp => {
+        const selected = resp == currentResponse;
+        console.log(
+          "RESPONSE",
+          this.event.data().type,
+          group,
+          resp,
+          currentResponse,
+          selected
+        );
+        return html`
+          <mwc-radio-list-item
+            group=${this.event.id + "-" + group}
+            data-response=${resp}
+            ?selected=${selected}
+          >
+            ${responseString(resp as ParticipantResponse)}
+          </mwc-radio-list-item>
+        `;
+      })}
+    `;
+  }
+
+  renderResponsePrompt() {
+    const response = this.participants[this.selfuid]?.response;
+    return html`
+      <div id="prompt">
         <mwc-button
-          outlined
-          icon="add_task"
-          @click=${() => this.openResponseDialog(this.selfuid)}
-          >Svara</mwc-button
+          trailingIcon
+          icon="arrow_drop_down"
+          @click=${() => this.promptMenu.show()}
+          >${responseString(response)}</mwc-button
         >
+        <mwc-menu
+          corner="TOP_START"
+          menuCorner="START"
+          .anchor=${this.promptButton}
+          @action=${(e: CustomEvent) => {
+            const detail = e.detail as ActionDetail;
+            const list = e.target as List;
+            const response = list.items[detail.index].dataset["response"];
+            const participantRef = doc(
+              this.event.ref,
+              "participants",
+              this.selfuid
+            );
+            console.log(
+              "[response menu] Updating response",
+              response,
+              participantRef.path
+            );
+            setDoc(
+              participantRef,
+              { attending: response },
+              { merge: true }
+            ).then(
+              () => console.log("Update successful"),
+              reason => console.log("Update failed:", reason)
+            );
+          }}
+        >
+          ${this.renderResponseMenuItems("prompt-response", response)}
+        </mwc-menu>
       </div>
     `;
   }
@@ -416,12 +448,17 @@ export class EventCard extends LitElement {
 
   renderResponses() {
     const data = this.event!.data()!;
+    let responses = {};
+    for (const uid in this.participants) {
+      responses[uid] = this.participants[uid].response;
+    }
+    console.log("RESPONSES", responses);
     return html`
       ${this.renderResponseDialog(data)}
       <mini-roster
         .members=${this.members}
         .event=${this.event}
-        .responses=${this.responses}
+        .responses=${responses}
         @click-participant=${e => this.openResponseDialog(e.detail.uid)}
       ></mini-roster>
     `;
@@ -453,6 +490,11 @@ export class EventCard extends LitElement {
             >${this.cancelled ? "Ångra ställ in" : "Ställ in"}</mwc-list-item
           >
           <mwc-list-item>Ändra svar</mwc-list-item>
+          <li divider role="separator"></li>
+          ${this.renderResponseMenuItems(
+            "menu-response",
+            this.participants[this.selfuid]?.response || "na"
+          )}
         </mwc-menu>
       </div>
     `;
