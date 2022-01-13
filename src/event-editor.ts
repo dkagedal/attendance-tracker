@@ -3,16 +3,16 @@ import { ifDefined } from "lit/directives/if-defined";
 import "@material/mwc-textfield";
 import "@material/mwc-icon-button";
 import "@material/mwc-button";
-import { BandEvent } from "./storage";
 import "./datetime-input";
 import { DatetimeInput } from "./datetime-input";
 import { TextField } from "@material/mwc-textfield";
 import { customElement, property, query } from "lit/decorators";
+import { BandEvent } from "./datamodel";
 
 @customElement("event-editor")
 export class EventEditor extends LitElement {
   @property({ type: Object, attribute: false })
-  data: BandEvent = { type: "", start: "" };
+  data: BandEvent = new BandEvent(null, "", "");
 
   @property({ type: Boolean, reflect: true })
   range: boolean = false;

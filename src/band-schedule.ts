@@ -7,11 +7,9 @@ import "@material/mwc-list/mwc-list-item";
 import "./time-range";
 import "./event-card";
 import "./mini-roster";
-import { BandEvent, bandEventYear, db } from "./storage";
 import {
   collection,
   doc,
-  DocumentSnapshot,
   onSnapshot,
   orderBy,
   query,
@@ -21,23 +19,19 @@ import {
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
-import { Member } from "./datamodel";
-
-interface EventsSnapshot {
-  docs: DocumentSnapshot<BandEvent>[];
-  size: number;
-}
+import { BandEvent, Member, UID } from "./datamodel";
+import { db } from "./storage";
 
 @customElement("band-schedule")
 export class BandSchedule extends LitElement {
   @property({ type: String })
-  uid: string = "";
+  uid: UID = "";
 
   @property({ type: String })
   bandid: string | null = null;
 
-  @property({ type: Object, attribute: false })
-  events: EventsSnapshot = { docs: [], size: 0 };
+  @property({ type: Array, attribute: false })
+  events: BandEvent[] = [];
 
   @state()
   loaded = false;
@@ -55,7 +49,7 @@ export class BandSchedule extends LitElement {
     console.log("[schedule] Updated", changedProperties);
     if (changedProperties.has("bandid")) {
       if (this.bandid == null) {
-        this.events = { docs: [], size: 0 };
+        this.events = [];
         this.selected_event = null;
         this.members = [];
         return;
@@ -70,9 +64,9 @@ export class BandSchedule extends LitElement {
         collection(bandref, "events"),
         where("start", ">=", yesterday),
         orderBy("start")
-      );
+      ).withConverter(BandEvent);
       onSnapshot(eventQuery, (querySnapshot): void => {
-        this.events = (querySnapshot as unknown) as EventsSnapshot;
+        this.events = querySnapshot.docs.map(doc => doc.data());
         this.loaded = true;
         this.dispatchEvent(new CustomEvent("loaded"));
       });
@@ -123,21 +117,21 @@ export class BandSchedule extends LitElement {
 
   render() {
     const years = [] as any[];
-    let currentYear = { year: "", events: [] };
-    this.events.docs.forEach(e => {
-      const year = bandEventYear(e.data());
+    let currentYear = { year: "", events: [] as BandEvent[] };
+    this.events.forEach(e => {
+      const year = e.year();
       if (year != currentYear.year) {
         currentYear = { year: year, events: [] };
         years.push(year);
       }
-      currentYear.events.push(e.data());
+      currentYear.events.push(e);
     });
     return html`
       <div class="list">
         ${repeat(
-          this.events.docs,
+          this.events,
           e => e.id,
-          (e: DocumentSnapshot<BandEvent>) => html`
+          (e: BandEvent) => html`
             <event-card
               selfuid=${this.uid}
               .members=${this.members}

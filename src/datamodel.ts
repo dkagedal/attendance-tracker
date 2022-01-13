@@ -133,6 +133,72 @@ export class MemberSettings {
   }
 }
 
+// A band event.
+export class BandEvent {
+  constructor(
+    public ref: DocumentReference<BandEvent>,
+    public type: string,
+    public start: string,
+    public stop?: string,
+    public location?: string,
+    public description?: string,
+    public cancelled?: boolean
+  ) {}
+
+  get id() {
+    return this.ref.id;
+  }
+
+  static toFirestore(event: BandEvent): object {
+    const data: any = {
+      type: event.start,
+      start: event.start
+    };
+    if (event.stop) {
+      data.stop = event.stop;
+    }
+    if (event.location) {
+      data.location = event.location;
+    }
+    if (event.description) {
+      data.description = event.description;
+    }
+    if (event.cancelled) {
+      data.cancelled = event.cancelled;
+    }
+    return data;
+  }
+
+  static fromFirestore(snapshot: any, options: any): BandEvent {
+    const data = snapshot.data(options);
+    return new BandEvent(
+      snapshot.ref,
+      data.type,
+      data.start,
+      data.stop,
+      data.location,
+      data.description,
+      data.cancelled
+    );
+  }
+
+  static makeref(
+    db: Firestore,
+    bandid: string,
+    eventid: string
+  ): DocumentReference<BandEvent> {
+    return doc(db, "bands", bandid, "events", eventid).withConverter(BandEvent);
+  }
+
+  year(): string {
+    return this.start.split("-", 1)[0];
+  }
+
+  hasStopTime(): boolean {
+    return !!this.stop;
+  }
+}
+
 // A participation record.
 export class Participant {
   constructor(
@@ -141,7 +207,9 @@ export class Participant {
     public comment: string
   ) {}
 
-  static DEFAULT = new Participant(null, "na", "");
+  static empty(uid: UID) {
+    return new Participant(uid, "na", "");
+  }
 
   static toFirestore(participant: Participant): object {
     return {
@@ -152,11 +220,9 @@ export class Participant {
 
   static fromFirestore(snapshot: any, options: any): Participant {
     const data = snapshot.data(options);
-    console.log("BEFORE", data);
     if (["yes", "no", "sub", "na"].indexOf(data.attending) == -1) {
       data.attending = "na";
     }
-    console.log("AFTER", data);
     return new Participant(
       snapshot.id,
       data.attending || "na",

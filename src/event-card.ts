@@ -15,18 +15,13 @@ import "./mini-roster";
 import { Menu } from "@material/mwc-menu";
 import { IconButton } from "@material/mwc-icon-button";
 import { ActionDetail } from "@material/mwc-list/mwc-list-foundation";
-import { BandEvent } from "./storage";
+import { auth } from "./storage";
 import { Dialog } from "@material/mwc-dialog";
 import { EventEditor } from "./event-editor";
-import {
-  collection,
-  doc,
-  DocumentSnapshot,
-  onSnapshot,
-  setDoc
-} from "firebase/firestore";
+import { collection, doc, onSnapshot, setDoc } from "firebase/firestore";
 import { customElement, property, query, state } from "lit/decorators";
 import {
+  BandEvent,
   Member,
   Participant,
   ParticipantResponse,
@@ -37,29 +32,25 @@ import { ResponseSelector } from "./response-selector";
 import { Button } from "@material/mwc-button";
 import { List } from "@material/mwc-list";
 
-interface Participants {
-  [uid: string]: Participant;
-}
-
 @customElement("event-card")
 export class EventCard extends LitElement {
-  @property({ type: String })
-  selfuid: string = "";
-
   @property({ type: Array, attribute: false })
   members: Member[] = [];
 
   @property({ type: Object, attribute: false })
-  event: DocumentSnapshot<BandEvent> | null = null;
+  event: BandEvent = null;
 
   @state()
-  participants = {} as Participants;
+  participants: { [uid: UID]: Participant } = {};
 
-  @property({ type: String })
-  responseuid: string = "";
-
+  // Export this as an attribute so it can be used in CSS selectors.
   @property({ type: Boolean, reflect: true })
-  cancelled: boolean = false;
+  get cancelled() {
+    return this.event.cancelled;
+  }
+
+  @state()
+  responseuid: string = null;
 
   @query("#menu-button")
   menuButton: IconButton;
@@ -95,11 +86,6 @@ export class EventCard extends LitElement {
     return null;
   }
 
-  // Returns the participation info for uid, with a default if nothing is stored.
-  getParticipant(uid: UID): Participant {
-    return this.participants[uid] || new Participant(uid, "na", "");
-  }
-
   fetchParticipants() {
     const event = this.event!;
     const ref = event.ref;
@@ -111,22 +97,26 @@ export class EventCard extends LitElement {
         this.needsResponse = true;
         snapshot.docs.forEach(doc => {
           const participant: Participant = doc.data();
-          if (participant.uid == this.selfuid) {
+          if (participant.uid == auth.currentUser.uid) {
             this.needsResponse = !participant.hasResponded();
           }
           this.participants[participant.uid] = participant;
         });
+        // Set defaults for missing responses, so that this.participants is always fully populated.
+        for (const member of this.members) {
+          if (!(member.uid in this.participants)) {
+            this.participants[member.uid] = Participant.empty(member.uid);
+          }
+        }
+        console.log("[event-card] Updated participants", this.participants);
       }
     );
   }
 
   updated(changedProperties: any) {
-    changedProperties.forEach((_oldValue: any, propName: string) => {
-      if (propName == "event") {
-        this.fetchParticipants();
-        this.cancelled = this.event.data().cancelled;
-      }
-    });
+    if (changedProperties.has("event") && this.event) {
+      this.fetchParticipants();
+    }
   }
 
   static styles = css`
@@ -208,19 +198,23 @@ export class EventCard extends LitElement {
 
   menuAction(event: CustomEvent): void {
     const detail = event.detail as ActionDetail;
-    const data = this.event!.data()! as BandEvent;
     switch (detail.index) {
       case 0: // edit
         console.log("Edit event");
-        this.editor.data = data;
-        this.editor.range = "stop" in data;
+        this.editor.data = this.event;
+        this.editor.range = this.event.hasStopTime();
         this.editDialog.show();
         return;
       case 1: // cancel
-        console.log("Cancel event", data.cancelled, "to", !data.cancelled);
+        console.log(
+          "Cancel event",
+          this.event.cancelled,
+          "to",
+          !this.event.cancelled
+        );
         setDoc(
           this.event.ref,
-          { cancelled: !data.cancelled },
+          { cancelled: !this.event.cancelled },
           { merge: true }
         ).then(
           () => console.log("Cancel successful"),
@@ -228,7 +222,7 @@ export class EventCard extends LitElement {
         );
         return;
       case 2: // change response
-        this.openResponseDialog(this.selfuid);
+        this.openResponseDialog(auth.currentUser.uid);
         return;
       default:
         const menu = event.target as Menu;
@@ -236,7 +230,7 @@ export class EventCard extends LitElement {
         console.log("[menu action]", item);
         if (item.group && item.group.endsWith("menu-response")) {
           this.setResponse(
-            this.selfuid,
+            auth.currentUser.uid,
             item.dataset["response"] as ParticipantResponse
           );
         }
@@ -252,7 +246,7 @@ export class EventCard extends LitElement {
       return "";
     }
     const member = this.getMemberData(this.responseuid);
-    const participant = this.getParticipant(this.responseuid);
+    const participant = this.participants[this.responseuid];
     return html`
       <mwc-dialog
         id="response-dialog"
@@ -283,6 +277,7 @@ export class EventCard extends LitElement {
   }
 
   setResponse(uid: UID, response?: ParticipantResponse, comment?: string) {
+    console.log("REF", this.event.ref, "participants", uid);
     const participantRef = doc(
       this.event.ref,
       "participants",
@@ -303,6 +298,7 @@ export class EventCard extends LitElement {
   }
 
   sendResponse(event: CustomEvent): void {
+    const uid = this.responseuid;
     this.responseuid = "";
     if (event.detail.action != "ok") {
       return;
@@ -312,15 +308,11 @@ export class EventCard extends LitElement {
     const selector = dialog.querySelector(
       "response-selector"
     ) as ResponseSelector;
-    this.setResponse(
-      this.responseuid,
-      selector.getResponse(),
-      selector.getComment()
-    );
+    this.setResponse(uid, selector.getResponse(), selector.getComment());
   }
 
   renderComments() {
-    if (this.cancelled) {
+    if (this.cancelled || Object.keys(this.participants).length == 0) {
       return "";
     }
     return html`
@@ -330,7 +322,7 @@ export class EventCard extends LitElement {
           member => member.uid,
           member => {
             const participant = this.participants[member.uid];
-            return participant && participant.comment
+            return participant.comment
               ? html`
                   <p class="comment">
                     <b>${member.display_name} —</b> ${participant.comment}
@@ -347,17 +339,17 @@ export class EventCard extends LitElement {
     return html`
       ${repeat(["yes", "no", "sub", "na"], resp => {
         const selected = resp == currentResponse;
-        console.log(
-          "RESPONSE",
-          this.event.data().type,
-          group,
-          resp,
-          currentResponse,
-          selected
-        );
+        // console.log(
+        //   "RESPONSE",
+        //   this.event.data().type,
+        //   group,
+        //   resp,
+        //   currentResponse,
+        //   selected
+        // );
         return html`
           <mwc-radio-list-item
-            group=${this.event.id + "-" + group}
+            group=${this.event.ref.id + "-" + group}
             data-response=${resp}
             ?selected=${selected}
           >
@@ -369,7 +361,7 @@ export class EventCard extends LitElement {
   }
 
   renderResponsePrompt() {
-    const response = this.participants[this.selfuid]?.response;
+    const response = this.participants[auth.currentUser.uid].response;
     return html`
       <div id="prompt">
         <mwc-button
@@ -389,7 +381,7 @@ export class EventCard extends LitElement {
             const participantRef = doc(
               this.event.ref,
               "participants",
-              this.selfuid
+              auth.currentUser.uid
             );
             console.log(
               "[response menu] Updating response",
@@ -413,14 +405,13 @@ export class EventCard extends LitElement {
   }
 
   renderHead() {
-    const data = this.event!.data()!;
     return html`
       <div id="desc">
         <div id="head">
-          <span class="event-type">${data.type}</span>
+          <span class="event-type">${this.event.type}</span>
           <time-range
-            start=${ifDefined(data.start)}
-            stop=${ifDefined(data.stop)}
+            start=${ifDefined(this.event.start)}
+            stop=${ifDefined(this.event.stop)}
           ></time-range>
           ${this.cancelled
             ? html`
@@ -438,8 +429,8 @@ export class EventCard extends LitElement {
           </mwc-dialog>
         </div>
         <div class="info">
-          <p>${data.location}</p>
-          <p>${data.description}</p>
+          <p>${this.event.location}</p>
+          <p>${this.event.description}</p>
         </div>
         ${this.needsResponse ? this.renderResponsePrompt() : ""}
       </div>
@@ -447,14 +438,13 @@ export class EventCard extends LitElement {
   }
 
   renderResponses() {
-    const data = this.event!.data()!;
     let responses = {};
     for (const uid in this.participants) {
       responses[uid] = this.participants[uid].response;
     }
     console.log("RESPONSES", responses);
     return html`
-      ${this.renderResponseDialog(data)}
+      ${this.renderResponseDialog(this.event)}
       <mini-roster
         .members=${this.members}
         .event=${this.event}
@@ -491,10 +481,12 @@ export class EventCard extends LitElement {
           >
           <mwc-list-item>Ändra svar</mwc-list-item>
           <li divider role="separator"></li>
-          ${this.renderResponseMenuItems(
-            "menu-response",
-            this.participants[this.selfuid]?.response || "na"
-          )}
+          ${auth.currentUser.uid in this.participants
+            ? this.renderResponseMenuItems(
+                "menu-response",
+                this.participants[auth.currentUser.uid].response
+              )
+            : ""}
         </mwc-menu>
       </div>
     `;

@@ -1,10 +1,8 @@
 import "./response-chip";
-import { BandEvent } from "./storage";
-import { DocumentSnapshot } from "firebase/firestore";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
-import { Member, ParticipantResponse } from "./datamodel";
+import { BandEvent, Member, ParticipantResponse } from "./datamodel";
 
 interface Responses {
   [uid: string]: ParticipantResponse;
@@ -16,7 +14,7 @@ export class MiniRoster extends LitElement {
   members: Member[] = [];
 
   @property({ type: Object, attribute: false })
-  event: DocumentSnapshot<BandEvent> | null = null;
+  event: BandEvent = null;
 
   @property({ type: Object, attribute: false })
   responses = {} as Responses;
@@ -41,7 +39,7 @@ export class MiniRoster extends LitElement {
   }
 
   render() {
-    if (this.event.data().cancelled) {
+    if (this.event.cancelled) {
       return html`
         <p class="cancelled">I N S T Ä L L T</p>
       `;

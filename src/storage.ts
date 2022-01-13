@@ -21,19 +21,6 @@ import {
 } from "firebase/auth";
 import { User } from "./datamodel";
 
-export interface BandEvent {
-  type: string;
-  start: string;
-  stop?: string;
-  location?: string;
-  description?: string;
-  cancelled?: boolean;
-}
-
-export function bandEventYear(event: BandEvent): string {
-  return event.start.split("-", 1)[0];
-}
-
 export var db: Firestore;
 export var auth: Auth;
 
