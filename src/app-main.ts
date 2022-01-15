@@ -38,7 +38,7 @@ import { Menu } from "@material/mwc-menu";
 import { IconButton } from "@material/mwc-icon-button/mwc-icon-button";
 import { ActionDetail, List } from "@material/mwc-list";
 import { repeat } from "lit/directives/repeat";
-import {  Member, User } from "./datamodel";
+import { Member, User } from "./datamodel";
 import { ProfileEditor } from "./profile-editor";
 import { Dialog } from "@material/mwc-dialog";
 import { Drawer } from "@material/mwc-drawer/mwc-drawer";
@@ -96,8 +96,8 @@ export class AppMain extends LitElement {
   @property({ type: Boolean })
   registered = false;
 
-  @property({ type: String, reflect: true })
-  bandid: string | null;
+  @state()
+  bandid: string = null;
 
   @property({ type: Object, attribute: false })
   bands: BandMap = {};
@@ -159,20 +159,15 @@ export class AppMain extends LitElement {
       onAuthStateChanged(this.auth, this.authStateChanged.bind(this));
       extractBandId().then(bandid => {
         console.log("[app-main] Band id:", bandid);
+        this.bandid = bandid;
+        this.loading.delete("bandid");
         if (!bandid) {
           return;
         }
-        if (!this.bandid) {
-          this.bandid = bandid;
-        }
-        this.loading.delete("bandid");
-        this.loadingSchedule = true;
-        this.requestUpdate();
       });
     }
 
     if (changedProperties.has("firebaseUser")) {
-      this.loading.delete("auth");
       this.unsubscribe("user");
       this.unsubscribe("member");
       this.unsubscribe("join-request");
@@ -207,7 +202,12 @@ export class AppMain extends LitElement {
       this.joinRequests = [];
       this.registered = false;
 
-      if (this.firebaseUser && this.bandid) {
+      if (
+        !this.loading.has("auth") &&
+        !this.loading.has("bandid") &&
+        this.firebaseUser &&
+        this.bandid
+      ) {
         this.subscribe(
           "member",
           onSnapshot(
@@ -250,7 +250,9 @@ export class AppMain extends LitElement {
   // Callback when the Firebase login stat changed.
   async authStateChanged(authUser: FirebaseUser | null) {
     console.log("[app-main] Login state changed:", authUser);
+    this.loading.delete("auth");
     this.firebaseUser = authUser;
+    this.requestUpdate();
   }
 
   // Callback when the /users/* doc for the currently logged in user changes.
@@ -305,7 +307,10 @@ export class AppMain extends LitElement {
       editor.save();
       const event = editor.data;
       console.log("New data:", event);
-      addDoc(collection(db, "bands", this.bandid, "events"), BandEvent.toFirestore(event)).then(
+      addDoc(
+        collection(db, "bands", this.bandid, "events"),
+        BandEvent.toFirestore(event)
+      ).then(
         () => {
           console.log("Add successful");
           this.addDialog.close();
@@ -547,8 +552,7 @@ export class AppMain extends LitElement {
   renderProgress() {
     if (this.isLoading() || this.loadingSchedule) {
       console.log(
-        "[app-main] Still waiting for",
-        this.loading,
+        `[app-main] Still waiting for [${Array.from(this.loading.keys())}]`,
         this.loadingSchedule
       );
       return html`

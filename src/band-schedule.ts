@@ -19,7 +19,7 @@ import {
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
-import {  Member, UID } from "./datamodel";
+import { Member, UID } from "./datamodel";
 import { db } from "./storage";
 import { BandEvent } from "./model/bandevent";
 

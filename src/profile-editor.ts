@@ -143,7 +143,12 @@ export class ProfileEditor extends LitElement {
       new_member: getSwitch("new_member").selected
     });
     console.log("[profile-editor] New member settings:", settings);
-    await setDoc(MemberSettings.ref(db, this.bandid, this.uid).withConverter(MemberSettings.converter), settings);
+    await setDoc(
+      MemberSettings.ref(db, this.bandid, this.uid).withConverter(
+        MemberSettings.converter
+      ),
+      settings
+    );
 
     return true;
   }

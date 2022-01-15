@@ -340,21 +340,18 @@ export class EventCard extends LitElement {
     return html`
       ${repeat(["yes", "no", "sub", "na"], resp => {
         const selected = resp == currentResponse;
-        console.log(
-          "RESPONSE",
-          this.event.type,
-          group,
-          resp,
-          currentResponse,
-          selected
-        );
         return html`
-          <mwc-list-item graphic="icon"
+          <mwc-list-item
+            graphic="icon"
             group=${this.event.ref.id + "-" + group}
             data-response=${resp}
             ?selected=${selected}
           >
-            ${selected ? html`<mwc-icon slot="graphic">check</mwc-icon>` : ""}
+            ${selected
+              ? html`
+                  <mwc-icon slot="graphic">check</mwc-icon>
+                `
+              : ""}
             <span>${responseString(resp as ParticipantResponse)}</span>
           </mwc-list-item>
         `;
@@ -502,7 +499,9 @@ export class EventCard extends LitElement {
       this.editor.save();
       const event = this.editor.data;
       console.log("New data:", event);
-      setDoc(this.event.ref, BandEvent.toFirestore(event), { merge: false }).then(
+      setDoc(this.event.ref, BandEvent.toFirestore(event), {
+        merge: false
+      }).then(
         () => console.log("Update successful"),
         reason => console.log("Update failed:", reason)
       );
