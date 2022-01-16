@@ -288,7 +288,7 @@ export class EventCard extends LitElement {
     if (response != undefined) {
       participant.response = response;
     }
-    if (comment != undefined) {
+    if (comment !== undefined) {
       participant.comment = comment;
     }
     console.log("New data:", participantRef.path, participant);
