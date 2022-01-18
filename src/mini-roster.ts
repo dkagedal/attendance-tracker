@@ -2,9 +2,9 @@ import "./response-chip";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
-import { Member } from "./datamodel";
 import { BandEvent } from "./model/bandevent";
 import { ParticipantResponse } from "./model/participant";
+import { Member } from "./model/member";
 
 interface Responses {
   [uid: string]: ParticipantResponse;
@@ -49,11 +49,11 @@ export class MiniRoster extends LitElement {
     return html`
       ${repeat(
         this.members,
-        member => member.uid,
+        member => member.id,
         member => html`
           <response-chip
-            response=${this.responses[member.uid]}
-            @click=${() => this.clickOne(member.uid)}
+            response=${this.responses[member.id]}
+            @click=${() => this.clickOne(member.id)}
             >${member.display_name}</response-chip
           >
         `

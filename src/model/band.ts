@@ -1,30 +1,51 @@
-import { collection, doc, DocumentReference, Firestore, getDoc, query, Query, QueryConstraint } from "firebase/firestore";
+import { collection, doc, DocumentReference, Firestore } from "firebase/firestore";
+import { BandEventCollectionReference, BandEventReference } from "./bandevent";
+import { MemberCollectionReference, MemberReference } from "./member";
 
-export class BandRef {
+export class BandReference {
   dbref: DocumentReference<Band>;
-  get id() { return dbref.id; }
+  constructor(ref: DocumentReference<any>) {
+    this.dbref = ref.withConverter(BandConverter);
+  }
+  get id() { return this.dbref.id; }
 
-  events(...constraints: QueryConstraints[]): BandEventQuery {
-    return collection(this.dbref, "events").withConverter(BandEventConverter);
+  events(): BandEventCollectionReference {
+    return new BandEventCollectionReference(collection(this.dbref, "events"));
   }
    
   event(eventid: string) {
-    return doc(this.dbref, "events", eventid).withConverter(BandEventConverter);
+    return new BandEventReference(doc(this.dbref, "events", eventid));
   }
 
-  members(...constraints: QueryConstraints[]): BandMemberQuery {
-    return collection(this.dbref, "members").withConverter(MemberConverter);
+  members(): MemberCollectionReference {
+    return new MemberCollectionReference(collection(this.dbref, "members"));
   }
    
   member(memberid: string) {
-    return doc(this.dbref, "members", memberid).withConverter(MemberConverter);
+    return new MemberReference(doc(this.dbref, "members", memberid));
   }
 }
 
-export function band(db: Firestore, bandid: string) {
-  return new BandRef(doc(dh, "bands", bandid));
+export function band(db: Firestore, bandid: string): BandReference {
+  return new BandReference(doc(db, "bands", bandid));
 }
 
 // Not needed:
 // export function bands(db: Firestore) { return new BandQuery(db, "bands")); }
 
+class BandConverter {
+  static toFirestore(band: Band) {
+    return {
+      display_name: band.display_name
+    };
+  }
+
+  static fromFirestore(snapshot, options): Band {
+    const data = snapshot.data(options);
+    return new Band(new BandReference(snapshot.ref), data.display_name);
+  }
+}
+
+export class Band {
+  constructor(public ref: BandReference, public display_name: string) { }
+}

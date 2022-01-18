@@ -1,14 +1,34 @@
-import { collection, doc, DocumentReference, Firestore, getDoc, query, Query, QueryConstraint } from "firebase/firestore";
+import { collection, CollectionReference, doc, DocumentReference } from "firebase/firestore";
+import { UID } from "../datamodel";
+import { ParticipantCollectionReference, ParticipantReference } from "./participant";
 
-export interface BandEventRef {
-  bandid: string;
-  eventid: string;
-  dbref: DocumentReference;
-  read: () => Promise<BandEvent>;
+export class BandEventReference {
+  dbref: DocumentReference<BandEvent>;
+  constructor(ref: DocumentReference<any>) {
+    this.dbref = ref.withConverter(BandEventConverter);
+  }
+
+  get id(): string { return this.dbref.id };
+
+  participants(): ParticipantCollectionReference {
+    return new ParticipantCollectionReference(collection(this.dbref, "participants"));
+  }
+
+  participant(uid: UID): ParticipantReference {
+    return new ParticipantReference(doc(this.dbref, "participants", uid));
+  }
+}
+
+export class BandEventCollectionReference {
+  dbref: CollectionReference<BandEvent>;
+  constructor(ref: CollectionReference<any>) {
+    this.dbref = ref.withConverter(BandEventConverter);
+  }
+  get id(): string { return this.dbref.id;}
 }
 
 export interface BandEvent {
-  ref: BandEventRef;
+  ref: BandEventReference;
   type: string;
   start: string;
   stop?: string;
@@ -17,26 +37,6 @@ export interface BandEvent {
   cancelled?: boolean;
   year: () => string;
   hasStopTime: () => boolean;
-}
-
-export function BandEventQuery(bandRef: DocumentReference, ...constraints: QueryConstraint[]):Query<BandEvent> {
-  return query(collection(bandRef, "events"), ...constraints).withConverter(BandEventConverter);
-}
-
-class BandEventRefImpl implements BandEventRef {
-  constructor(private ref: DocumentReference<BandEvent>) { }
-
-  static ref(db: Firestore, bandid: string, eventid: string) {
-    return new BandEventRefImpl(doc(db, "bands", bandid, "events", eventid).withConverter(BandEventConverter))
-  }
-
-  get bandid() { return this.ref.parent.id; }
-  get eventid() { return this.ref.id };
-  get dbref() {    return this.ref;}
-
-  read() {
-    return getDoc(this.ref).then(snapshot => snapshot.data());
-  }
 }
 
 class BandEventConverter {
@@ -63,7 +63,7 @@ class BandEventConverter {
   static fromFirestore(snapshot: any, options: any): BandEvent {
     const data = snapshot.data(options);
     return new BandEventFromDb(
-      new BandEventRefImpl(snapshot.ref),
+      new BandEventReference(snapshot.ref),
       data.type,
       data.start,
       data.stop,
@@ -77,7 +77,7 @@ class BandEventConverter {
 // A band event.
 class BandEventFromDb implements BandEvent {
   constructor(
-    public ref: BandEventRef,
+    public ref: BandEventReference,
     public type: string,
     public start: string,
     public stop?: string,
@@ -87,7 +87,7 @@ class BandEventFromDb implements BandEvent {
   ) { }
 
   get id() {
-    return this.ref.eventid;
+    return this.ref.id;
   }
 
   year(): string {

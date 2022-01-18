@@ -1,56 +1,42 @@
-import { collection, doc, DocumentReference, Firestore, getDoc, query, Query, QueryConstraint } from "firebase/firestore";
+import {  CollectionReference, DocumentReference } from "firebase/firestore";
 import { UID } from "../datamodel";
-import { BandEventRef } from "./bandevent";
 
-export interface ParticipantRef {
-  bandid: string;
-  eventid: string;
-  uid: UID;
-
-  read: (db: Firestore) => Promise<Participant>;
+export class ParticipantReference {
+  dbref: DocumentReference<Participant>
+  constructor(ref: DocumentReference<any>) {
+    this.dbref = ref.withConverter(ParticipantConverter)
+  }
+  get id(): string { return this.dbref.id; }
 }
 
-export function participantRef(db: Firestore, bandid: string, eventid:string) {
-  return new ParticipantRefImpl(doc(db, "bands", bandid, "events", eventid).withConverter(ParticipantConverter))
+export class ParticipantCollectionReference {
+  dbref: CollectionReference<Participant>;
+  constructor(ref: CollectionReference<any>) {
+    this.dbref = ref.withConverter(ParticipantConverter)
+  }
 }
 
 export type ParticipantResponse = "yes" | "no" | "sub" | "na";
 
 export interface Participant {
-  ref: ParticipantRef;
+  ref: ParticipantReference;
   uid: UID;
-  response: ParticipantResponse;
+  attending: ParticipantResponse;
   comment: string;
   hasResponded: () => boolean;
 }
 
-export function ParticipantQuery(eventRef: BandEventRef, ...constraints: QueryConstraint[]): Query<Participant> {
-  return query(collection(eventRef.dbref, "events"), ...constraints).withConverter(ParticipantConverter);
-}
-
 export function emptyParticipant(uid: UID): Participant {
   return {
-    ref: null, uid, response: "na", comment: "",
+    ref: null, uid, attending: "na", comment: "",
     hasResponded: () => false
   };
-}
-
-class ParticipantRefImpl implements ParticipantRef {
-  constructor(private ref: DocumentReference<Participant>) { }
-
-  get bandid() { return this.ref.parent.parent.id; }
-  get eventid() { return this.ref.parent.id; }
-  get uid() { return this.ref.id };
-
-  read() {
-    return getDoc(this.ref).then(snapshot => snapshot.data());
-  }
 }
 
 class ParticipantConverter {
   static toFirestore(participant: Participant): object {
     return {
-      attending: participant.response,
+      attending: participant.attending,
       comment: participant.comment
     };
   }
@@ -61,7 +47,7 @@ class ParticipantConverter {
       data.attending = "na";
     }
     return new ParticipantFromDb(
-      new ParticipantRefImpl(snapshot.ref),
+      new ParticipantReference(snapshot.ref),
       data.attending || "na",
       data.comment || ""
     );
@@ -71,17 +57,17 @@ class ParticipantConverter {
 // A band event.
 class ParticipantFromDb implements Participant {
   constructor(
-    public ref: ParticipantRef,
-    public response: ParticipantResponse,
+    public ref: ParticipantReference,
+    public attending: ParticipantResponse,
     public comment: string
   ) { }
 
   get uid() {
-    return this.ref.uid;
+    return this.ref.id;
   }
 
   hasResponded(): boolean {
-    switch (this.response) {
+    switch (this.attending) {
       case "yes":
       case "no":
       case "sub":

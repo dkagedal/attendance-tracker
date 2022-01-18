@@ -8,6 +8,7 @@ import "@material/mwc-icon-button/mwc-icon-button";
 import "@material/mwc-top-app-bar-fixed/mwc-top-app-bar-fixed";
 import { FirebaseApp } from "firebase/app";
 import {
+  addDoc,
   deleteDoc,
   DocumentSnapshot,
   onSnapshot,
@@ -36,11 +37,12 @@ import { Menu } from "@material/mwc-menu";
 import { IconButton } from "@material/mwc-icon-button/mwc-icon-button";
 import { ActionDetail, List } from "@material/mwc-list";
 import { repeat } from "lit/directives/repeat";
-import { Member, User } from "./datamodel";
+import { User } from "./datamodel";
 import { band } from "./model/band";
 import { ProfileEditor } from "./profile-editor";
 import { Dialog } from "@material/mwc-dialog";
 import { Drawer } from "@material/mwc-drawer/mwc-drawer";
+import { Member } from "./model/member";
 
 interface BandMap {
   [key: string]: { display_name: string };
@@ -209,7 +211,7 @@ export class AppMain extends LitElement {
         this.subscribe(
           "member",
           onSnapshot(
-            band(db, this.bandid).member(this.firebaseUser.uid),
+            band(db, this.bandid).member(this.firebaseUser.uid).dbref,
             snapshot => {
               this.membership = snapshot.data();
             },
@@ -305,7 +307,7 @@ export class AppMain extends LitElement {
       editor.save();
       const event = editor.data;
       console.log("New data:", event);
-      band(db, this.bandid).events().add(event).then(
+      addDoc(band(db, this.bandid).events().dbref, event).then(
         () => {
           console.log("Add successful");
           this.addDialog.close();

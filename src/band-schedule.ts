@@ -8,8 +8,6 @@ import "./time-range";
 import "./event-card";
 import "./mini-roster";
 import {
-  collection,
-  doc,
   onSnapshot,
   orderBy,
   query,
@@ -19,9 +17,11 @@ import {
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
-import { Member, UID } from "./datamodel";
+import { UID } from "./datamodel";
 import { db } from "./storage";
-import { BandEvent, BandEventQuery } from "./model/bandevent";
+import { BandEvent } from "./model/bandevent";
+import { band } from "./model/band";
+import { Member } from "./model/member";
 
 @customElement("band-schedule")
 export class BandSchedule extends LitElement {
@@ -60,9 +60,9 @@ export class BandSchedule extends LitElement {
       const nowMinus24h = new Timestamp(now.seconds - 86400, 0).toDate();
       const yesterday = nowMinus24h.toISOString().split("T")[0];
       console.log("[schedule] Getting band events and members...", yesterday);
-      const bandref = doc(db, "bands", this.bandid);
-      const eventQuery = BandEventQuery(
-        bandref,
+      const bandref = band(db, this.bandid);
+      const eventQuery = query(
+        bandref.events().dbref,
         where("start", ">=", yesterday),
         orderBy("start")
       );
@@ -71,16 +71,14 @@ export class BandSchedule extends LitElement {
         this.loaded = true;
         this.dispatchEvent(new CustomEvent("loaded"));
       });
-      const memberQuery = query(collection(bandref, "members")).withConverter(
-        Member.converter
-      );
+      const memberQuery = query(bandref.members().dbref);
       onSnapshot(memberQuery, (querySnapshot): void => {
-        this.members = querySnapshot.docs.map(s => s.data());
+        this.members = querySnapshot.docs.map(doc => doc.data());
         this.members.sort((m1, m2) => {
-          if (m1.uid < m2.uid) {
+          if (m1.id < m2.id) {
             return -1;
           }
-          if (m1.uid > m2.uid) {
+          if (m1.id > m2.id) {
             return 1;
           }
           return 0;
@@ -130,7 +128,7 @@ export class BandSchedule extends LitElement {
       <div class="list">
         ${repeat(
           this.events,
-          e => e.ref.eventid,
+          e => e.ref.id,
           (e: BandEvent) => html`
             <event-card
               selfuid=${this.uid}

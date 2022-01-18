@@ -6,12 +6,13 @@ import "@material/mwc-switch/mwc-switch";
 import { LitElement, html, css } from "lit";
 import { customElement, property, query, state } from "lit/decorators";
 import { TextField } from "@material/mwc-textfield/mwc-textfield";
-import { Member, MemberSettings } from "./datamodel";
+import {  MemberSettings } from "./datamodel";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./storage";
 import { Switch } from "@material/mwc-switch/mwc-switch";
 import { classMap } from "lit/directives/class-map";
 import { Dialog } from "@material/mwc-dialog/mwc-dialog";
+import { Member } from "./model/member";
 
 @customElement("profile-editor")
 export class ProfileEditor extends LitElement {

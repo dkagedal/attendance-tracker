@@ -18,10 +18,9 @@ import { ActionDetail } from "@material/mwc-list/mwc-list-foundation";
 import { auth } from "./storage";
 import { Dialog } from "@material/mwc-dialog";
 import { EventEditor } from "./event-editor";
-import { doc, onSnapshot, setDoc } from "firebase/firestore";
+import { onSnapshot, setDoc } from "firebase/firestore";
 import { customElement, property, query, state } from "lit/decorators";
 import {
-  Member,
   responseString,
   UID
 } from "./datamodel";
@@ -29,7 +28,8 @@ import { ResponseSelector } from "./response-selector";
 import { Button } from "@material/mwc-button";
 import { List } from "@material/mwc-list";
 import { BandEvent } from "./model/bandevent";
-import { emptyParticipant, Participant, ParticipantQuery, ParticipantResponse } from "./model/participant";
+import { emptyParticipant, Participant, ParticipantResponse } from "./model/participant";
+import { Member } from "./model/member";
 
 @customElement("event-card")
 export class EventCard extends LitElement {
@@ -78,7 +78,7 @@ export class EventCard extends LitElement {
 
   getMemberData(uid: UID): Member {
     for (const member of this.members) {
-      if (member.uid == uid) {
+      if (member.id == uid) {
         return member;
       }
     }
@@ -87,9 +87,8 @@ export class EventCard extends LitElement {
 
   fetchParticipants() {
     const event = this.event!;
-    const ref = event.ref;
     this.cancelParticipantsListener();
-    this.cancelParticipantsListener = onSnapshot( ParticipantQuery(     ref),
+    this.cancelParticipantsListener = onSnapshot(event.ref.participants().dbref,
       snapshot => {
         this.participants = {};
         this.needsResponse = true;
@@ -102,8 +101,8 @@ export class EventCard extends LitElement {
         });
         // Set defaults for missing responses, so that this.participants is always fully populated.
         for (const member of this.members) {
-          if (!(member.uid in this.participants)) {
-            this.participants[member.uid] = emptyParticipant(member.uid);
+          if (!(member.id in this.participants)) {
+            this.participants[member.id] = emptyParticipant(member.id);
           }
         }
         console.log("[event-card] Updated participants", this.participants);
@@ -267,7 +266,7 @@ export class EventCard extends LitElement {
         <response-selector
           id="myresponse"
           uid=${this.responseuid}
-          response=${participant.response}
+          response=${participant.attending}
           comment=${participant.comment}
         ></response-selector>
         <mwc-button slot="primaryAction" dialogAction="ok">OK</mwc-button>
@@ -277,10 +276,10 @@ export class EventCard extends LitElement {
 
   setResponse(uid: UID, response?: ParticipantResponse, comment?: string) {
     console.log("REF", this.event.ref, "participants", uid);
-    const ref = participantRef(this.event.ref, uid);
+    const ref = this.event.ref.participant(uid);
     const participant = this.participants[uid];
     if (response != undefined) {
-      participant.response = response;
+      participant.attending = response;
     }
     if (comment !== undefined) {
       participant.comment = comment;
@@ -314,9 +313,9 @@ export class EventCard extends LitElement {
       <div class="comments">
         ${repeat(
           this.members,
-          member => member.uid,
+          member => member.id,
           member => {
-            const participant = this.participants[member.uid];
+            const participant = this.participants[member.id];
             return participant.comment
               ? html`
                   <p class="comment">
@@ -354,7 +353,7 @@ export class EventCard extends LitElement {
   }
 
   renderResponsePrompt() {
-    const response = this.participants[auth.currentUser.uid].response;
+    const response = this.participants[auth.currentUser.uid].attending;
     return html`
       <div id="prompt">
         <mwc-button
@@ -370,19 +369,16 @@ export class EventCard extends LitElement {
           @action=${(e: CustomEvent) => {
             const detail = e.detail as ActionDetail;
             const list = e.target as List;
-            const response = list.items[detail.index].dataset["response"];
-            const participantRef = doc(
-              this.event.ref,
-              "participants",
-              auth.currentUser.uid
-            );
+            const response = list.items[detail.index].dataset["response"] as ParticipantResponse;
+      const participantRef =
+        this.event.ref.participant(auth.currentUser.uid);
             console.log(
               "[response menu] Updating response",
               response,
-              participantRef.path
+              participantRef.dbref.path
             );
             setDoc(
-              participantRef,
+              participantRef.dbref,
               { attending: response },
               { merge: true }
             ).then(
@@ -433,7 +429,7 @@ export class EventCard extends LitElement {
   renderResponses() {
     let responses = {};
     for (const uid in this.participants) {
-      responses[uid] = this.participants[uid].response;
+      responses[uid] = this.participants[uid].attending;
     }
     return html`
       ${this.renderResponseDialog(this.event)}
@@ -476,7 +472,7 @@ export class EventCard extends LitElement {
           ${!this.cancelled && auth.currentUser.uid in this.participants
             ? this.renderResponseMenuItems(
                 "menu-response",
-                this.participants[auth.currentUser.uid].response
+                this.participants[auth.currentUser.uid].attending
               )
             : ""}
         </mwc-menu>
@@ -493,7 +489,7 @@ export class EventCard extends LitElement {
       this.editor.save();
       const event = this.editor.data;
       console.log("New data:", event);
-      setDoc(this.event.ref, BandEvent.toFirestore(event), {
+      setDoc(this.event.ref.dbref, event, {
         merge: false
       }).then(
         () => console.log("Update successful"),

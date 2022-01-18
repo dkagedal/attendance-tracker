@@ -55,38 +55,6 @@ export class User {
   }
 }
 
-// Non-private band member data, stored in /bands/{bandid}/members/{uid}, visible to all band members.
-export class Member {
-  constructor(
-    public readonly uid: UID,
-    public readonly display_name: string,
-    public readonly admin: boolean
-  ) {}
-
-  static converter = {
-    toFirestore: (member: Member) => {
-      return {
-        display_name: member.display_name,
-        admin: member.admin
-      };
-    },
-    fromFirestore: (snapshot, options) => {
-      const data = snapshot.data(options);
-      return new Member(snapshot.id, data.display_name, data.admin);
-    }
-  };
-
-  static ref(
-    db: Firestore,
-    bandid: string,
-    uid: string
-  ): DocumentReference<Member> {
-    return doc(db, "bands", bandid, "members", uid).withConverter(
-      Member.converter
-    );
-  }
-}
-
 // Private settings for a band member, stored in /bands/{bandid}/members/{uid}/private/settings, readable by the member and an admin.
 export class MemberSettings {
   constructor(
