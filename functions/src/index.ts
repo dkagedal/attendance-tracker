@@ -45,28 +45,19 @@ async function approve(
   const uid = joinRequestSnapshot.id;
   const logger = createLogger({ bandId: bandRef.id, uid });
   const memberDocRef = bandRef.collection("members").doc(uid);
-  const userDocRef = db.collection("users").doc(uid);
   const bandSnapshot = await bandRef.get();
-  const userData = (await userDocRef.get()).data()!;
-  if (userData.bands === undefined) {
-    logger.warn("Missing 'bands' field in", userDocRef.path);
-    userData.bands = {};
-  }
   let bandName = bandSnapshot.data()?.display_name;
   if (!bandName) {
     logger.warn("Missing 'display_name' in", bandRef.path);
     bandName = "??";
   }
-  // Update user and band information.
-  userData.bands[bandRef.id] = { display_name: bandName };
+  // Update  band information.
   const memberData = {
     display_name: joinRequestSnapshot.data().display_name,
     admin: !!options.makeAdmin
   };
-  logger.info("Updating", userDocRef.path, "to", userData);
   logger.info("Updating", memberDocRef.path, "to", memberData);
   await Promise.all([
-    userDocRef.set(userData),
     memberDocRef.set(memberData),
     joinRequestSnapshot.ref.delete()
   ]);
@@ -121,9 +112,21 @@ export const joinRequestCreated = functions.firestore
       const uid = context.params.uid;
       const logger = createLogger({ bandId, uid });
       logger.info("New member");
-      // Notify admins.
       const band = await getBand(bandId);
-      const user = await admin.auth().getUser(uid);
+
+      // Update /users/{uid} field "bands".
+      const userDocRef = db.collection("users").doc(uid);
+      const userData = (await userDocRef.get()).data()!;
+      if (userData.bands === undefined) {
+        logger.warn("Missing 'bands' field in", userDocRef.path);
+        userData.bands = {};
+      }
+      userData.bands[bandId] = { display_name: band.display_name };
+      logger.info("Updating", userDocRef.path, "to", userData);
+      await userDocRef.set(userData);
+    
+      // Notify admins.
+      const authUser = await admin.auth().getUser(uid);
       const admins = await getBandAdmins(bandId);
       db.collection("mail").add({
         to: admins.docs.map(snap => snap.data().email),
@@ -136,7 +139,7 @@ export const joinRequestCreated = functions.firestore
 
 Inloggad som:
 
-  ${user.displayName ? user.displayName : " "} <${user.email}>
+  ${authUser.displayName ? authUser.displayName : " "} <${authUser.email}>
 `
         }
       });

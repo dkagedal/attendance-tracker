@@ -5,7 +5,6 @@ import {
   doc,
   getDoc,
   setDoc,
-  DocumentReference,
   Firestore,
   collection,
   onSnapshot,
@@ -19,7 +18,6 @@ import {
   onAuthStateChanged,
   User as FirebaseUser
 } from "firebase/auth";
-import { User } from "./datamodel";
 
 export var db: Firestore;
 export var auth: Auth;
@@ -48,22 +46,6 @@ export function initDB(app: FirebaseApp, useEmulator: boolean) {
   if (loginStateCallback) {
     onAuthStateChanged(auth, loginStateCallback);
   }
-}
-
-export async function ensureUserExists(
-  user: FirebaseUser
-): Promise<DocumentReference<User>> {
-  const docRef = User.ref(db, user.uid);
-  const snapshot = await getDoc(docRef);
-  if (!snapshot.exists()) {
-    const data: User = {
-      uid: user.uid,
-      bands: {}
-    };
-    console.log("Creating user record for", user.uid);
-    await setDoc(docRef, data, { merge: true });
-  }
-  return docRef;
 }
 
 export interface MemberSettings {
