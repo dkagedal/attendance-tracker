@@ -1,5 +1,6 @@
-import { CollectionReference, DocumentReference } from "firebase/firestore";
+import { CollectionReference, doc, DocumentReference, setDoc, SetOptions } from "firebase/firestore";
 import { UID } from "../datamodel";
+import { MemberSettingsReference } from "./membersettings";
 
 export class MemberReference {
   dbref: DocumentReference<Member>;
@@ -8,6 +9,14 @@ export class MemberReference {
   }
   get id(): string {
     return this.dbref.id;
+  }
+
+  update(data: any, options: SetOptions= {}): Promise<void> {
+    return setDoc(this.dbref, data, options);
+  }
+
+  settings(): MemberSettingsReference {
+    return new MemberSettingsReference(doc(this.dbref, "private", "settings"));
   }
 }
 
@@ -43,7 +52,6 @@ class MemberConverter {
   }
 }
 
-// A band event.
 class MemberFromDb implements Member {
   constructor(
     public ref: MemberReference,

@@ -6,13 +6,13 @@ import "@material/mwc-switch/mwc-switch";
 import { LitElement, html, css } from "lit";
 import { customElement, property, query, state } from "lit/decorators";
 import { TextField } from "@material/mwc-textfield/mwc-textfield";
-import { MemberSettings } from "./datamodel";
-import { doc, getDoc, setDoc } from "firebase/firestore";
 import { auth, db } from "./storage";
 import { Switch } from "@material/mwc-switch/mwc-switch";
 import { classMap } from "lit/directives/class-map";
 import { Dialog } from "@material/mwc-dialog/mwc-dialog";
 import { Member } from "./model/member";
+import { MemberSettings } from "./model/membersettings";
+import { band } from "./model/band";
 
 @customElement("profile-editor")
 export class ProfileEditor extends LitElement {
@@ -32,10 +32,10 @@ export class ProfileEditor extends LitElement {
   dialog: Dialog;
 
   show() {
-    getDoc(MemberSettings.ref(db, this.bandid, this.uid)).then(
-      snapshot => {
-        if (snapshot.exists()) {
-          this.settings = snapshot.data();
+    band(db, this.bandid).member(this.uid).settings().read().then(
+      settings => {
+        if (settings != null) {
+          this.settings = settings;
         } else {
           this.settings = MemberSettings.DEFAULT;
           if (this.uid == auth.currentUser?.uid) {
@@ -128,9 +128,7 @@ export class ProfileEditor extends LitElement {
 
     if (nameField.value != this.membership.display_name) {
       console.log("[profile-editor] New display name:", nameField.value);
-      await setDoc(
-        //Member.ref(db, this.bandid, this.uid),
-        doc(db, "bands", this.bandid, "members", this.uid),
+      await band(db, this.bandid).member(this.uid).update(
         { display_name: nameField.value },
         { merge: true }
       );
@@ -144,13 +142,7 @@ export class ProfileEditor extends LitElement {
       new_member: getSwitch("new_member").selected
     });
     console.log("[profile-editor] New member settings:", settings);
-    await setDoc(
-      MemberSettings.ref(db, this.bandid, this.uid).withConverter(
-        MemberSettings.converter
-      ),
-      settings
-    );
-
+    await band(db, this.bandid).member(this.uid).settings().update(settings);
     return true;
   }
 }

@@ -8,7 +8,6 @@ import "@material/mwc-icon-button/mwc-icon-button";
 import "@material/mwc-top-app-bar-fixed/mwc-top-app-bar-fixed";
 import { FirebaseApp } from "firebase/app";
 import {
-  addDoc,
   deleteDoc,
   DocumentSnapshot,
   onSnapshot,
@@ -307,7 +306,7 @@ export class AppMain extends LitElement {
       editor.save();
       const event = editor.data;
       console.log("New data:", event);
-      addDoc(band(db, this.bandid).events().dbref, event).then(
+      band(db, this.bandid).events().add(event).then(
         () => {
           console.log("Add successful");
           this.addDialog.close();

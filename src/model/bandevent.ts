@@ -1,4 +1,5 @@
 import {
+  addDoc,
   collection,
   CollectionReference,
   doc,
@@ -36,8 +37,10 @@ export class BandEventCollectionReference {
   constructor(ref: CollectionReference<any>) {
     this.dbref = ref.withConverter(BandEventConverter);
   }
-  get id(): string {
-    return this.dbref.id;
+
+  async add(event: BandEvent): Promise<BandEventReference> {
+    const ref = await addDoc(this.dbref, event);
+    return new BandEventReference(ref);
   }
 }
 
