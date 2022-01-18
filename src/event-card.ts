@@ -20,15 +20,16 @@ import { Dialog } from "@material/mwc-dialog";
 import { EventEditor } from "./event-editor";
 import { onSnapshot, setDoc } from "firebase/firestore";
 import { customElement, property, query, state } from "lit/decorators";
-import {
-  responseString,
-  UID
-} from "./datamodel";
+import { responseString, UID } from "./datamodel";
 import { ResponseSelector } from "./response-selector";
 import { Button } from "@material/mwc-button";
 import { List } from "@material/mwc-list";
 import { BandEvent } from "./model/bandevent";
-import { emptyParticipant, Participant, ParticipantResponse } from "./model/participant";
+import {
+  emptyParticipant,
+  Participant,
+  ParticipantResponse
+} from "./model/participant";
 import { Member } from "./model/member";
 
 @customElement("event-card")
@@ -88,7 +89,8 @@ export class EventCard extends LitElement {
   fetchParticipants() {
     const event = this.event!;
     this.cancelParticipantsListener();
-    this.cancelParticipantsListener = onSnapshot(event.ref.participants().dbref,
+    this.cancelParticipantsListener = onSnapshot(
+      event.ref.participants().dbref,
       snapshot => {
         this.participants = {};
         this.needsResponse = true;
@@ -369,9 +371,12 @@ export class EventCard extends LitElement {
           @action=${(e: CustomEvent) => {
             const detail = e.detail as ActionDetail;
             const list = e.target as List;
-            const response = list.items[detail.index].dataset["response"] as ParticipantResponse;
-      const participantRef =
-        this.event.ref.participant(auth.currentUser.uid);
+            const response = list.items[detail.index].dataset[
+              "response"
+            ] as ParticipantResponse;
+            const participantRef = this.event.ref.participant(
+              auth.currentUser.uid
+            );
             console.log(
               "[response menu] Updating response",
               response,

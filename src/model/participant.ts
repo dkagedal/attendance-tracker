@@ -1,18 +1,20 @@
-import {  CollectionReference, DocumentReference } from "firebase/firestore";
+import { CollectionReference, DocumentReference } from "firebase/firestore";
 import { UID } from "../datamodel";
 
 export class ParticipantReference {
-  dbref: DocumentReference<Participant>
+  dbref: DocumentReference<Participant>;
   constructor(ref: DocumentReference<any>) {
-    this.dbref = ref.withConverter(ParticipantConverter)
+    this.dbref = ref.withConverter(ParticipantConverter);
   }
-  get id(): string { return this.dbref.id; }
+  get id(): string {
+    return this.dbref.id;
+  }
 }
 
 export class ParticipantCollectionReference {
   dbref: CollectionReference<Participant>;
   constructor(ref: CollectionReference<any>) {
-    this.dbref = ref.withConverter(ParticipantConverter)
+    this.dbref = ref.withConverter(ParticipantConverter);
   }
 }
 
@@ -28,17 +30,24 @@ export interface Participant {
 
 export function emptyParticipant(uid: UID): Participant {
   return {
-    ref: null, uid, attending: "na", comment: "",
+    ref: null,
+    uid,
+    attending: "na",
+    comment: "",
     hasResponded: () => false
   };
 }
 
 class ParticipantConverter {
-  static toFirestore(participant: Participant): object {
-    return {
-      attending: participant.attending,
-      comment: participant.comment
-    };
+  static toFirestore(participant: Participant) {
+    const data: any = {};
+    if (participant.attending !== undefined) {
+      data.attending = participant.attending;
+    }
+    if (participant.comment !== undefined) {
+      data.comment = participant.comment;
+    }
+    return data;
   }
 
   static fromFirestore(snapshot: any, options: any): Participant {
@@ -60,7 +69,7 @@ class ParticipantFromDb implements Participant {
     public ref: ParticipantReference,
     public attending: ParticipantResponse,
     public comment: string
-  ) { }
+  ) {}
 
   get uid() {
     return this.ref.id;

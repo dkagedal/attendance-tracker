@@ -1,6 +1,14 @@
-import { collection, CollectionReference, doc, DocumentReference } from "firebase/firestore";
+import {
+  collection,
+  CollectionReference,
+  doc,
+  DocumentReference
+} from "firebase/firestore";
 import { UID } from "../datamodel";
-import { ParticipantCollectionReference, ParticipantReference } from "./participant";
+import {
+  ParticipantCollectionReference,
+  ParticipantReference
+} from "./participant";
 
 export class BandEventReference {
   dbref: DocumentReference<BandEvent>;
@@ -8,10 +16,14 @@ export class BandEventReference {
     this.dbref = ref.withConverter(BandEventConverter);
   }
 
-  get id(): string { return this.dbref.id };
+  get id(): string {
+    return this.dbref.id;
+  }
 
   participants(): ParticipantCollectionReference {
-    return new ParticipantCollectionReference(collection(this.dbref, "participants"));
+    return new ParticipantCollectionReference(
+      collection(this.dbref, "participants")
+    );
   }
 
   participant(uid: UID): ParticipantReference {
@@ -24,7 +36,9 @@ export class BandEventCollectionReference {
   constructor(ref: CollectionReference<any>) {
     this.dbref = ref.withConverter(BandEventConverter);
   }
-  get id(): string { return this.dbref.id;}
+  get id(): string {
+    return this.dbref.id;
+  }
 }
 
 export interface BandEvent {
@@ -84,7 +98,7 @@ class BandEventFromDb implements BandEvent {
     public location?: string,
     public description?: string,
     public cancelled?: boolean
-  ) { }
+  ) {}
 
   get id() {
     return this.ref.id;

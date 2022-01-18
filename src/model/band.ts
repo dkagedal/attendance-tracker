@@ -1,4 +1,9 @@
-import { collection, doc, DocumentReference, Firestore } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  DocumentReference,
+  Firestore
+} from "firebase/firestore";
 import { BandEventCollectionReference, BandEventReference } from "./bandevent";
 import { MemberCollectionReference, MemberReference } from "./member";
 
@@ -7,12 +12,14 @@ export class BandReference {
   constructor(ref: DocumentReference<any>) {
     this.dbref = ref.withConverter(BandConverter);
   }
-  get id() { return this.dbref.id; }
+  get id() {
+    return this.dbref.id;
+  }
 
   events(): BandEventCollectionReference {
     return new BandEventCollectionReference(collection(this.dbref, "events"));
   }
-   
+
   event(eventid: string) {
     return new BandEventReference(doc(this.dbref, "events", eventid));
   }
@@ -20,7 +27,7 @@ export class BandReference {
   members(): MemberCollectionReference {
     return new MemberCollectionReference(collection(this.dbref, "members"));
   }
-   
+
   member(memberid: string) {
     return new MemberReference(doc(this.dbref, "members", memberid));
   }
@@ -47,5 +54,5 @@ class BandConverter {
 }
 
 export class Band {
-  constructor(public ref: BandReference, public display_name: string) { }
+  constructor(public ref: BandReference, public display_name: string) {}
 }
