@@ -4,8 +4,8 @@ import {
   Firestore,
   FirestoreDataConverter
 } from "firebase/firestore";
+import { ParticipantResponse } from "./model/participant";
 
-export type ParticipantResponse = "yes" | "no" | "sub" | "na";
 export const responseLabels: Map<ParticipantResponse, string> = new Map([
   ["yes", "Kommer"],
   ["no", "Kommer inte"],
@@ -130,65 +130,5 @@ export class MemberSettings {
       "private",
       "settings"
     ).withConverter(MemberSettings.converter);
-  }
-}
-
-// A participation record.
-export class Participant {
-  constructor(
-    public uid: UID,
-    public response: ParticipantResponse,
-    public comment: string
-  ) {}
-
-  static empty(uid: UID) {
-    return new Participant(uid, "na", "");
-  }
-
-  static toFirestore(participant: Participant): object {
-    return {
-      attending: participant.response,
-      comment: participant.comment
-    };
-  }
-
-  static fromFirestore(snapshot: any, options: any): Participant {
-    const data = snapshot.data(options);
-    if (["yes", "no", "sub", "na"].indexOf(data.attending) == -1) {
-      data.attending = "na";
-    }
-    return new Participant(
-      snapshot.id,
-      data.attending || "na",
-      data.comment || ""
-    );
-  }
-
-  static ref(
-    db: Firestore,
-    bandid: string,
-    eventid: string,
-    uid: UID
-  ): DocumentReference<Participant> {
-    return doc(
-      db,
-      "bands",
-      bandid,
-      "events",
-      eventid,
-      "participants",
-      uid
-    ).withConverter(Participant);
-  }
-
-  hasResponded(): boolean {
-    switch (this.response) {
-      case "yes":
-      case "no":
-      case "sub":
-        return true;
-      default:
-        return false;
-    }
   }
 }

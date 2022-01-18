@@ -18,12 +18,10 @@ import { ActionDetail } from "@material/mwc-list/mwc-list-foundation";
 import { auth } from "./storage";
 import { Dialog } from "@material/mwc-dialog";
 import { EventEditor } from "./event-editor";
-import { collection, doc, onSnapshot, setDoc } from "firebase/firestore";
+import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { customElement, property, query, state } from "lit/decorators";
 import {
   Member,
-  Participant,
-  ParticipantResponse,
   responseString,
   UID
 } from "./datamodel";
@@ -31,6 +29,7 @@ import { ResponseSelector } from "./response-selector";
 import { Button } from "@material/mwc-button";
 import { List } from "@material/mwc-list";
 import { BandEvent } from "./model/bandevent";
+import { emptyParticipant, Participant, ParticipantQuery, ParticipantResponse } from "./model/participant";
 
 @customElement("event-card")
 export class EventCard extends LitElement {
@@ -90,8 +89,7 @@ export class EventCard extends LitElement {
     const event = this.event!;
     const ref = event.ref;
     this.cancelParticipantsListener();
-    this.cancelParticipantsListener = onSnapshot(
-      collection(ref, "participants").withConverter(Participant),
+    this.cancelParticipantsListener = onSnapshot( ParticipantQuery(     ref),
       snapshot => {
         this.participants = {};
         this.needsResponse = true;
@@ -105,7 +103,7 @@ export class EventCard extends LitElement {
         // Set defaults for missing responses, so that this.participants is always fully populated.
         for (const member of this.members) {
           if (!(member.uid in this.participants)) {
-            this.participants[member.uid] = Participant.empty(member.uid);
+            this.participants[member.uid] = emptyParticipant(member.uid);
           }
         }
         console.log("[event-card] Updated participants", this.participants);
@@ -210,7 +208,7 @@ export class EventCard extends LitElement {
           !this.event.cancelled
         );
         setDoc(
-          this.event.ref,
+          this.event.ref.dbref,
           { cancelled: !this.event.cancelled },
           { merge: true }
         ).then(
@@ -279,11 +277,7 @@ export class EventCard extends LitElement {
 
   setResponse(uid: UID, response?: ParticipantResponse, comment?: string) {
     console.log("REF", this.event.ref, "participants", uid);
-    const participantRef = doc(
-      this.event.ref,
-      "participants",
-      uid
-    ).withConverter(Participant);
+    const ref = participantRef(this.event.ref, uid);
     const participant = this.participants[uid];
     if (response != undefined) {
       participant.response = response;
@@ -291,8 +285,8 @@ export class EventCard extends LitElement {
     if (comment !== undefined) {
       participant.comment = comment;
     }
-    console.log("New data:", participantRef.path, participant);
-    setDoc(participantRef, participant, { merge: false }).then(
+    console.log("New data:", ref.dbref.path, participant);
+    setDoc(ref.dbref, participant, { merge: false }).then(
       () => console.log("Update successful"),
       reason => console.log("Update failed:", reason)
     );

@@ -12,7 +12,7 @@ import { BandEvent } from "./model/bandevent";
 @customElement("event-editor")
 export class EventEditor extends LitElement {
   @property({ type: Object, attribute: false })
-  data: BandEvent = new BandEvent(null, "", "");
+  data: BandEvent = {ref: null, type:"", start:"", year: () => "", hasStopTime: () => false};
 
   @property({ type: Boolean, reflect: true })
   range: boolean = false;

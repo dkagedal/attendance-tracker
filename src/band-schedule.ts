@@ -21,7 +21,7 @@ import { customElement, property, state } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
 import { Member, UID } from "./datamodel";
 import { db } from "./storage";
-import { BandEvent } from "./model/bandevent";
+import { BandEvent, BandEventQuery } from "./model/bandevent";
 
 @customElement("band-schedule")
 export class BandSchedule extends LitElement {
@@ -61,11 +61,11 @@ export class BandSchedule extends LitElement {
       const yesterday = nowMinus24h.toISOString().split("T")[0];
       console.log("[schedule] Getting band events and members...", yesterday);
       const bandref = doc(db, "bands", this.bandid);
-      const eventQuery = query(
-        collection(bandref, "events"),
+      const eventQuery = BandEventQuery(
+        bandref,
         where("start", ">=", yesterday),
         orderBy("start")
-      ).withConverter(BandEvent);
+      );
       onSnapshot(eventQuery, (querySnapshot): void => {
         this.events = querySnapshot.docs.map(doc => doc.data());
         this.loaded = true;
@@ -130,7 +130,7 @@ export class BandSchedule extends LitElement {
       <div class="list">
         ${repeat(
           this.events,
-          e => e.id,
+          e => e.ref.eventid,
           (e: BandEvent) => html`
             <event-card
               selfuid=${this.uid}

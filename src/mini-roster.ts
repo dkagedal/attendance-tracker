@@ -2,8 +2,9 @@ import "./response-chip";
 import { css, html, LitElement } from "lit";
 import { customElement, property } from "lit/decorators";
 import { repeat } from "lit/directives/repeat";
-import { Member, ParticipantResponse } from "./datamodel";
+import { Member } from "./datamodel";
 import { BandEvent } from "./model/bandevent";
+import { ParticipantResponse } from "./model/participant";
 
 interface Responses {
   [uid: string]: ParticipantResponse;

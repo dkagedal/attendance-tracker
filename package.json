@@ -37,8 +37,9 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && sed -e 's|.*// HIDE|// HIDDEN|' -i '' build/*.js && rollup -c",
-    "fmt": "prettier --write src/* styles/*",
+    "build": "tsc && rollup -c",
+    "build-emacs": "tsc --pretty false && rollup -c",
+    "fmt": "prettier --write src/* src/*/* styles/*",
     "rollup": "rollup -c"
   }
 }
