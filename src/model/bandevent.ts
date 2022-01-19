@@ -3,7 +3,9 @@ import {
   collection,
   CollectionReference,
   doc,
-  DocumentReference
+  DocumentReference,
+  setDoc,
+  SetOptions
 } from "firebase/firestore";
 import { UID } from "../datamodel";
 import {
@@ -19,6 +21,10 @@ export class BandEventReference {
 
   get id(): string {
     return this.dbref.id;
+  }
+
+  update(data: any, options?: SetOptions): Promise<void> {
+    return setDoc(this.dbref.withConverter(null), data, options);
   }
 
   participants(): ParticipantCollectionReference {

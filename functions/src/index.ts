@@ -65,6 +65,104 @@ async function approve(
   return "OK";
 }
 
+async function calculateNotifications(bandid: string) {
+  const logger = createLogger({ bandid });
+  const notifications = {
+    new_event: [] as string[]
+  };
+  const admin_notifications = {
+    new_join_request: [] as string[],
+    new_member: [] as string[]
+  };
+  const bandRef = db.collection("bands").doc(bandid);
+  const members = await bandRef.collection("members").get();
+  for (const doc of members.docs) {
+    const member = doc.data();
+    logger.info(
+      "Checking member:",
+      member.display_name,
+      member.admin ? "(admin)" : "(non-admin)"
+    );
+    const settingsDoc = await doc.ref
+      .collection("private")
+      .doc("settings")
+      .get();
+    if (!settingsDoc.exists) {
+      continue;
+    }
+    const settings = settingsDoc.data()!;
+    if (!settings.email) {
+      continue;
+    }
+    logger.info("Email:", settings.email);
+    for (const [k, emails] of Object.entries(notifications)) {
+      if (settings.notify[k]) {
+        emails.push(settings.email);
+      }
+    }
+    if (member.admin) {
+      for (const [k, emails] of Object.entries(admin_notifications)) {
+        if (settings.notify[k]) {
+          emails.push(settings.email);
+        }
+      }
+    }
+  }
+  logger.info("Notifications:", notifications);
+  logger.info("Admin notifications:", admin_notifications);
+  Object.assign(notifications, admin_notifications);
+  await bandRef
+    .collection("admin")
+    .doc("notify")
+    .set(notifications);
+}
+
+type MailMessage = {
+  subject: string;
+  text: string;
+  messageId?: string;
+  headers?: { [hdr: string]: string };
+};
+
+async function notify(
+  bandid: string,
+  notificationType: string,
+  message: MailMessage,
+  extraKey: string = "", // like a uid
+  followUp: boolean = false
+) {
+  const notifyDoc = await db
+    .collection("bands")
+    .doc(bandid)
+    .collection("admin")
+    .doc("notify")
+    .get();
+  if (!notifyDoc.exists) {
+    return;
+  }
+  const addresses = notifyDoc.data()![notificationType];
+  functions.logger.info("Notify", bandid, notificationType, addresses);
+  if (!message.messageId) {
+    const baseMessageId = `<${notificationType}-${extraKey}@${bandid}>`;
+    if (followUp) {
+      message.messageId = `<${notificationType}-${extraKey}-${Date.now()}@${bandid}>`;
+      if (!message.headers) {
+        message.headers = {};
+      }
+      message.headers["In-Reply-To"] = baseMessageId;
+      message.headers["References"] = baseMessageId;
+    } else {
+      message.messageId = baseMessageId;
+    }
+  }
+  db.collection("mail").add({
+    to: addresses,
+    message: message
+  });
+}
+
+///
+
 export const joinRequestCreated = functions.firestore
   .document("bands/{bandId}/join_requests/{uid}")
   .onCreate(
@@ -87,11 +185,10 @@ export const joinRequestCreated = functions.firestore
       // Otherwise, notify admins.
       const band = await getBand(bandId);
       const user = await admin.auth().getUser(uid);
-      const admins = await getBandAdmins(bandId);
-      db.collection("mail").add({
-        to: admins.docs.map(snap => snap.data().email),
-        message: {
-          messageId: uid + "-joinreq",
+      notify(
+        bandId,
+        "new_join_request",
+        {
           subject: `Någon vill gå med i ${band.display_name}`,
           text: `Begäran om om att få bli medlem i ${
             band.display_name
@@ -99,12 +196,13 @@ export const joinRequestCreated = functions.firestore
 
   ${user.displayName ? user.displayName : " "} <${user.email}>
 `
-        }
-      });
+        },
+        uid
+      );
     }
   );
 
-  export const memberCreated = functions.firestore
+export const memberCreated = functions.firestore
   .document("bands/{bandId}/members/{uid}")
   .onCreate(
     async (snapshot, context): Promise<void> => {
@@ -113,6 +211,7 @@ export const joinRequestCreated = functions.firestore
       const logger = createLogger({ bandId, uid });
       logger.info("New member");
       const band = await getBand(bandId);
+      const authUser = await admin.auth().getUser(uid);
 
       // Update /users/{uid} field "bands".
       const userDocRef = db.collection("users").doc(uid);
@@ -124,11 +223,21 @@ export const joinRequestCreated = functions.firestore
       userData.bands[bandId] = { display_name: band.display_name };
       logger.info("Updating", userDocRef.path, "to", userData);
       await userDocRef.set(userData);
-    
+
+      // Create default settings.
+      const settingsRef = snapshot.ref.collection("private").doc("settings");
+      await settingsRef.set({
+        email: authUser.email,
+        notify: {
+          new_event: true,
+          new_join_request: true,
+          new_member: true
+        }
+      });
+
       // Notify admins.
-      const authUser = await admin.auth().getUser(uid);
       const admins = await getBandAdmins(bandId);
-      db.collection("mail").add({
+      await db.collection("mail").add({
         to: admins.docs.map(snap => snap.data().email),
         message: {
           messageId: uid + "-join",
@@ -146,7 +255,7 @@ Inloggad som:
     }
   );
 
-export const approval = functions.firestore
+export const joinRequestUpdated = functions.firestore
   .document("bands/{bandId}/join_requests/{uid}")
   .onUpdate(
     async (change, context): Promise<string> => {
@@ -221,9 +330,82 @@ export const userDeleted = functions.firestore
     }
   });
 
-export const scheduled = functions.pubsub
-  .schedule("0,10,20,30,40 * * * *")
-  .timeZone("Europe/Stockholm")
-  .onRun(context => {
-    functions.logger.info("Scheduled run");
+export const settingsChanged = functions.firestore
+  .document("bands/{bandid}/members/{uid}/private/settings")
+  .onWrite(async (snapshot, context) => {
+    const bandid = context.params.bandid;
+    const uid = context.params.uid;
+    const logger = createLogger({ bandid, uid });
+    logger.info("Settings changed");
+    // TODO: Only update for this user once we're in a steady state.
+    await calculateNotifications(bandid);
   });
+
+type BandEvent = {
+  type: string;
+  start: string;
+  stop?: string;
+  location?: string;
+  description?: string;
+  cancelled?: boolean;
+};
+
+function formatEventInfo(event: BandEvent): string {
+  if (event.cancelled) {
+    return `${event.type}
+Inställt`;
+  }
+  return `${event.type}
+${event.description}
+${event.location || "-"}
+${event.start}`;
+}
+
+export const eventCreated = functions.firestore
+  .document("bands/{bandid}/events/{eventid}")
+  .onCreate(async (snapshot, context) => {
+    const bandid = context.params.bandid;
+    const eventid = context.params.eventid;
+    const event = snapshot.data() as BandEvent;
+    const band = await getBand(bandid);
+    notify(
+      bandid,
+      "new_event",
+      {
+        subject: `Ny planerad händelse: ${event.type}`,
+        text: `En ny händelse har lagts till i kalendariet för ${
+          band.display_name
+        }.
+
+${formatEventInfo(event)}`
+      },
+      eventid
+    );
+  });
+
+export const eventUpdated = functions.firestore
+  .document("bands/{bandid}/events/{eventid}")
+  .onUpdate(async (snapshot, context) => {
+    const bandid = context.params.bandid;
+    const eventid = context.params.eventid;
+    const event = snapshot.after.data() as BandEvent;
+    notify(
+      bandid,
+      "new_event",
+      {
+        subject: `Ny planerad händelse: ${event.type}`,
+        text: `Händelsen har ändrats.
+
+${formatEventInfo(event)}`
+      },
+      eventid,
+      true
+    );
+  });
+
+// export const scheduled = functions.pubsub
+//   .schedule("0,10,20,30,40 * * * *")
+//   .timeZone("Europe/Stockholm")
+//   .onRun(context => {
+//     functions.logger.info("Scheduled run");
+//   });

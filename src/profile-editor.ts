@@ -130,7 +130,7 @@ export class ProfileEditor extends LitElement {
       return false;
     }
 
-    if (nameField.value != this.membership.display_name) {
+    if (nameField.value != this.membership?.display_name) {
       console.log("[profile-editor] New display name:", nameField.value);
       await band(db, this.bandid)
         .member(this.uid)

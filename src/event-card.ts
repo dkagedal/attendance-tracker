@@ -208,14 +208,12 @@ export class EventCard extends LitElement {
           "to",
           !this.event.cancelled
         );
-        setDoc(
-          this.event.ref.dbref,
-          { cancelled: !this.event.cancelled },
-          { merge: true }
-        ).then(
-          () => console.log("Cancel successful"),
-          reason => console.log("Cancel failed:", reason)
-        );
+        this.event.ref
+          .update({ cancelled: !this.event.cancelled }, { merge: true })
+          .then(
+            () => console.log("Cancel successful"),
+            reason => console.log("Cancel failed:", reason)
+          );
         return;
       case 2: // change response
         this.openResponseDialog(auth.currentUser.uid);
