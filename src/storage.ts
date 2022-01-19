@@ -4,12 +4,7 @@ import {
   connectFirestoreEmulator,
   doc,
   getDoc,
-  setDoc,
-  Firestore,
-  collection,
-  onSnapshot,
-  QuerySnapshot,
-  FirestoreError
+  Firestore
 } from "firebase/firestore";
 import {
   Auth,
@@ -18,6 +13,8 @@ import {
   onAuthStateChanged,
   User as FirebaseUser
 } from "firebase/auth";
+import { JoinRequest } from "./model/joinrequest";
+import { band } from "./model/band";
 
 export var db: Firestore;
 export var auth: Auth;
@@ -66,21 +63,6 @@ export async function getHostBand(
   return snapshot.data()!.band;
 }
 
-export interface JoinRequest {
-  display_name: string;
-  url: string;
-  approved: boolean;
-}
-
-export const joinRequestConverter = {
-  toFirestore: (joinRequest: JoinRequest) => {
-    return joinRequest;
-  },
-  fromFirestore: (snapshot, options) => {
-    return snapshot.data(options) as JoinRequest;
-  }
-};
-
 export class JoinRequestError extends Error {
   readonly name = "JoinRequestError";
 
@@ -100,7 +82,7 @@ export async function CreateJoinRequest(
   if (!bandid) {
     throw new JoinRequestError("join/create", "No bandid given");
   }
-  const docRef = doc(db, "bands", bandid, "join_requests", user.uid);
+  const docRef = band(db, bandid).join_request(user.uid);
   const joinRequest: JoinRequest = {
     display_name: user.displayName || "Utan Namn",
     url: location.href,
@@ -108,23 +90,12 @@ export async function CreateJoinRequest(
   };
   console.log("Making a join request to", docRef);
   try {
-    return await setDoc(docRef, joinRequest, { merge: true });
+    return await docRef.update(joinRequest);
   } catch (reason) {
     throw new JoinRequestError(
       "join/create",
-      `Failed to create join request ${docRef.path}`,
+      `Failed to create join request ${docRef.dbref.path}`,
       reason
     );
   }
-}
-
-export function onJoinRequestSnapshot(
-  bandid: string,
-  onNext: (snapshot: QuerySnapshot<JoinRequest>) => void,
-  onError?: (error: FirestoreError) => void
-) {
-  const ref = collection(db, "bands", bandid, "join_requests").withConverter(
-    joinRequestConverter
-  );
-  return onSnapshot(ref, onNext, onError);
 }

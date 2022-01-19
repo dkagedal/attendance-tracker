@@ -12,8 +12,7 @@ import {
   DocumentSnapshot,
   onSnapshot,
   QueryDocumentSnapshot,
-  QuerySnapshot,
-  setDoc
+  QuerySnapshot
 } from "firebase/firestore";
 import {
   Auth,
@@ -22,13 +21,7 @@ import {
   signOut,
   User as FirebaseUser
 } from "firebase/auth";
-import {
-  CreateJoinRequest,
-  db,
-  getHostBand,
-  JoinRequest,
-  onJoinRequestSnapshot
-} from "./storage";
+import { CreateJoinRequest, db, getHostBand } from "./storage";
 import "./login-dialog";
 import "./band-schedule";
 import { EventEditor } from "./event-editor";
@@ -42,6 +35,7 @@ import { ProfileEditor } from "./profile-editor";
 import { Dialog } from "@material/mwc-dialog";
 import { Drawer } from "@material/mwc-drawer/mwc-drawer";
 import { Member } from "./model/member";
+import { JoinRequest, JoinRequestReference } from "./model/joinrequest";
 
 interface BandMap {
   [key: string]: { display_name: string };
@@ -230,17 +224,19 @@ export class AppMain extends LitElement {
       if (this.membership?.admin) {
         this.subscribe(
           "join-request",
-          onJoinRequestSnapshot(
-            this.bandid,
-            (snapshot: QuerySnapshot<JoinRequest>) => {
-              this.joinRequests = snapshot.docs;
-            },
-            error => {
-              if (error.code != "permission-denied") {
-                this.addErrorMessage("Internt fel [join-request]", error);
+          band(db, this.bandid)
+            .join_requests()
+            .query()
+            .onSnapshot(
+              (snapshot: QuerySnapshot<JoinRequest>) => {
+                this.joinRequests = snapshot.docs;
+              },
+              error => {
+                if (error.code != "permission-denied") {
+                  this.addErrorMessage("Internt fel [join-request]", error);
+                }
               }
-            }
-          )
+            )
         );
       }
     }
@@ -306,17 +302,20 @@ export class AppMain extends LitElement {
       editor.save();
       const event = editor.data;
       console.log("New data:", event);
-      band(db, this.bandid).events().add(event).then(
-        () => {
-          console.log("Add successful");
-          this.addDialog.close();
-        },
-        reason => {
-          console.log("Add failed:", reason);
-          this.addErrorMessage("Kunde inte lägga till händelse", reason);
-          this.addDialog.close();
-        }
-      );
+      band(db, this.bandid)
+        .events()
+        .add(event)
+        .then(
+          () => {
+            console.log("Add successful");
+            this.addDialog.close();
+          },
+          reason => {
+            console.log("Add failed:", reason);
+            this.addErrorMessage("Kunde inte lägga till händelse", reason);
+            this.addDialog.close();
+          }
+        );
     }
   }
 
@@ -579,7 +578,10 @@ export class AppMain extends LitElement {
           console.log("[join request] Action:", action);
           try {
             if (action == "accept") {
-              await setDoc(snapshot.ref, { approved: true }, { merge: true });
+              await new JoinRequestReference(snapshot.ref).update(
+                { approved: true },
+                { merge: true }
+              );
             } else if (action == "reject") {
               await deleteDoc(snapshot.ref);
             }

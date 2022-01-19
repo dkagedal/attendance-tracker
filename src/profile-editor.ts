@@ -32,22 +32,26 @@ export class ProfileEditor extends LitElement {
   dialog: Dialog;
 
   show() {
-    band(db, this.bandid).member(this.uid).settings().read().then(
-      settings => {
-        if (settings != null) {
-          this.settings = settings;
-        } else {
-          this.settings = MemberSettings.DEFAULT;
-          if (this.uid == auth.currentUser?.uid) {
-            this.settings.email = auth.currentUser.email;
+    band(db, this.bandid)
+      .member(this.uid)
+      .settings()
+      .read()
+      .then(
+        settings => {
+          if (settings != null) {
+            this.settings = settings;
+          } else {
+            this.settings = MemberSettings.DEFAULT;
+            if (this.uid == auth.currentUser?.uid) {
+              this.settings.email = auth.currentUser.email;
+            }
           }
+          this.requestUpdate();
+        },
+        error => {
+          console.log("[profile-editor] Failed to read settings:", error);
         }
-        this.requestUpdate();
-      },
-      error => {
-        console.log("[profile-editor] Failed to read settings:", error);
-      }
-    );
+      );
   }
 
   static styles = css`
@@ -128,10 +132,9 @@ export class ProfileEditor extends LitElement {
 
     if (nameField.value != this.membership.display_name) {
       console.log("[profile-editor] New display name:", nameField.value);
-      await band(db, this.bandid).member(this.uid).update(
-        { display_name: nameField.value },
-        { merge: true }
-      );
+      await band(db, this.bandid)
+        .member(this.uid)
+        .update({ display_name: nameField.value }, { merge: true });
     }
 
     const getSwitch = (id: string) =>
@@ -142,7 +145,10 @@ export class ProfileEditor extends LitElement {
       new_member: getSwitch("new_member").selected
     });
     console.log("[profile-editor] New member settings:", settings);
-    await band(db, this.bandid).member(this.uid).settings().update(settings);
+    await band(db, this.bandid)
+      .member(this.uid)
+      .settings()
+      .update(settings);
     return true;
   }
 }

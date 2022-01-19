@@ -4,7 +4,12 @@ import {
   DocumentReference,
   Firestore
 } from "firebase/firestore";
+import { UID } from "../datamodel";
 import { BandEventCollectionReference, BandEventReference } from "./bandevent";
+import {
+  JoinRequestCollectionReference,
+  JoinRequestReference
+} from "./joinrequest";
 import { MemberCollectionReference, MemberReference } from "./member";
 
 export class BandReference {
@@ -30,6 +35,16 @@ export class BandReference {
 
   member(memberid: string) {
     return new MemberReference(doc(this.dbref, "members", memberid));
+  }
+
+  join_requests(): JoinRequestCollectionReference {
+    return new JoinRequestCollectionReference(
+      collection(this.dbref, "join_requests")
+    );
+  }
+
+  join_request(uid: UID): JoinRequestReference {
+    return new JoinRequestReference(doc(this.dbref, "join_requests", uid));
   }
 }
 

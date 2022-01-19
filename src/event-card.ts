@@ -318,7 +318,7 @@ export class EventCard extends LitElement {
           member => member.id,
           member => {
             const participant = this.participants[member.id];
-            return participant.comment
+            return participant?.comment
               ? html`
                   <p class="comment">
                     <b>${member.display_name} —</b> ${participant.comment}

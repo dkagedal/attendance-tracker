@@ -1,4 +1,10 @@
-import { CollectionReference, doc, DocumentReference, setDoc, SetOptions } from "firebase/firestore";
+import {
+  CollectionReference,
+  doc,
+  DocumentReference,
+  setDoc,
+  SetOptions
+} from "firebase/firestore";
 import { UID } from "../datamodel";
 import { MemberSettingsReference } from "./membersettings";
 
@@ -11,7 +17,7 @@ export class MemberReference {
     return this.dbref.id;
   }
 
-  update(data: any, options: SetOptions= {}): Promise<void> {
+  update(data: any, options?: SetOptions): Promise<void> {
     return setDoc(this.dbref, data, options);
   }
 
