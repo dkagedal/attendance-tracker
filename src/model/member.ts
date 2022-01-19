@@ -18,7 +18,7 @@ export class MemberReference {
   }
 
   update(data: any, options?: SetOptions): Promise<void> {
-    return setDoc(this.dbref, data, options);
+    return setDoc(this.dbref.withConverter(null), data, options);
   }
 
   settings(): MemberSettingsReference {

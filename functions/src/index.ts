@@ -142,23 +142,23 @@ async function notify(
   }
   const addresses = notifyDoc.data()![notificationType];
   functions.logger.info("Notify", bandid, notificationType, addresses);
+  const envelope: any = {
+    to: addresses,
+    message: message
+  };
   if (!message.messageId) {
     const baseMessageId = `<${notificationType}-${extraKey}@${bandid}>`;
     if (followUp) {
       message.messageId = `<${notificationType}-${extraKey}-${Date.now()}@${bandid}>`;
-      if (!message.headers) {
-        message.headers = {};
-      }
-      message.headers["In-Reply-To"] = baseMessageId;
-      message.headers["References"] = baseMessageId;
+      envelope.headers = {
+        "In-Reply-To": baseMessageId,
+        References: baseMessageId
+      };
     } else {
       message.messageId = baseMessageId;
     }
   }
-  db.collection("mail").add({
-    to: addresses,
-    message: message
-  });
+  db.collection("mail").add(envelope);
 }
 
 ///
