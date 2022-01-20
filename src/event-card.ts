@@ -396,6 +396,18 @@ export class EventCard extends LitElement {
     `;
   }
 
+  renderEventEditorDialog() {
+    return html`
+      <mwc-dialog id="event-editor-dialog" @closing=${this.closingEditor}>
+        <event-editor></event-editor>
+        <mwc-button slot="primaryAction" dialogAction="save">Spara</mwc-button>
+        <mwc-button slot="secondaryAction" dialogAction="cancel"
+          >Avbryt</mwc-button
+        >
+      </mwc-dialog>
+    `;
+  }
+
   renderHead() {
     return html`
       <div id="desc">
@@ -410,21 +422,17 @@ export class EventCard extends LitElement {
                 <span class="chip cancelled">Inställt</span>
               `
             : ""}
-          <mwc-dialog id="event-editor-dialog" @closing=${this.closingEditor}>
-            <event-editor></event-editor>
-            <mwc-button slot="primaryAction" dialogAction="save"
-              >Spara</mwc-button
-            >
-            <mwc-button slot="secondaryAction" dialogAction="cancel"
-              >Avbryt</mwc-button
-            >
-          </mwc-dialog>
+          ${this.renderEventEditorDialog()}
         </div>
-        <div class="info">
-          <p>${this.event.location}</p>
-          <p>${this.event.description}</p>
-        </div>
-        ${this.needsResponse ? this.renderResponsePrompt() : ""}
+        ${this.cancelled
+          ? ""
+          : html`
+              <div class="info">
+                <p>${this.event.location}</p>
+                <p>${this.event.description}</p>
+              </div>
+              ${this.needsResponse ? this.renderResponsePrompt() : ""}
+            `}
       </div>
     `;
   }
