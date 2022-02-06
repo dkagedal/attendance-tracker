@@ -27,6 +27,25 @@ async function getBand(bandid: string) {
   return snapshot.data()!;
 }
 
+type BandSettings = {
+  from_address: string | null;
+};
+
+async function getBandSettings(bandid: string): Promise<BandSettings> {
+  const doc = await db
+    .collection("bands")
+    .doc(bandid)
+    .collection("admin")
+    .doc("settings")
+    .get();
+  if (doc.exists) {
+    return doc.data()! as BandSettings;
+  }
+  return {
+    from_address: null
+  };
+}
+
 async function getBandAdmins(bandid: string) {
   return await db
     .collection("bands")
@@ -65,14 +84,30 @@ async function approve(
   return "OK";
 }
 
+type Envelope = {
+  from: string | null;
+  to: string[];
+  headers?: any;
+  message?: any;
+};
+
+function NewEnvelope(from: string | null): Envelope {
+  const env: Envelope = {
+    from: from,
+    to: []
+  };
+  return env;
+}
+
 async function calculateNotifications(bandid: string) {
   const logger = createLogger({ bandid });
+  const bandSettings = await getBandSettings(bandid);
   const notifications = {
-    new_event: [] as string[]
+    new_event: NewEnvelope(bandSettings.from_address)
   };
   const admin_notifications = {
-    new_join_request: [] as string[],
-    new_member: [] as string[]
+    new_join_request: NewEnvelope(bandSettings.from_address),
+    new_member: NewEnvelope(bandSettings.from_address)
   };
   const bandRef = db.collection("bands").doc(bandid);
   const members = await bandRef.collection("members").get();
@@ -95,15 +130,15 @@ async function calculateNotifications(bandid: string) {
       continue;
     }
     logger.info("Email:", settings.email);
-    for (const [k, emails] of Object.entries(notifications)) {
+    for (const [k, envelope] of Object.entries(notifications)) {
       if (settings.notify[k]) {
-        emails.push(settings.email);
+        envelope.to.push(settings.email);
       }
     }
     if (member.admin) {
-      for (const [k, emails] of Object.entries(admin_notifications)) {
+      for (const [k, envelope] of Object.entries(admin_notifications)) {
         if (settings.notify[k]) {
-          emails.push(settings.email);
+          envelope.to.push(settings.email);
         }
       }
     }
@@ -140,12 +175,22 @@ async function notify(
   if (!notifyDoc.exists) {
     return;
   }
-  const addresses = notifyDoc.data()![notificationType];
-  functions.logger.info("Notify", bandid, notificationType, addresses);
-  const envelope: any = {
-    to: addresses,
-    message: message
-  };
+  let envelope: Envelope = notifyDoc.data()![notificationType];
+  // TODO: delete this:
+  if (Array.isArray(envelope)) {
+    envelope = {
+      from: null,
+      to: envelope
+    };
+  }
+  envelope.message = message;
+  functions.logger.info(
+    "Notify",
+    bandid,
+    notificationType,
+    envelope.from,
+    envelope.to
+  );
   if (!message.messageId) {
     const baseMessageId = `<${notificationType}-${extraKey}@${bandid}>`;
     if (followUp) {
