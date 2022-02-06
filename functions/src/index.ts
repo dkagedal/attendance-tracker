@@ -46,16 +46,6 @@ async function getBandSettings(bandid: string): Promise<BandSettings> {
   };
 }
 
-async function getBandAdmins(bandid: string) {
-  return await db
-    .collection("bands")
-    .doc(bandid)
-    .collection("members")
-    .where("admin", "==", true)
-    .where("email", "!=", "")
-    .get();
-}
-
 async function approve(
   joinRequestSnapshot: functions.firestore.QueryDocumentSnapshot,
   options: { makeAdmin?: boolean } = {}
@@ -156,7 +146,6 @@ type MailMessage = {
   subject: string;
   text: string;
   messageId?: string;
-  headers?: { [hdr: string]: string };
 };
 
 async function notify(
@@ -230,7 +219,7 @@ export const joinRequestCreated = functions.firestore
       // Otherwise, notify admins.
       const band = await getBand(bandId);
       const user = await admin.auth().getUser(uid);
-      notify(
+      await notify(
         bandId,
         "new_join_request",
         {
@@ -281,53 +270,42 @@ export const memberCreated = functions.firestore
       });
 
       // Notify admins.
-      const admins = await getBandAdmins(bandId);
-      await db.collection("mail").add({
-        to: admins.docs.map(snap => snap.data().email),
-        message: {
-          messageId: uid + "-join",
-          subject: `Ny medlem i ${band.display_name}`,
-          text: `Ny medlem i ${band.display_name}:
+      const message = {
+        subject: `Ny medlem i ${band.display_name}`,
+        text: `Ny medlem i ${band.display_name}:
 
-  ${snapshot.get("display_name")}
+${snapshot.get("display_name")}
 
 Inloggad som:
 
-  ${authUser.displayName ? authUser.displayName : " "} <${authUser.email}>
+${authUser.displayName ? authUser.displayName : " "} <${authUser.email}>
 `
-        }
-      });
+      };
+      notify(bandId, "new_member", message, uid);
     }
   );
 
 export const joinRequestUpdated = functions.firestore
   .document("bands/{bandId}/join_requests/{uid}")
   .onUpdate(
-    async (change, context): Promise<string> => {
+    async (change, context): Promise<void> => {
       const bandId = context.params.bandId;
       const uid = context.params.uid;
       const logger = createLogger({ bandId, uid });
       logger.info("Join request for", uid, "was updated");
       if (change.before.get("approved") || !change.after.get("approved")) {
         logger.info("Not approved, nothing to do");
-        return "OK";
+        return;
       }
       const joinRequest = change.after.data();
       logger.info("Approving join request for", uid, ":", joinRequest);
       const band = await getBand(bandId);
-      const admins = await getBandAdmins(bandId);
-      db.collection("mail").add({
-        to: admins.docs.map(snap => snap.data().email),
-        Headers: {
-          "In-Reply-To": uid + "-joinreq"
-        },
-        message: {
-          messageId: uid + "-approved",
-          subject: `Någon vill gå med i ${band.display_name}`,
-          text: `Insläppt.`
-        }
-      });
-      return approve(change.after);
+      const message: MailMessage = {
+        subject: `Någon vill gå med i ${band.display_name}`,
+        text: `Insläppt.`
+      };
+      await approve(change.after);
+      await notify(bandId, "new_join_request", message, uid, true);
     }
   );
 
