@@ -1,5 +1,11 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import {
+  changedEventHtml,
+  changedEventText,
+  newEventHtml,
+  newEventText
+} from "./email";
 
 // Start writing Firebase Functions
 // https://firebase.google.com/docs/functions/typescript
@@ -19,12 +25,12 @@ function createLogger(context: any) {
   };
 }
 
-async function getBand(bandid: string) {
+async function getBand(bandid: string): Promise<Band> {
   const snapshot = await db
     .collection("bands")
     .doc(bandid)
     .get();
-  return snapshot.data()!;
+  return snapshot.data()! as Band;
 }
 
 type BandSettings = {
@@ -145,6 +151,7 @@ async function calculateNotifications(bandid: string) {
 type MailMessage = {
   subject: string;
   text: string;
+  html?: string;
   messageId?: string;
 };
 
@@ -364,26 +371,6 @@ export const settingsChanged = functions.firestore
     await calculateNotifications(bandid);
   });
 
-type BandEvent = {
-  type: string;
-  start: string;
-  stop?: string;
-  location?: string;
-  description?: string;
-  cancelled?: boolean;
-};
-
-function formatEventInfo(event: BandEvent): string {
-  if (event.cancelled) {
-    return `${event.type}
-Inställt`;
-  }
-  return `${event.type}
-${event.description}
-${event.location || "-"}
-${event.start}`;
-}
-
 export const eventCreated = functions.firestore
   .document("bands/{bandid}/events/{eventid}")
   .onCreate(async (snapshot, context) => {
@@ -395,12 +382,9 @@ export const eventCreated = functions.firestore
       bandid,
       "new_event",
       {
-        subject: `Ny planerad händelse: ${event.type}`,
-        text: `En ny händelse har lagts till i kalendariet för ${
-          band.display_name
-        }.
-
-${formatEventInfo(event)}`
+        subject: `${band.display_name}: ${event.type}`,
+        text: newEventText(band, event),
+        html: newEventHtml(band, event)
       },
       eventid
     );
@@ -412,14 +396,14 @@ export const eventUpdated = functions.firestore
     const bandid = context.params.bandid;
     const eventid = context.params.eventid;
     const event = snapshot.after.data() as BandEvent;
+    const band = await getBand(bandid);
     notify(
       bandid,
       "new_event",
       {
-        subject: `Ny planerad händelse: ${event.type}`,
-        text: `Händelsen har ändrats.
-
-${formatEventInfo(event)}`
+        subject: `${band.display_name}: ${event.type}`,
+        text: changedEventText(band, event),
+        html: changedEventHtml(band, event)
       },
       eventid,
       true
