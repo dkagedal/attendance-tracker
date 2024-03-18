@@ -15,7 +15,7 @@ import {
 } from "firebase-functions/v2/firestore"
 import * as logger from "firebase-functions/logger";
 import { initializeApp, } from 'firebase-admin/app';
-import { getAuth, } from 'firebase-admin/auth';
+// import { getAuth, } from 'firebase-admin/auth';
 import {
   getFirestore,
   DocumentReference,
@@ -345,7 +345,7 @@ export const joinRequestUpdated = onDocumentUpdated("bands/{bandId}/join_request
     };
     await approve(change.after);
     await notify(bandId, "new_join_request", message, uid, true);
-  };
+  });
 
 
 
