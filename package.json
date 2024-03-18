@@ -36,7 +36,8 @@
     "@material/mwc-top-app-bar-fixed": "^0.25.3",
     "firebase": "^9.6.1",
     "firebaseui": "^0.600.0",
-    "lit": "^2.0.2"
+    "lit": "^2.0.2",
+    "node": "^18.19.1"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",

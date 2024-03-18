@@ -2,7 +2,7 @@
   "projects": {
     "staging": "kommer-staging",
     "prod": "attendance-tracker-b8e9f",
-    "default": "attendance-tracker-b8e9f"
+    "default": "kommer-staging"
   },
   "targets": {
     "attendance-tracker-b8e9f": {
