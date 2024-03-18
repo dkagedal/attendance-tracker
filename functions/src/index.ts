@@ -1,3 +1,28 @@
+/**
+ * Import function triggers from their respective submodules:
+ *
+ * import {onCall} from "firebase-functions/v2/https";
+ * import {onDocumentWritten} from "firebase-functions/v2/firestore";
+ *
+ * See a full list of supported triggers at https://firebase.google.com/docs/functions
+ */
+
+import {
+  onDocumentCreated,
+  onDocumentUpdated,
+  onDocumentDeleted,
+  QueryDocumentSnapshot,
+} from "firebase-functions/v2/firestore"
+import * as logger from "firebase-functions/logger";
+import { initializeApp, } from 'firebase-admin/app';
+import { getAuth, } from 'firebase-admin/auth';
+import {
+  getFirestore,
+  DocumentReference,
+  DocumentData
+} from 'firebase-admin/firestore';
+
+// v1 stuff below.
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import {
@@ -10,17 +35,16 @@ import {
 // Start writing Firebase Functions
 // https://firebase.google.com/docs/functions/typescript
 
-admin.initializeApp();
-
-const db = admin.firestore();
+initializeApp();
+const db = getFirestore();
 
 function createLogger(context: any) {
   return {
     info: (...args: any[]) => {
-      functions.logger.info(...args, context);
+      logger.info(...args, context);
     },
     warn: (...args: any[]) => {
-      functions.logger.warn(...args, context);
+      logger.warn(...args, context);
     }
   };
 }
@@ -53,7 +77,7 @@ async function getBandSettings(bandid: string): Promise<BandSettings> {
 }
 
 async function approve(
-  joinRequestSnapshot: functions.firestore.QueryDocumentSnapshot,
+  joinRequestSnapshot: QueryDocumentSnapshot,
   options: { makeAdmin?: boolean } = {}
 ) {
   const bandRef = joinRequestSnapshot.ref.parent.parent!;
@@ -204,82 +228,87 @@ async function notify(
 
 ///
 
-export const joinRequestCreated = functions.firestore
-  .document("bands/{bandId}/join_requests/{uid}")
-  .onCreate(
-    async (snapshot, context): Promise<void> => {
-      const bandId = context.params.bandId;
-      const uid = context.params.uid;
-      const logger = createLogger({ bandId, uid });
-      logger.info("New join request");
-      // If this is the first user to apply, auto-accept and make them admin.
-      const members = await db
-        .collection("bands")
-        .doc(bandId)
-        .collection("members")
-        .get();
-      if (members.docs.length == 0) {
-        logger.info("Auto-accepting first member");
-        await approve(snapshot, { makeAdmin: true });
-        return;
-      }
-      // Otherwise, notify admins.
-      const band = await getBand(bandId);
-      const user = await admin.auth().getUser(uid);
-      await notify(
-        bandId,
-        "new_join_request",
-        {
-          subject: `Någon vill gå med i ${band.display_name}`,
-          text: `Begäran om om att få bli medlem i ${
-            band.display_name
+export const joinRequestCreated = onDocumentCreated("bands/{bandId}/join_requests/{uid}",
+  async (event): Promise<void> => {
+    const bandId = event.params.bandId;
+    const uid = event.params.uid;
+    const logger = createLogger({ bandId, uid });
+    logger.info("New join request");
+    const snapshot = event.data;
+    if (!snapshot) {
+      logger.warn("No data associated with the event");
+      return;
+    }
+    // If this is the first user to apply, auto-accept and make them admin.
+    const members = await db
+      .collection("bands")
+      .doc(bandId)
+      .collection("members")
+      .get();
+    if (members.docs.length == 0) {
+      logger.info("Auto-accepting first member");
+      await approve(snapshot, { makeAdmin: true });
+      return;
+    }
+    // Otherwise, notify admins.
+    const band = await getBand(bandId);
+    const user = await admin.auth().getUser(uid);
+    await notify(
+      bandId,
+      "new_join_request",
+      {
+        subject: `Någon vill gå med i ${band.display_name}`,
+        text: `Begäran om om att få bli medlem i ${band.display_name
           } via ${snapshot.get("url") || "??"}:
 
   ${user.displayName ? user.displayName : " "} <${user.email}>
 `
-        },
-        uid
-      );
+      },
+      uid
+    );
+  }
+);
+
+export const memberCreated = onDocumentCreated("bands/{bandId}/members/{uid}",
+  async (event): Promise<void> => {
+    const bandId = event.params.bandId;
+    const uid = event.params.uid;
+    const logger = createLogger({ bandId, uid });
+    logger.info("New member");
+    const snapshot = event.data;
+    if (!snapshot) {
+      logger.warn("No data associated with the event");
+      return;
     }
-  );
+    const band = await getBand(bandId);
+    const authUser = await admin.auth().getUser(uid);
 
-export const memberCreated = functions.firestore
-  .document("bands/{bandId}/members/{uid}")
-  .onCreate(
-    async (snapshot, context): Promise<void> => {
-      const bandId = context.params.bandId;
-      const uid = context.params.uid;
-      const logger = createLogger({ bandId, uid });
-      logger.info("New member");
-      const band = await getBand(bandId);
-      const authUser = await admin.auth().getUser(uid);
+    // Update /users/{uid} field "bands".
+    const userDocRef = db.collection("users").doc(uid);
+    const userData = (await userDocRef.get()).data()!;
+    if (userData.bands === undefined) {
+      logger.warn("Missing 'bands' field in", userDocRef.path);
+      userData.bands = {};
+    }
+    userData.bands[bandId] = { display_name: band.display_name };
+    logger.info("Updating", userDocRef.path, "to", userData);
+    await userDocRef.set(userData);
 
-      // Update /users/{uid} field "bands".
-      const userDocRef = db.collection("users").doc(uid);
-      const userData = (await userDocRef.get()).data()!;
-      if (userData.bands === undefined) {
-        logger.warn("Missing 'bands' field in", userDocRef.path);
-        userData.bands = {};
+    // Create default settings.
+    const settingsRef = snapshot.ref.collection("private").doc("settings");
+    await settingsRef.set({
+      email: authUser.email,
+      notify: {
+        new_event: true,
+        new_join_request: true,
+        new_member: true
       }
-      userData.bands[bandId] = { display_name: band.display_name };
-      logger.info("Updating", userDocRef.path, "to", userData);
-      await userDocRef.set(userData);
+    });
 
-      // Create default settings.
-      const settingsRef = snapshot.ref.collection("private").doc("settings");
-      await settingsRef.set({
-        email: authUser.email,
-        notify: {
-          new_event: true,
-          new_join_request: true,
-          new_member: true
-        }
-      });
-
-      // Notify admins.
-      const message = {
-        subject: `Ny medlem i ${band.display_name}`,
-        text: `Ny medlem i ${band.display_name}:
+    // Notify admins.
+    const message = {
+      subject: `Ny medlem i ${band.display_name}`,
+      text: `Ny medlem i ${band.display_name}:
 
 ${snapshot.get("display_name")}
 
@@ -287,43 +316,47 @@ Inloggad som:
 
 ${authUser.displayName ? authUser.displayName : " "} <${authUser.email}>
 `
-      };
-      notify(bandId, "new_member", message, uid);
-    }
-  );
+    };
+    notify(bandId, "new_member", message, uid);
+  }
+);
 
-export const joinRequestUpdated = functions.firestore
-  .document("bands/{bandId}/join_requests/{uid}")
-  .onUpdate(
-    async (change, context): Promise<void> => {
-      const bandId = context.params.bandId;
-      const uid = context.params.uid;
-      const logger = createLogger({ bandId, uid });
-      logger.info("Join request for", uid, "was updated");
-      if (change.before.get("approved") || !change.after.get("approved")) {
-        logger.info("Not approved, nothing to do");
-        return;
-      }
-      const joinRequest = change.after.data();
-      logger.info("Approving join request for", uid, ":", joinRequest);
-      const band = await getBand(bandId);
-      const message: MailMessage = {
-        subject: `Någon vill gå med i ${band.display_name}`,
-        text: `Insläppt.`
-      };
-      await approve(change.after);
-      await notify(bandId, "new_join_request", message, uid, true);
+export const joinRequestUpdated = onDocumentUpdated("bands/{bandId}/join_requests/{uid}",
+  async (event): Promise<void> => {
+    const bandId = event.params.bandId;
+    const uid = event.params.uid;
+    const logger = createLogger({ bandId, uid });
+    logger.info("Join request for", uid, "was updated");
+    const change = event.data;
+    if (!change) {
+      logger.warn("No data associated with the event");
+      return;
     }
-  );
+    if (change.before.get("approved") || !change.after.get("approved")) {
+      logger.info("Not approved, nothing to do");
+      return;
+    }
+    const joinRequest = change.after.data();
+    logger.info("Approving join request for", uid, ":", joinRequest);
+    const band = await getBand(bandId);
+    const message: MailMessage = {
+      subject: `Någon vill gå med i ${band.display_name}`,
+      text: `Insläppt.`
+    };
+    await approve(change.after);
+    await notify(bandId, "new_join_request", message, uid, true);
+  };
+
+
 
 export const authUserCreated = functions.auth.user().onCreate(async user => {
-  const logger = createLogger({ uid: user.uid });
-  logger.info("New auth user");
-  await db
-    .collection("users")
-    .doc(user.uid)
-    .set({ bands: {} });
-});
+    const logger = createLogger({ uid: user.uid });
+    logger.info("New auth user");
+    await db
+      .collection("users")
+      .doc(user.uid)
+      .set({ bands: {} });
+  });
 
 export const authUserDeleted = functions.auth.user().onDelete(async user => {
   const logger = createLogger({ uid: user.uid });
@@ -335,30 +368,31 @@ export const authUserDeleted = functions.auth.user().onDelete(async user => {
     .delete();
 });
 
-export const userDeleted = functions.firestore
-  .document("users/{uid}")
-  .onDelete(async (snapshot, context) => {
-    const uid = context.params.uid;
-    const logger = createLogger({ uid });
-    logger.info("User was deleted. Snapshot:", snapshot.data());
-    const deleteDoc = (
-      ref: admin.firestore.DocumentReference<admin.firestore.DocumentData>
-    ) => {
-      ref.delete().then(
-        () => {
-          logger.info("Deleted", ref.path);
-        },
-        error => {
-          logger.warn("Failed to delete", ref.path, ":", error);
-        }
-      );
-    };
-    const bands = await db.collection("bands").listDocuments();
-    for (const bandRef of bands) {
-      deleteDoc(bandRef.collection("members").doc(uid));
-      deleteDoc(bandRef.collection("join_requests").doc(uid));
-    }
-  });
+export const userDeleted = onDocumentDeleted("users/{uid}", async (event) => {
+  const uid = event.params.uid;
+  const logger = createLogger({ uid });
+  const snapshot = event.data;
+  if (!snapshot) {
+    logger.warn("No data associated with the event");
+    return;
+  }
+  logger.info("User was deleted. Snapshot:", snapshot.data());
+  const deleteDoc = (ref: DocumentReference<DocumentData>) => {
+    ref.delete().then(
+      () => {
+        logger.info("Deleted", ref.path);
+      },
+      error => {
+        logger.warn("Failed to delete", ref.path, ":", error);
+      }
+    );
+  };
+  const bands = await db.collection("bands").listDocuments();
+  for (const bandRef of bands) {
+    deleteDoc(bandRef.collection("members").doc(uid));
+    deleteDoc(bandRef.collection("join_requests").doc(uid));
+  }
+});
 
 export const settingsChanged = functions.firestore
   .document("bands/{bandid}/members/{uid}/private/settings")

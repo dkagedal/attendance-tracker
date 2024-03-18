@@ -1,11 +1,13 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Is the given user known to this application?
     function isUser(uid) {
         let user = /databases/$(database)/documents/users/$(uid);
         return exists(user);
     }
 
+    // Users collection.
     match /users/{user} {
 			allow read: if request.auth.uid == user;
       allow create: if request.auth.uid == user;
@@ -13,20 +15,24 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Hosts collection.
     match /hosts/{hostname} {
       allow get: if true;
     }
 
+    // Bands collection.
     match /bands/{band} {
       allow list: if false;
 			allow get: if true;
 			allow write: if false;
 
+      // Is the given user a member of this band?
       function isMember(uid) {
         let member = /databases/$(database)/documents/bands/$(band)/members/$(uid);
         return exists(member);
       }
 
+      // Is the given user an admin for this band?
       function isAdmin(uid) {
         let member = /databases/$(database)/documents/bands/$(band)/members/$(uid);
         return exists(member) && get(member).data.admin;
