@@ -2,7 +2,7 @@
   "projects": {
     "staging": "kommer-staging",
     "prod": "attendance-tracker-b8e9f",
-    "default": "demo-kommer"
+    "default": "kommer-staging"
   },
   "targets": {
     "attendance-tracker-b8e9f": {
@@ -17,6 +17,13 @@
         "kommer": [
           "kommer-staging"
         ]
+      }
+    }
+  },
+  "etags": {
+    "kommer-staging": {
+      "extensionInstances": {
+        "firestore-send-email": "e593417f6b4374f1050f19a6f16e4efeadeeecd68a7c58a0026966b865d4edd8"
       }
     }
   }
