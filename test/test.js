@@ -5,8 +5,8 @@ import {
     initializeTestEnvironment
 } from "@firebase/rules-unit-testing"
 
-const PROJECT_ID = "attendance-tracker-b8e9f";
-// const PROJECT_ID = "testing";
+// const PROJECT_ID = "attendance-tracker-b8e9f";
+const PROJECT_ID = "demo-kommer";
 
 let testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
