@@ -10,7 +10,7 @@ function escape(s: string): string {
 const dateFmt = new Intl.DateTimeFormat("sv-SE", {
   timeZone: "UTC",
   month: "long",
-  day: "numeric"
+  day: "numeric",
 });
 
 const dateTimeFmt = new Intl.DateTimeFormat("sv-SE", {
@@ -18,15 +18,15 @@ const dateTimeFmt = new Intl.DateTimeFormat("sv-SE", {
   month: "long",
   day: "numeric",
   hour: "numeric",
-  minute: "numeric"
+  minute: "numeric",
 });
 
 function utcDate(timestring: string): number {
-  let [date, time] = timestring.split("T");
-  let [year, month, day] = date.split("-").map(s => parseInt(s));
-  month -= 1; // adjust month number to be zero-based
+  const [date, time] = timestring.split("T");
+  const [year, month1, day] = date.split("-").map((s) => parseInt(s));
+  const month = month1 - 1; // adjust month number to be zero-based
   if (time) {
-    return Date.UTC(year, month, day, ...time.split(":").map(s => parseInt(s)));
+    return Date.UTC(year, month, day, ...time.split(":").map((s) => parseInt(s)));
   } else {
     return Date.UTC(year, month, day);
   }
@@ -56,7 +56,8 @@ function eventRowHtml(event: BandEvent): string {
   <td>
   <span style="font-weight: 600">${etype}</span>
   <span>${start}</span>
-  <span style="border-radius: 0.5em; padding: 0 0.5em; background: #ffaaaa; color: black; font-weight: 600">INSTÄLLT</span>
+  <span style="border-radius: 0.5em; padding: 0 0.5em;
+        background: #ffaaaa; color: black; font-weight: 600">INSTÄLLT</span>
   </td>
 </tr>`;
   }
@@ -80,19 +81,9 @@ function eventRowText(event: BandEvent): string {
     return `    ${start} -- INSTÄLLT: ${etype}`;
   }
 
-  const loc = event.location ? escape(event.location) : "";
-  const desc = event.description ? escape(event.description) : "";
-  return `    ${start} -- ${etype}${
-    loc
-      ? `
-    Plats: ${loc}`
-      : ""
-  }${
-    desc
-      ? `
-    ${desc}`
-      : ""
-  }`;
+  const loc = event.location ? `\nPlats: ${escape(event.location)}` : "";
+  const desc = event.description ? `\n${escape(event.description)}` : "";
+  return `    ${start} -- ${etype}${loc}${desc}`;
 }
 
 export function newEventHtml(band: Band, event: BandEvent): string {

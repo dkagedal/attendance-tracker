@@ -19,7 +19,7 @@ beforeEach(async () => {
     await testEnv.clearFirestore();
 })
 
-describe("Attendance tracker", () => {
+describe("Access rules", () => {
     describe("User documents", () => {
         it("can be created by the user", async () => {
             const context = testEnv.authenticatedContext("user1");

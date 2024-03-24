@@ -12,15 +12,15 @@ import {
   onDocumentUpdated,
   onDocumentDeleted,
   QueryDocumentSnapshot,
-} from "firebase-functions/v2/firestore"
+} from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
-import { initializeApp, } from 'firebase-admin/app';
+import { initializeApp } from "firebase-admin/app";
 // import { getAuth, } from 'firebase-admin/auth';
 import {
   getFirestore,
   DocumentReference,
-  DocumentData
-} from 'firebase-admin/firestore';
+  DocumentData,
+} from "firebase-admin/firestore";
 
 // v1 stuff below.
 import * as functions from "firebase-functions";
@@ -29,7 +29,7 @@ import {
   changedEventHtml,
   changedEventText,
   newEventHtml,
-  newEventText
+  newEventText,
 } from "./email";
 
 // Start writing Firebase Functions
@@ -38,14 +38,14 @@ import {
 initializeApp();
 const db = getFirestore();
 
-function createLogger(context: any) {
+function createLogger(context: object) {
   return {
     info: (...args: any[]) => {
       logger.info(...args, context);
     },
     warn: (...args: any[]) => {
       logger.warn(...args, context);
-    }
+    },
   };
 }
 
@@ -72,7 +72,7 @@ async function getBandSettings(bandid: string): Promise<BandSettings> {
     return doc.data()! as BandSettings;
   }
   return {
-    from_address: null
+    from_address: null,
   };
 }
 
@@ -350,13 +350,13 @@ export const joinRequestUpdated = onDocumentUpdated("bands/{bandId}/join_request
 
 
 export const authUserCreated = functions.auth.user().onCreate(async user => {
-    const logger = createLogger({ uid: user.uid });
-    logger.info("New auth user");
-    await db
-      .collection("users")
-      .doc(user.uid)
-      .set({ bands: {} });
-  });
+  const logger = createLogger({ uid: user.uid });
+  logger.info("New auth user");
+  await db
+    .collection("users")
+    .doc(user.uid)
+    .set({ bands: {} });
+});
 
 export const authUserDeleted = functions.auth.user().onDelete(async user => {
   const logger = createLogger({ uid: user.uid });
