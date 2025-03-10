@@ -1,5 +1,15 @@
 # Development environment
 
+## Nix
+
+The instructions here assume you will be using Nix to set up the environment, using the included `shell.nix` file.
+
+Read more at https://nixos.org/ or just install it with
+
+```
+$ curl -L https://nixos.org/nix/install | sh -s -- --daemon
+```
+
 ## Clone Git repository
 
 ```
@@ -7,57 +17,55 @@ $ git clone whatever:attendance-tracker
 $ cd attendance-tracker
 ```
 
-## Install npm
-
-Google it.
-
-## Install LitElement from the Polymer project
+## Enter the Nix environment
 
 ```
-$ npm install lit-element
+$ nix-shell
 ```
 
-See https://lit-element.polymer-project.org/ for more information.
+If you want to install dependencies yourself, check the `shell.nix` file for details.
 
-## Rollup
-
-Install rollup
+## Install npm modules
 
 ```
-$ npm install -g rollup
+$ npm ci
 ```
 
-To rebuild:
+Note that in Nix, you typically don't use the `-g` flag too `npm install`.
+
+## Set up Firebase
+
+Login to Firebase (if not already logged in):
 
 ```
-$ rollup -c
+$ firebase login
 ```
 
-## Install firebase and set it up
+Make sure you have a Firebase project to work with, created in the Firebase console.
 
-See https://firebase.google.com/docs/web/setup.
-
-And https://firebase.google.com/docs/cli for how to install the
-firebase command-line tools. Using the npm install method, like this:
+Set the current project to work with, and pick an alias for it:
 
 ```
-$ npm install -g firebase-tools
+$ firebase use --add
 ```
 
-Firebase services used:
+## Build functions
 
-* **Firebase Hosting** to serve files
-* **Cloud Firestore** as storage
-* **Authentication** for, well, authentication
-* And maybe more?
+```
+$ cd functions
+$ npm ci
+$ npm run build
+$ cd ..
+```
 
-In particular, see https://firebase.google.com/docs/hosting/deploying
-learn about how to deploy the app.
+TODO: make this part of top-level build.
+
+## Run locally
 
 For testing:
 
 ```
-$ firebase serve
+$ npm run serve
 ```
 
 To upload:
@@ -65,6 +73,8 @@ To upload:
 ```
 $ firebase deploy
 ```
+
+See https://firebase.google.com/docs/hosting/deploying tolearn more about how to deploy the app.
 
 ## Database schema
 
