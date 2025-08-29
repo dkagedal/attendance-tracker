@@ -19,7 +19,7 @@
   },
   "functions": [
     {
-      "source": "functions",
+      "source": "packages/backend",
       "codebase": "main",
       "ignore": [
         "node_modules",

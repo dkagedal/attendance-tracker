@@ -67,5 +67,13 @@ node_modules/
 /public
 /build
 
-/src/config.ts
 *~
+*.d.ts
+*.d.ts.map
+*.js.map
+packages/backend/lib/*.js
+packages/frontend/public/bundle.js
+packages/frontend/build
+packages/frontend/src/config.ts
+packages/frontend/src/*.js
+packages/frontend/src/model/*.js

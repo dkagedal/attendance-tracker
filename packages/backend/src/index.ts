@@ -396,7 +396,7 @@ export const userDeleted = onDocumentDeleted("users/{uid}", async (event) => {
 
 export const settingsChanged = functions.firestore
   .document("bands/{bandid}/members/{uid}/private/settings")
-  .onWrite(async (snapshot, context) => {
+  .onWrite(async (_snapshot, context) => {
     const bandid = context.params.bandid;
     const uid = context.params.uid;
     const logger = createLogger({ bandid, uid });
