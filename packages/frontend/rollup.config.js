@@ -3,7 +3,8 @@ import copy from 'rollup-plugin-copy';
 
 const copyConfig = {
   targets: [
-    { src: 'index.html', dest: 'public' },
+    //{ src: 'public/index.html', dest: 'dist' },
+    //{ src: 'public/404.html', dest: 'dist' },
   ],
 }
 

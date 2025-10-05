@@ -10,7 +10,10 @@
   ],
   "scripts": {
     "build": "npm run build -w frontend && npm run build -w backend",
-    "serve": "firebase emulators:start",
+    "serve": "npm run serve -w backend",
     "deploy": "firebase deploy"
+  },
+  "devDependencies": {
+    "firebase-tools": "^14.18.0"
   }
 }
