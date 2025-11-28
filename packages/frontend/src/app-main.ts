@@ -620,7 +620,7 @@ export class AppMain extends LitElement {
     }
     if (this.firebaseUser == null) {
       return html`
-        <mwc-dialog open heading="Välkommen">
+        <mwc-dialog open heading="Välkommen" scrimClickAction="" escapeKeyAction="">
           <login-dialog .app=${this.app}></login-dialog>
         </mwc-dialog>
       `;

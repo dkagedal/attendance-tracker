@@ -46,3 +46,31 @@ The entire project is deployed to Firebase.
 -   **Backend**: Deployed as Firebase Functions.
 -   **Frontend**: Deployed to Firebase Hosting.
 
+
+## Local Development
+
+To run the application locally with Firebase emulators:
+
+1.  Run `npm run dev` in the root directory. This will build the project and start the emulators.
+2.  Access the application at `http://localhost:5002/beatles`.
+3.  Access the Emulator UI at `http://localhost:4000`.
+
+### Login Flow
+
+The local environment uses the Firebase Auth Emulator.
+
+1.  When you first load the app, you will see a "Välkommen" login dialog.
+2.  Click **"Logga in med Google"**.
+    *   **Note:** This button opens the "Auth Emulator IDP Login Widget" (usually at `http://localhost:9099/...`).
+    *   If nothing happens, ensure popups are allowed or check if the widget opened in a background tab/window.
+3.  In the emulator widget:
+    *   Click **"Add new account"**.
+    *   Click **"Auto-generate user information"**.
+    *   Click **"Sign in with Google.com"**.
+4.  You should be redirected back to the app and logged in.
+
+### Known Quirks & Notes
+
+*   **Login Dialog:** The login dialog is modal and cannot be dismissed by clicking outside it. You *must* log in to use the app.
+*   **"Logga ut" Visibility:** The "Logga ut" (Log out) option in the avatar menu is **always visible**, even if you are not logged in.
+*   **Verifying Login:** The best way to verify you are logged in is if the "Välkommen" login dialog is **not** visible.

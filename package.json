@@ -11,6 +11,7 @@
   "scripts": {
     "build": "npm run build -w frontend && npm run build -w backend",
     "serve": "npm run serve -w backend",
+    "dev": "npm run build && firebase emulators:start --project demo-project --import packages/backend/testdata",
     "deploy": "firebase deploy"
   },
   "devDependencies": {
