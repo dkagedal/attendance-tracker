@@ -1,7 +1,8 @@
-import "@material/mwc-textfield/mwc-textfield";
-import "@material/mwc-button/mwc-button";
+import "./components/app-input";
+import "./components/app-button";
+import { AppInput } from "./components/app-input";
 import { css, html, LitElement } from "lit";
-import { customElement, property, query } from "lit/decorators";
+import { customElement, property, query } from "lit/decorators.js";
 import {
   createUserWithEmailAndPassword,
   getAuth,
@@ -10,10 +11,9 @@ import {
   signInWithPopup
 } from "firebase/auth";
 import { FirebaseApp } from "firebase/app";
-import { TextField } from "@material/mwc-textfield/mwc-textfield";
 
 @customElement("login-dialog")
-export class AppMain extends LitElement {
+export class LoginDialog extends LitElement {
   @property({ attribute: false })
   app: FirebaseApp = null;
 
@@ -24,10 +24,10 @@ export class AppMain extends LitElement {
   errormsg: string = null;
 
   @query("#email")
-  emailField: TextField;
+  emailField: AppInput;
 
   @query("#pwd")
-  pwdField: TextField;
+  pwdField: AppInput;
 
   static styles = css`
     #top {
@@ -37,7 +37,7 @@ export class AppMain extends LitElement {
       flex-direction: column;
     }
 
-    mwc-textfield {
+    app-input {
       width: 100%;
     }
 
@@ -53,36 +53,36 @@ export class AppMain extends LitElement {
   render() {
     return html`
       <div id="top">
-        <mwc-button raised @click=${this.loginWithGoogle}
-          >Logga in med Google</mwc-button
+        <app-button variant="primary" @click=${this.loginWithGoogle}
+          >Logga in med Google</app-button
         >
         <p class="sep">eller</p>
-        <mwc-textfield id="email" type="email" label="Epost"></mwc-textfield>
-        <mwc-textfield
+        <app-input id="email" type="email" label="Epost"></app-input>
+        <app-input
           id="pwd"
           type="password"
           label="Lösenord"
           style=${this.state == null ? "display: none" : undefined}
-        ></mwc-textfield>
+        ></app-input>
         <p>
-          <mwc-button
-            raised
+          <app-button
+            variant="primary"
             @click=${this.loginWithPassword.bind(this)}
             style=${this.state == "create" ? "display: none" : undefined}
-            >Logga in</mwc-button
+            >Logga in</app-button
           >
-          <mwc-button
-            raised
+          <app-button
+            variant="secondary"
             @click=${this.createPasswordUser.bind(this)}
             style=${this.state == "login" ? "display: none" : undefined}
-            >Ny inloggning</mwc-button
+            >Ny inloggning</app-button
           >
         </p>
         ${this.errormsg
-          ? html`
+        ? html`
               <p class="error">${this.errormsg}</p>
             `
-          : ""}
+        : ""}
       </div>
     `;
   }

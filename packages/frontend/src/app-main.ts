@@ -1,11 +1,9 @@
 import "./profile-editor";
 import { LitElement, html, css } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
-import "@material/mwc-button/mwc-button";
-import "@material/mwc-drawer/mwc-drawer";
-import "@material/mwc-fab/mwc-fab";
-import "@material/mwc-icon-button/mwc-icon-button";
-import "@material/mwc-top-app-bar-fixed/mwc-top-app-bar-fixed";
+import "./components";
+import { AppDrawer } from "./components/app-drawer";
+import { AppDialog } from "./components/app-dialog";
 import { FirebaseApp } from "firebase/app";
 import {
   deleteDoc,
@@ -24,16 +22,12 @@ import {
 import { CreateJoinRequest, db, getHostBand } from "./storage";
 import "./login-dialog";
 import "./band-schedule";
+import "./event-editor";
 import { EventEditor } from "./event-editor";
-import { Menu } from "@material/mwc-menu";
-import { IconButton } from "@material/mwc-icon-button/mwc-icon-button";
-import { ActionDetail, List } from "@material/mwc-list";
 import { repeat } from "lit/directives/repeat";
 import { User } from "./datamodel";
 import { band } from "./model/band";
 import { ProfileEditor } from "./profile-editor";
-import { Dialog } from "@material/mwc-dialog";
-import { Drawer } from "@material/mwc-drawer/mwc-drawer";
 import { Member } from "./model/member";
 import { JoinRequest, JoinRequestReference } from "./model/joinrequest";
 
@@ -107,23 +101,23 @@ export class AppMain extends LitElement {
   @state()
   membership: Member = null;
 
-  @query("mwc-dialog#add-dialog")
-  addDialog: Dialog;
+  @query("app-dialog#add-dialog")
+  addDialog: AppDialog;
 
   @query("#add-dialog-editor")
   addDialogEditor: EventEditor;
 
-  @query("#profile")
-  profileIcon: IconButton;
-
-  @query("#profile-menu")
-  profileMenu: Menu;
+  @query("app-drawer")
+  drawer: AppDrawer;
 
   @query("profile-editor")
   profileEditor: ProfileEditor;
 
-  @query("mwc-dialog#settings")
-  profileEditorDialog: Dialog;
+  @query("app-dialog#settings")
+  profileEditorDialog: AppDialog;
+
+  @state()
+  profileMenuOpen = false;
 
   auth: Auth = null;
   subscriptions: Map<string, () => void> = new Map();
@@ -339,51 +333,111 @@ export class AppMain extends LitElement {
   }
 
   static styles = css`
-    mwc-fab {
-      position: fixed;
-      bottom: 1rem;
-      right: 1rem;
+    :host {
+      --header-height: 64px;
+      display: block;
+      box-sizing: border-box;
     }
 
-    @media (max-width: 599px) {
-      #body {
-        margin: 0 16px;
-      }
+    *, *:before, *:after {
+      box-sizing: border-box;
     }
 
-    @media (min-width: 600px) and (max-width: 904px) {
-      #body {
-        margin: 0 32px;
-      }
-    }
-
-    @media (min-width: 905px) and (max-width: 1239px) {
-      #body {
-        margin: 0 auto;
-        width: 840px;
-      }
-    }
-
-    @media (min-width: 1240px) and (max-width: 1493px) {
-      #body {
-        margin: 0 200px;
-      }
-    }
-
-    @media (min-width: 1440px) {
-      #body {
-        margin: 0 auto;
-        width: 1040px;
-      }
-    }
-
-    #schedule {
+    .app-header {
+      height: var(--header-height);
+      background: var(--app-color-primary-gradient);
+      color: white;
       display: flex;
-      justify-content: center;
+      align-items: center;
+      padding: 0 var(--app-spacing-md);
+      box-shadow: var(--app-shadow-md);
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 100;
     }
 
-    band-schedule {
+    .app-title {
+      font-size: var(--app-font-size-xl);
+      font-weight: var(--app-font-weight-bold);
       flex: 1;
+      margin-left: var(--app-spacing-md);
+    }
+
+    .main-content {
+      margin-top: var(--header-height);
+      padding: var(--app-spacing-md);
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .fab {
+      position: fixed;
+      bottom: var(--app-spacing-lg);
+      right: var(--app-spacing-lg);
+      z-index: 90;
+    }
+
+    /* Profile Menu */
+    .profile-menu-container {
+      position: relative;
+    }
+
+    .profile-menu {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      background: var(--app-color-surface);
+      border-radius: var(--app-radius-md);
+      box-shadow: var(--app-shadow-lg);
+      padding: var(--app-spacing-xs) 0;
+      min-width: 200px;
+      display: none;
+      z-index: 1000;
+      color: var(--app-color-text);
+    }
+
+    .profile-menu.open {
+      display: block;
+    }
+
+    .menu-item {
+      padding: var(--app-spacing-sm) var(--app-spacing-md);
+      display: flex;
+      align-items: center;
+      gap: var(--app-spacing-sm);
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .menu-item:hover {
+      background-color: var(--app-color-background);
+    }
+
+    .menu-divider {
+      height: 1px;
+      background-color: var(--app-color-border);
+      margin: var(--app-spacing-xs) 0;
+    }
+
+    /* Drawer Items */
+    .drawer-item {
+      padding: var(--app-spacing-sm) var(--app-spacing-md);
+      cursor: pointer;
+      border-radius: var(--app-radius-sm);
+      margin-bottom: var(--app-spacing-xs);
+    }
+
+    .drawer-item:hover {
+      background-color: var(--app-color-background);
+    }
+
+    .drawer-item.selected {
+      background-color: rgba(37, 99, 235, 0.1);
+      color: var(--app-color-primary);
+      font-weight: var(--app-font-weight-medium);
     }
 
     .toast {
@@ -417,26 +471,24 @@ export class AppMain extends LitElement {
   renderDrawer() {
     const bands = Object.entries(this.bands);
     return html`
-      <mwc-list @action=${(e: CustomEvent) => this.bandListAction(e)}>
+      <div class="drawer-list">
         ${repeat(
-          bands,
-          ([bandid, band]) =>
-            html`
-              <mwc-list-item data-bandid=${bandid}
-                ><span>${band.display_name}</span></mwc-list-item
+      bands,
+      ([bandid, band]) =>
+        html`
+              <div
+                class="drawer-item ${bandid === this.bandid ? "selected" : ""}"
+                @click=${() => {
+            this.selectBand(bandid);
+            this.drawer.close();
+          }}
               >
+                ${band.display_name}
+              </div>
             `
-        )}
-      </mwc-list>
+    )}
+      </div>
     `;
-  }
-
-  bandListAction(e: CustomEvent) {
-    const list = e.target as List;
-    const selectedItem = list.selected as HTMLElement;
-    const bandid = selectedItem.dataset["bandid"];
-    this.addDialog.close();
-    this.selectBand(bandid);
   }
 
   renderProfileMenu() {
@@ -447,47 +499,36 @@ export class AppMain extends LitElement {
     const secondary = this.firebaseUser?.displayName
       ? this.firebaseUser.email
       : null;
+
     return html`
-      <mwc-menu
-        id="profile-menu"
-        corner="TOP_END"
-        menuCorner="END"
-        .anchor=${this.profileIcon}
-        @action=${e => {
-          const detail = e.detail as ActionDetail;
-          console.log("[profile-menu]", detail);
-          switch (detail.index) {
-            case 0:
-              this.editProfile();
-              break;
-            case 1:
-              signOut(this.auth);
-              break;
-          }
-        }}
-      >
-        <mwc-list-item
-          graphic="avatar"
-          ?twoline=${secondary != null}
-          noninteractive
-        >
-          <mwc-icon slot="graphic">account_circle</mwc-icon>
-          <span>${displayName}</span>
-          ${secondary != null
-            ? html`
-                <span slot="secondary">${secondary}</span>
-              `
-            : ""}
-        </mwc-list-item>
-        <li divider role="separator"></li>
-        <mwc-list-item graphic="icon">
-          <span>Redigera profil...</span>
-        </mwc-list-item>
-        <mwc-list-item graphic="icon">
-          <mwc-icon slot="graphic">exit_to_app</mwc-icon>
-          <span>Logga ut</span>
-        </mwc-list-item>
-      </mwc-menu>
+      <div class="profile-menu-container">
+        <app-button
+          variant="icon"
+          icon="account_circle"
+          style="color: white;"
+          @click=${(e: Event) => {
+        e.stopPropagation();
+        this.profileMenuOpen = !this.profileMenuOpen;
+      }}
+        ></app-button>
+        <div class="profile-menu ${this.profileMenuOpen ? "open" : ""}" @click=${(e: Event) => e.stopPropagation()}>
+          <div class="menu-item" style="cursor: default;">
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-weight: bold;">${displayName}</span>
+              ${secondary ? html`<span style="font-size: 0.8em; color: var(--app-color-text-secondary);">${secondary}</span>` : ""}
+            </div>
+          </div>
+          <div class="menu-divider"></div>
+          <div class="menu-item" @click=${() => { this.editProfile(); this.profileMenuOpen = false; }}>
+            <app-icon icon="edit" style="font-size: 20px;"></app-icon>
+            <span>Redigera profil...</span>
+          </div>
+          <div class="menu-item" @click=${() => { signOut(this.auth); this.profileMenuOpen = false; }}>
+            <app-icon icon="exit_to_app" style="font-size: 20px;"></app-icon>
+            <span>Logga ut</span>
+          </div>
+        </div>
+      </div>
     `;
   }
 
@@ -499,44 +540,51 @@ export class AppMain extends LitElement {
           bandid=${this.bandid}
           uid=${this.firebaseUser.uid}
           @loaded=${() => {
-            this.loadingSchedule = false;
-          }}
+        this.loadingSchedule = false;
+      }}
         >
         </band-schedule>
       </div>
-      <mwc-fab id="fab" icon="add" @click=${() => this.addDialog.show()}>
-      </mwc-fab>
-      <mwc-dialog id="add-dialog">
+      <div class="fab">
+        <app-button
+          variant="primary"
+          icon="add"
+          style="border-radius: 9999px; padding: 16px; box-shadow: var(--app-shadow-lg);"
+          @click=${() => this.addDialog.show()}
+        ></app-button>
+      </div>
+      <app-dialog id="add-dialog" heading="Ny händelse" hideCloseButton>
         <event-editor id="add-dialog-editor"></event-editor>
-        <mwc-button
+        <app-button
           slot="primaryAction"
-          id="add-dialog-save"
+          variant="primary"
           @click=${() => this.saveNewEvent()}
         >
           Spara
-        </mwc-button>
-        <mwc-button slot="secondaryAction" dialogAction="cancel"
-          >Avbryt</mwc-button
+        </app-button>
+        <app-button slot="secondaryAction" variant="secondary" @click=${() => this.addDialog.close()}
+          >Avbryt</app-button
         >
-      </mwc-dialog>
+      </app-dialog>
     `;
   }
 
   renderRegister() {
     return html`
-      <mwc-dialog open heading="Välkommen">
+      <app-dialog open heading="Välkommen">
         <p>
           ${this.registered
-            ? "Ansökan skickad"
-            : "Du verkar inte vara medlem än."}
+        ? "Ansökan skickad"
+        : "Du verkar inte vara medlem än."}
         </p>
-        <mwc-button
+        <app-button
           ?disabled=${this.registered}
           slot="primaryAction"
+          variant="primary"
           @click=${this.joinRequest}
-          >Ansök</mwc-button
+          >Ansök</app-button
         >
-      </mwc-dialog>
+      </app-dialog>
     `;
   }
 
@@ -546,12 +594,14 @@ export class AppMain extends LitElement {
 
   renderProgress() {
     if (this.isLoading() || this.loadingSchedule) {
-      console.log(
-        `[app-main] Still waiting for [${Array.from(this.loading.keys())}]`,
-        this.loadingSchedule
-      );
       return html`
-        <mwc-linear-progress indeterminate></mwc-linear-progress>
+        <div style="position: fixed; top: var(--header-height); left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, var(--app-color-primary) 0%, var(--app-color-secondary) 100%); animation: loading 1s infinite;"></div>
+        <style>
+          @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+          }
+        </style>
       `;
     }
     return "";
@@ -561,49 +611,48 @@ export class AppMain extends LitElement {
     return html`
       <div class="joinreq toast">
         ${snapshot.data().display_name} har sökt medlemsskap
-        <button
+        <app-button
+          variant="text"
           @click=${() => {
-            this.viewingJoinRequest = snapshot.id;
-          }}
+        this.viewingJoinRequest = snapshot.id;
+      }}
         >
           Visa
-        </button>
+        </app-button>
       </div>
-      <mwc-dialog
+      <app-dialog
         heading="Begäran att gå med"
         ?open=${snapshot.id == this.viewingJoinRequest}
-        @closed=${async e => {
-          this.viewingJoinRequest = null;
-          const action = e.detail.action;
-          console.log("[join request] Action:", action);
-          try {
-            if (action == "accept") {
-              await new JoinRequestReference(snapshot.ref).update(
-                { approved: true },
-                { merge: true }
-              );
-            } else if (action == "reject") {
-              await deleteDoc(snapshot.ref);
-            }
-          } catch (e) {
-            console.log("Failed to", action, ":", e);
-            this.addErrorMessage("Kunde inte svara på ansökan", e);
-          }
-        }}
+        @closed=${async () => {
+        this.viewingJoinRequest = null;
+        // app-dialog doesn't use dialogAction like mwc-dialog, we need to handle it differently or assume close means cancel unless explicitly handled.
+        // But wait, app-button click handler is where we should do the action.
+      }}
       >
         <p><b>Namn:</b> ${snapshot.data().display_name}</p>
         <p>Vill du acceptera?</p>
-        <mwc-button
+        <app-button
           slot="primaryAction"
-          dialogAction="accept"
+          variant="primary"
+          @click=${async () => {
+        await new JoinRequestReference(snapshot.ref).update(
+          { approved: true },
+          { merge: true }
+        );
+        this.viewingJoinRequest = null;
+      }}
           label="Ja"
-        ></mwc-button>
-        <mwc-button
+        >Ja</app-button>
+        <app-button
           slot="secondaryAction"
-          dialogAction="reject"
+          variant="secondary"
+          @click=${async () => {
+        await deleteDoc(snapshot.ref);
+        this.viewingJoinRequest = null;
+      }}
           label="Nej"
-        ></mwc-button>
-      </mwc-dialog>
+        >Nej</app-button>
+      </app-dialog>
     `;
   }
 
@@ -613,16 +662,16 @@ export class AppMain extends LitElement {
     }
     if (!this.bandid) {
       return html`
-        <mwc-dialog open heading="Konfigurationsfel">
+        <app-dialog open heading="Konfigurationsfel">
           <p>Okänd organisation.</p>
-        </mwc-dialog>
+        </app-dialog>
       `;
     }
     if (this.firebaseUser == null) {
       return html`
-        <mwc-dialog open heading="Välkommen" scrimClickAction="" escapeKeyAction="">
+        <app-dialog open heading="Välkommen">
           <login-dialog .app=${this.app}></login-dialog>
-        </mwc-dialog>
+        </app-dialog>
       `;
     }
     if (!(this.bandid in this.bands)) {
@@ -630,76 +679,72 @@ export class AppMain extends LitElement {
     }
     return html`
       ${this.renderSchedule()}
-      <mwc-dialog id="settings" heading="Inställningar för ${this.bandid}">
+      <app-dialog id="settings" heading="Inställningar för ${this.bandid}">
         <profile-editor
           bandid=${this.bandid}
           uid=${this.firebaseUser.uid}
           .membership=${this.membership}
         ></profile-editor>
-        <mwc-button
+        <app-button
           slot="primaryAction"
+          variant="primary"
           @click=${async () => {
-            if (await this.profileEditor.save()) {
-              this.profileEditorDialog.close();
-            }
-          }}
-          >OK</mwc-button
+        if (await this.profileEditor.save()) {
+          this.profileEditorDialog.close();
+        }
+      }}
+          >OK</app-button
         >
-        <mwc-button slot="secondaryAction" dialogAction="cancel"
-          >Avbryt</mwc-button
+        <app-button slot="secondaryAction" variant="secondary" @click=${() => this.profileEditorDialog.close()}
+          >Avbryt</app-button
         >
-      </mwc-dialog>
+      </app-dialog>
     `;
   }
 
   render() {
     return html`
-      <mwc-drawer id="mainMenuDrawer" type="modal">
-        <div>${this.renderDrawer()}</div>
-        <div slot="appContent">
-          <mwc-top-app-bar-fixed>
-            <mwc-icon-button
-              id="mainMenuButton"
-              icon="menu"
-              slot="navigationIcon"
-              @click=${() => {
-                const drawer = this.shadowRoot.getElementById(
-                  "mainMenuDrawer"
-                ) as Drawer;
-                drawer.open = true;
-              }}
-            ></mwc-icon-button>
-            <div slot="title">Närvarokollen</div>
-            <mwc-icon-button
-              id="profile"
-              icon="account_circle"
-              slot="actionItems"
-              @click=${() => {
-                this.profileMenu.open = !this.profileMenu.open;
-              }}
-            ></mwc-icon-button>
-            ${this.renderProfileMenu()} ${this.renderProgress()}
-            <div id="body">
-              ${repeat(
-                this.errorMessages,
-                (em: ErrorMessage) => em.id,
-                ({ id, message, details }: ErrorMessage) => html`
-                  <div class="error toast" id="error-${id}">
-                    <span class="errormsg">${message}</span>
-                    <span class="errordetail">${details || ""}</span>
-                  </div>
-                `
-              )}
-              ${repeat(
-                this.joinRequests,
-                snapshot => snapshot.id,
-                snapshot => this.renderJoinRequest(snapshot)
-              )}
-              ${this.renderMain()}
-            </div>
-          </mwc-top-app-bar-fixed>
+      <app-drawer id="mainMenuDrawer" @close=${() => (this.drawer.open = false)}>
+        <div slot="header">
+          <span style="font-weight: bold; font-size: 1.2rem;">Organisationer</span>
         </div>
-      </mwc-drawer>
+        ${this.renderDrawer()}
+      </app-drawer>
+
+      <div class="app-header" @click=${() => { if (this.profileMenuOpen) this.profileMenuOpen = false; }}>
+        <app-button
+          variant="icon"
+          icon="menu"
+          style="color: white;"
+          @click=${() => {
+        this.drawer.open = true;
+      }}
+        ></app-button>
+        <div class="app-title">Närvarokollen</div>
+        ${this.renderProfileMenu()}
+      </div>
+      ${this.renderProgress()}
+
+      <div class="main-content" @click=${() => { if (this.profileMenuOpen) this.profileMenuOpen = false; }}>
+        <div id="body">
+          ${repeat(
+        this.errorMessages,
+        (em: ErrorMessage) => em.id,
+        ({ id, message, details }: ErrorMessage) => html`
+              <div class="error toast" id="error-${id}">
+                <span class="errormsg">${message}</span>
+                <span class="errordetail">${details || ""}</span>
+              </div>
+            `
+      )}
+          ${repeat(
+        this.joinRequests,
+        snapshot => snapshot.id,
+        snapshot => this.renderJoinRequest(snapshot)
+      )}
+          ${this.renderMain()}
+        </div>
+      </div>
     `;
   }
 }

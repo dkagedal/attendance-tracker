@@ -1,33 +1,43 @@
-import "@material/mwc-textfield/mwc-textfield";
+import "./components/app-input";
+import { AppInput } from "./components/app-input";
 import { LitElement, html, css } from "lit";
-import { ifDefined } from "lit/directives/if-defined";
-import { customElement, property, query } from "lit/decorators";
-import "@material/mwc-textfield";
+import { customElement, property, query, state } from "lit/decorators.js";
 import "./time-range.js";
-import { TextField } from "@material/mwc-textfield";
 
 @customElement("datetime-input")
 export class DatetimeInput extends LitElement {
   @property({ type: String })
   initial_value: string; // "2020-02-29T19:50" or "2020-02-29"
 
+  @state()
+  private _date: string = "";
+
+  @state()
+  private _time: string = "";
+
   @property({ type: Boolean })
   required = false;
 
   @query("#date")
-  date: TextField;
+  date: AppInput;
 
   @query("#time")
-  time: TextField;
+  time: AppInput;
+
+  willUpdate(changedProperties: Map<string, any>) {
+    if (changedProperties.has("initial_value") && this.initial_value) {
+      const [d, t] = this.initial_value.split("T");
+      this._date = d || "";
+      this._time = t || "";
+    }
+  }
 
   get value() {
-    const date = this.date.value;
-    const time = this.time.value;
-    if (date) {
-      if (time) {
-        return `${date}T${time}`;
+    if (this._date) {
+      if (this._time) {
+        return `${this._date}T${this._time}`;
       } else {
-        return date;
+        return this._date;
       }
     } else {
       return undefined;
@@ -35,48 +45,50 @@ export class DatetimeInput extends LitElement {
   }
 
   set value(value) {
-    let [dateval, timeval] = value.split("T");
-    this.date.value = dateval;
-    if (timeval != undefined) {
-      this.time.value = timeval;
+    if (!value) {
+      this._date = "";
+      this._time = "";
+      return;
     }
+    let [dateval, timeval] = value.split("T");
+    this._date = dateval || "";
+    this._time = timeval || "";
   }
 
   static styles = css`
     :host {
       display: inline-flex;
+      gap: var(--app-spacing-sm);
     }
-    mwc-textfield[type="date"] {
-      margin-right: -2rem;
+    app-input {
+      margin-bottom: 0;
     }
   `;
 
   render() {
-    const date = this.initial_value
-      ? this.initial_value.split("T")[0]
-      : undefined;
-    const time = this.initial_value
-      ? this.initial_value.split("T")[1]
-      : undefined;
     return html`
-      <mwc-textfield
-        ?required=${this.required}
+      <app-input
         label="Datum"
         id="date"
         type="date"
-        value=${ifDefined(date)}
-      ></mwc-textfield>
-      <mwc-textfield
+        .value=${this._date}
+        @input=${(e: CustomEvent) => { this._date = (e.target as AppInput).value; }}
+      ></app-input>
+      <app-input
         label="Tid"
         id="time"
         type="time"
-        value=${ifDefined(time)}
-      ></mwc-textfield>
+        .value=${this._time}
+        @input=${(e: CustomEvent) => { this._time = (e.target as AppInput).value; }}
+      ></app-input>
     `;
   }
 
   checkValidity(): boolean {
-    return this.date.checkValidity() && this.time.checkValidity();
+    if (this.required && !this._date) {
+      return false;
+    }
+    return true;
   }
 }
 

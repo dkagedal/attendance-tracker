@@ -5,8 +5,11 @@ import "@material/mwc-linear-progress";
 import "@material/mwc-list/mwc-list";
 import "@material/mwc-list/mwc-list-item";
 import "./time-range";
-import "./event-card";
+import "./components/event-summary-card";
+import "./components/app-dialog";
+import "./components/app-button";
 import "./mini-roster";
+import "./event-card";
 import {
   onSnapshot,
   orderBy,
@@ -127,36 +130,45 @@ export class BandSchedule extends LitElement {
     return html`
       <div class="list">
         ${repeat(
-          this.events,
-          e => e.ref.id,
-          (e: BandEvent) => html`
-            <event-card
-              selfuid=${this.uid}
+      this.events,
+      e => e.ref.id,
+      (e: BandEvent) => html`
+            <event-summary-card
+              uid=${this.uid}
               .members=${this.members}
               .event=${e}
-            ></event-card>
+              @click=${(ev: Event) => this.selected(ev, e)}
+            ></event-summary-card>
           `
-        )}
-        ${this.loaded
-          ? ""
-          : html`
-              <div>
+    )}
+        ${this.loaded && this.events.length === 0
+        ? html`
+              <div style="text-align: center; padding: 20px; color: var(--app-color-text-secondary);">
                 Inget planerat
               </div>
-            `}
+            `
+        : ""}
       </div>
+      
+      <app-dialog 
+        heading="${this.selected_event?.type || 'Händelse'}" 
+        ?open=${this.selected_event != null}
+        @closed=${() => this.selected_event = null}
+        hideCloseButton
+      >
+        ${this.selected_event ? html`
+          <event-card
+            .event=${this.selected_event}
+            .members=${this.members}
+          ></event-card>
+        ` : ""}
+        <app-button slot="primaryAction" variant="primary" @click=${() => this.selected_event = null}>Stäng</app-button>
+      </app-dialog>
     `;
   }
 
-  selected(selectEvent: any, gig: Event) {
-    let listItem = selectEvent.target;
-    let event = new CustomEvent("select-event", {
-      detail: {
-        item: listItem,
-        gig: gig
-      }
-    });
-    this.dispatchEvent(event);
+  selected(_selectEvent: any, gig: BandEvent) {
+    this.selected_event = gig;
   }
 }
 

@@ -1,12 +1,11 @@
+import "./components/app-input";
+import "./components/app-button";
+import { AppInput } from "./components/app-input";
 import { css, html, LitElement } from "lit";
-import { ifDefined } from "lit/directives/if-defined";
-import "@material/mwc-textfield";
-import "@material/mwc-icon-button";
-import "@material/mwc-button";
+import { ifDefined } from "lit/directives/if-defined.js";
 import "./datetime-input";
 import { DatetimeInput } from "./datetime-input";
-import { TextField } from "@material/mwc-textfield";
-import { customElement, property, query } from "lit/decorators";
+import { customElement, property, query } from "lit/decorators.js";
 import { BandEvent } from "./model/bandevent";
 
 @customElement("event-editor")
@@ -24,13 +23,13 @@ export class EventEditor extends LitElement {
   range: boolean = false;
 
   @query("#type")
-  typeInput: TextField;
+  typeInput: AppInput;
 
   @query("#location")
-  locationInput: TextField;
+  locationInput: AppInput;
 
   @query("#desc")
-  descriptionInput: TextField;
+  descriptionInput: AppInput;
 
   @query("#start")
   startInput: DatetimeInput;
@@ -39,9 +38,8 @@ export class EventEditor extends LitElement {
   stopInput: DatetimeInput;
 
   static styles = css`
-    mwc-textfield {
+    app-input {
       width: 100%;
-      margin-bottom: 12px;
     }
 
     :host(:not([range])) .ranged {
@@ -55,25 +53,28 @@ export class EventEditor extends LitElement {
 
   render() {
     return html`
-      <mwc-textfield
+      <app-input
         label="Typ"
         id="type"
         type="text"
         required
         value="${this.data.type}"
-      ></mwc-textfield>
-      <mwc-textfield
+        @input=${(e: CustomEvent) => { this.data.type = (e.target as AppInput).value; }}
+      ></app-input>
+      <app-input
         label="Plats"
         id="location"
         type="text"
         value="${ifDefined(this.data.location)}"
-      ></mwc-textfield>
-      <mwc-textfield
+        @input=${(e: CustomEvent) => { this.data.location = (e.target as AppInput).value; }}
+      ></app-input>
+      <app-input
         label="Beskrivning"
         id="desc"
         type="text"
         value="${ifDefined(this.data.description)}"
-      ></mwc-textfield>
+        @input=${(e: CustomEvent) => { this.data.description = (e.target as AppInput).value; }}
+      ></app-input>
       <datetime-input
         id="start"
         required
@@ -85,15 +86,16 @@ export class EventEditor extends LitElement {
         class="ranged"
         initial_value="${ifDefined(this.data.stop)}"
       ></datetime-input>
-      <mwc-icon-button
+      <app-button
+        variant="icon"
         icon="delete"
         class="ranged"
         @click=${() => {
-          this.range = false;
-        }}
-      ></mwc-icon-button>
-      <mwc-button icon="add" class="notranged" @click=${this.addStop}
-        >Lägg till sluttid</mwc-button
+        this.range = false;
+      }}
+      ></app-button>
+      <app-button variant="secondary" icon="add" class="notranged" @click=${this.addStop}
+        >Lägg till sluttid</app-button
       >
     `;
   }
@@ -140,11 +142,9 @@ export class EventEditor extends LitElement {
         return false;
       }
     }
-    return (
-      this.typeInput.checkValidity() &&
-      this.locationInput.checkValidity() &&
-      this.descriptionInput.checkValidity()
-    );
+    const startValid = this.startInput.checkValidity();
+    const typeValid = this.typeInput.checkValidity();
+    return startValid && typeValid;
   }
 }
 
