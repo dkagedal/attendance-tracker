@@ -4,27 +4,28 @@ import "@material/mwc-button";
 import "@material/mwc-linear-progress";
 import "@material/mwc-list/mwc-list";
 import "@material/mwc-list/mwc-list-item";
-import "./time-range";
-import "./components/event-summary-card";
-import "./components/app-dialog";
-import "./components/app-button";
-import "./mini-roster";
-import "./event-card";
 import {
   onSnapshot,
   orderBy,
-  query,
+  query as firestoreQuery,
   Timestamp,
   where
 } from "firebase/firestore";
 import { css, html, LitElement } from "lit";
-import { customElement, property, state } from "lit/decorators";
+import { customElement, property, query, state } from "lit/decorators.js";
 import { repeat } from "lit/directives/repeat";
 import { UID } from "./datamodel";
 import { db } from "./storage";
 import { BandEvent } from "./model/bandevent";
 import { band } from "./model/band";
 import { Member } from "./model/member";
+import "./time-range";
+import "./components/event-summary-card";
+import "./components/app-dialog";
+import "./components/app-button";
+import "./mini-roster";
+import "./event-card";
+import { EventCard } from "./event-card";
 
 @customElement("band-schedule")
 export class BandSchedule extends LitElement {
@@ -41,53 +42,75 @@ export class BandSchedule extends LitElement {
   loaded = false;
 
   @property({ type: Object })
-  selected_event = null;
+  selected_event: BandEvent | null = null;
 
-  @property({ type: Boolean })
-  event_expanded = false;
+  @state()
+  admin_data_copy: BandEvent | null = null;
 
   @property({ type: Array, attribute: false })
   members: Member[] = [];
 
-  updated(changedProperties: any) {
-    console.log("[schedule] Updated", changedProperties);
-    if (changedProperties.has("bandid")) {
-      if (this.bandid == null) {
-        this.events = [];
-        this.selected_event = null;
-        this.members = [];
-        return;
-      }
+  @query("event-card")
+  card: EventCard;
 
-      const now = Timestamp.now();
-      const nowMinus24h = new Timestamp(now.seconds - 86400, 0).toDate();
-      const yesterday = nowMinus24h.toISOString().split("T")[0];
-      console.log("[schedule] Getting band events and members...", yesterday);
-      const bandref = band(db, this.bandid);
-      const eventQuery = query(
-        bandref.events().dbref,
-        where("start", ">=", yesterday),
-        orderBy("start")
-      );
-      onSnapshot(eventQuery, (querySnapshot): void => {
-        this.events = querySnapshot.docs.map(doc => doc.data());
-        this.loaded = true;
-        this.dispatchEvent(new CustomEvent("loaded"));
-      });
-      const memberQuery = query(bandref.members().dbref);
-      onSnapshot(memberQuery, (querySnapshot): void => {
-        this.members = querySnapshot.docs.map(doc => doc.data());
-        this.members.sort((m1, m2) => {
-          if (m1.id < m2.id) {
-            return -1;
-          }
-          if (m1.id > m2.id) {
-            return 1;
-          }
-          return 0;
-        });
-      });
+  @property({ type: Boolean })
+  admin: boolean = false;
+
+  private _unsubscribeGigs: () => void = () => { };
+  private _unsubscribeMembers: () => void = () => { };
+
+  updated(changedProperties: any) {
+    if (changedProperties.has("bandid")) {
+      this.fetchGigs();
+      this.fetchMembers();
     }
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._unsubscribeGigs();
+    this._unsubscribeMembers();
+  }
+
+  fetchGigs() {
+    this._unsubscribeGigs();
+    if (!this.bandid) {
+      this.events = [];
+      this.loaded = false;
+      return;
+    }
+
+    const now = Timestamp.now();
+    const nowMinus24h = new Timestamp(now.seconds - 86400, 0).toDate();
+    const yesterday = nowMinus24h.toISOString().split("T")[0];
+
+    const bandRef = band(db, this.bandid);
+    const q = firestoreQuery(
+      bandRef.events().dbref,
+      where("start", ">=", yesterday),
+      orderBy("start")
+    );
+
+    this._unsubscribeGigs = onSnapshot(q, (snapshot) => {
+      this.events = snapshot.docs.map(doc => doc.data());
+      this.loaded = true;
+    });
+  }
+
+  fetchMembers() {
+    this._unsubscribeMembers();
+    if (!this.bandid) {
+      this.members = [];
+      return;
+    }
+
+    const bandRef = band(db, this.bandid);
+    const q = firestoreQuery(bandRef.members().dbref);
+
+    this._unsubscribeMembers = onSnapshot(q, (snapshot) => {
+      this.members = snapshot.docs.map(doc => doc.data());
+      this.members.sort((m1, m2) => m1.id.localeCompare(m2.id));
+    });
   }
 
   static get styles() {
@@ -96,37 +119,10 @@ export class BandSchedule extends LitElement {
         display: flex;
         flex-direction: column;
       }
-      .type {
-        font-weight: 600;
-      }
-      time-range {
-        color: rgba(0, 0, 0, 0.7);
-      }
-      @media (max-width: 600px) {
-        div.schedule {
-          padding: 16px 16px;
-        }
-      }
-      event-card {
-        border-top: 1px solid rgba(0, 0, 0, 0.3);
-      }
-      event-card:first-of-type {
-        border-top: none;
-      }
     `;
   }
 
   render() {
-    const years = [] as any[];
-    let currentYear = { year: "", events: [] as BandEvent[] };
-    this.events.forEach(e => {
-      const year = e.year();
-      if (year != currentYear.year) {
-        currentYear = { year: year, events: [] };
-        years.push(year);
-      }
-      currentYear.events.push(e);
-    });
     return html`
       <div class="list">
         ${repeat(
@@ -143,7 +139,7 @@ export class BandSchedule extends LitElement {
     )}
         ${this.loaded && this.events.length === 0
         ? html`
-              <div style="text-align: center; padding: 20px; color: var(--app-color-text-secondary);">
+              <div style="text-align: center; padding: 40px; color: var(--app-color-text-secondary);">
                 Inget planerat
               </div>
             `
@@ -158,17 +154,42 @@ export class BandSchedule extends LitElement {
       >
         ${this.selected_event ? html`
           <event-card
-            .event=${this.selected_event}
+            .event=${this.admin_data_copy || this.selected_event}
             .members=${this.members}
+            .admin=${this.admin}
+            @closed=${() => this.selected_event = null}
           ></event-card>
         ` : ""}
-        <app-button slot="primaryAction" variant="primary" @click=${() => this.selected_event = null}>Stäng</app-button>
+        
+        ${this.admin ? html`
+          <app-button slot="primaryAction" variant="primary" @click=${this.saveAndClose}>Spara</app-button>
+          <app-button slot="secondaryAction" variant="secondary" @click=${() => this.selected_event = null}>Avbryt</app-button>
+        ` : html`
+          <app-button slot="primaryAction" variant="primary" @click=${() => this.selected_event = null}>Stäng</app-button>
+        `}
       </app-dialog>
     `;
   }
 
   selected(_selectEvent: any, gig: BandEvent) {
+    if (this.admin) {
+      this.admin_data_copy = gig.clone();
+    } else {
+      this.admin_data_copy = null;
+    }
     this.selected_event = gig;
+  }
+
+  async saveAndClose() {
+    if (this.admin && this.card) {
+      try {
+        await this.card.save();
+      } catch (e) {
+        console.error("Save failed:", e);
+        return; // Don't close on error
+      }
+    }
+    this.selected_event = null;
   }
 }
 

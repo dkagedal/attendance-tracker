@@ -7,8 +7,8 @@ import "./components/app-button";
 import "./components/app-icon";
 import { auth } from "./storage";
 import { EventEditor } from "./event-editor";
-import { onSnapshot, setDoc } from "firebase/firestore";
-import { customElement, property, query, state } from "lit/decorators";
+import { deleteDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { customElement, property, query, state } from "lit/decorators.js";
 import { UID } from "./datamodel";
 import { BandEvent } from "./model/bandevent";
 import {
@@ -26,12 +26,15 @@ export class EventCard extends LitElement {
   @property({ type: Object, attribute: false })
   event: BandEvent = null;
 
+  @property({ type: Boolean })
+  admin: boolean = false;
+
   @state()
   participants: { [uid: UID]: Participant } = {};
 
   @property({ type: Boolean, reflect: true })
   get cancelled() {
-    return this.event.cancelled;
+    return this.event?.cancelled || false;
   }
 
   @query("event-editor")
@@ -84,6 +87,11 @@ export class EventCard extends LitElement {
   static styles = css`
     :host {
       display: block;
+    }
+
+    :host([cancelled]) .header,
+    :host([cancelled]) .roster-section {
+      opacity: 0.5;
     }
 
     .header {
@@ -154,8 +162,16 @@ export class EventCard extends LitElement {
     }
 
     .chip.cancelled {
-      background-color: var(--app-color-error);
+      background-color: var(--app-color-text-secondary);
       color: white;
+    }
+
+    .admin-actions {
+      margin-top: var(--app-spacing-lg);
+      padding-top: var(--app-spacing-md);
+      border-top: 1px solid var(--app-color-border);
+      display: flex;
+      justify-content: flex-end;
     }
   `;
 
@@ -172,6 +188,33 @@ export class EventCard extends LitElement {
       () => console.log("Update successful"),
       reason => console.log("Update failed:", reason)
     );
+  }
+
+  async save() {
+    if (this.admin && this.editor) {
+      if (this.editor.checkValidity()) {
+        this.editor.save();
+        const ref = this.event.ref;
+        await ref.update(this.event);
+        console.log("Update successful");
+      } else {
+        throw new Error("Invalid data");
+      }
+    }
+  }
+
+  deleteEvent() {
+    if (confirm("Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.")) {
+      deleteDoc(this.event.ref.dbref).then(
+        () => {
+          console.log("Delete successful");
+          this.dispatchEvent(new CustomEvent("closed", { bubbles: true, composed: true }));
+        },
+        reason => {
+          console.log("Delete failed:", reason);
+        }
+      );
+    }
   }
 
   renderResponseButtons() {
@@ -208,40 +251,59 @@ export class EventCard extends LitElement {
     if (!this.event) return html``;
 
     return html`
-      <div class="header">
-        <div class="type">
-          ${this.cancelled ? html`<span class="chip cancelled">Inställt</span>` : ""}
-        </div>
-        <div class="meta">
-          <div class="meta-row">
-            <app-icon icon="schedule"></app-icon>
-            <time-range
-              start=${ifDefined(this.event.start)}
-              stop=${ifDefined(this.event.stop)}
-            ></time-range>
+      ${this.admin ? html`
+        <event-editor .data=${this.event} .editing=${true}></event-editor>
+      ` : html`
+        <div class="header">
+          <div class="type">
+            ${this.event.type}
+            ${this.cancelled ? html`<span class="chip cancelled">Inställt</span>` : ""}
           </div>
-          ${this.event.location ? html`
+          <div class="meta">
             <div class="meta-row">
-              <app-icon icon="place"></app-icon>
-              <span>${this.event.location}</span>
+              <app-icon icon="schedule"></app-icon>
+              <time-range
+                start=${ifDefined(this.event.start)}
+                stop=${ifDefined(this.event.stop)}
+              ></time-range>
             </div>
+            ${this.event.location ? html`
+              <div class="meta-row">
+                <app-icon icon="place"></app-icon>
+                <span>${this.event.location}</span>
+              </div>
+            ` : ""}
+          </div>
+          ${this.event.description ? html`
+            <div class="description">${this.event.description}</div>
           ` : ""}
         </div>
-        ${this.event.description ? html`
-          <div class="description">${this.event.description}</div>
-        ` : ""}
-      </div>
+      `}
 
       ${!this.cancelled ? this.renderResponseButtons() : ""}
 
       <div class="roster-section">
-        <span class="roster-title">Vilka kommer?</span>
-        <mini-roster
-          .members=${this.members}
-          .event=${this.event}
-          .responses=${Object.fromEntries(Object.entries(this.participants).map(([k, v]) => [k, v.attending]))}
-        ></mini-roster>
+        ${!this.cancelled ? html`
+          <span class="roster-title">Vilka kommer?</span>
+          <mini-roster
+            .members=${this.members}
+            .event=${this.event}
+            .responses=${Object.fromEntries(Object.entries(this.participants).map(([k, v]) => [k, v.attending]))}
+          ></mini-roster>
+        ` : ""}
       </div>
+
+      ${this.admin ? html`
+        <div class="admin-actions">
+          <app-button variant="secondary" icon="delete" @click=${this.deleteEvent}>Radera händelse</app-button>
+        </div>
+      ` : ""}
     `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    "event-card": EventCard;
   }
 }

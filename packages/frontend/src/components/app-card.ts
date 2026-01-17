@@ -3,10 +3,13 @@ import { customElement, property } from "lit/decorators.js";
 
 @customElement("app-card")
 export class AppCard extends LitElement {
-    @property({ type: Boolean })
-    clickable = false;
+  @property({ type: Boolean })
+  clickable = false;
 
-    static styles = css`
+  @property({ type: Boolean, reflect: true })
+  disabled = false;
+
+  static styles = css`
     :host {
       display: block;
     }
@@ -33,13 +36,20 @@ export class AppCard extends LitElement {
       transform: translateY(0);
       box-shadow: var(--app-shadow-sm);
     }
+
+    :host([disabled]) .card {
+      opacity: 0.6;
+      filter: grayscale(1);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
   `;
 
-    render() {
-        return html`
+  render() {
+    return html`
       <div class="card ${this.clickable ? "clickable" : ""}">
         <slot></slot>
       </div>
     `;
-    }
+  }
 }

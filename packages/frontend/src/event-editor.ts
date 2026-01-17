@@ -16,11 +16,15 @@ export class EventEditor extends LitElement {
     type: "",
     start: "",
     year: () => "",
-    hasStopTime: () => false
+    hasStopTime: () => false,
+    clone: () => ({} as any)
   };
 
   @property({ type: Boolean, reflect: true })
   range: boolean = false;
+
+  @property({ type: Boolean })
+  editing: boolean = false;
 
   @query("#type")
   typeInput: AppInput;
@@ -49,15 +53,26 @@ export class EventEditor extends LitElement {
     :host([range]) .notranged {
       display: none;
     }
+
+    .cancel-section {
+      margin-top: var(--app-spacing-md);
+      padding-top: var(--app-spacing-md);
+      border-top: 1px solid var(--app-color-border);
+      display: flex;
+      justify-content: center;
+    }
   `;
 
   render() {
+    const isCancelled = !!this.data.cancelled;
+
     return html`
       <app-input
         label="Typ"
         id="type"
         type="text"
         required
+        ?disabled=${isCancelled}
         value="${this.data.type}"
         @input=${(e: CustomEvent) => { this.data.type = (e.target as AppInput).value; }}
       ></app-input>
@@ -65,6 +80,7 @@ export class EventEditor extends LitElement {
         label="Plats"
         id="location"
         type="text"
+        ?disabled=${isCancelled}
         value="${ifDefined(this.data.location)}"
         @input=${(e: CustomEvent) => { this.data.location = (e.target as AppInput).value; }}
       ></app-input>
@@ -72,31 +88,49 @@ export class EventEditor extends LitElement {
         label="Beskrivning"
         id="desc"
         type="text"
+        ?disabled=${isCancelled}
         value="${ifDefined(this.data.description)}"
         @input=${(e: CustomEvent) => { this.data.description = (e.target as AppInput).value; }}
       ></app-input>
       <datetime-input
         id="start"
         required
+        ?disabled=${isCancelled}
         initial_value="${ifDefined(this.data.start)}"
       ></datetime-input>
       <span class="ranged">-</span>
       <datetime-input
         id="stop"
         class="ranged"
+        ?disabled=${isCancelled}
         initial_value="${ifDefined(this.data.stop)}"
       ></datetime-input>
       <app-button
         variant="icon"
         icon="delete"
         class="ranged"
+        ?disabled=${isCancelled}
         @click=${() => {
         this.range = false;
       }}
       ></app-button>
-      <app-button variant="secondary" icon="add" class="notranged" @click=${this.addStop}
+      <app-button variant="secondary" icon="add" class="notranged" ?disabled=${isCancelled} @click=${this.addStop}
         >Lägg till sluttid</app-button
       >
+
+      ${this.editing ? html`
+        <div class="cancel-section">
+          ${isCancelled ? html`
+            <app-button variant="secondary" icon="history" @click=${() => { this.data.cancelled = false; this.requestUpdate(); }}>
+              Återställ händelse
+            </app-button>
+          ` : html`
+            <app-button variant="secondary" icon="cancel" @click=${() => { this.data.cancelled = true; this.requestUpdate(); }}>
+              Ställ in händelse
+            </app-button>
+          `}
+        </div>
+      ` : ""}
     `;
   }
 
@@ -126,9 +160,15 @@ export class EventEditor extends LitElement {
         }
       }
     }
+    // Cancellation state is already updated on this.data via click handlers,
+    // but we ensure it persists through the save call if we ever re-assign.
+    this.data.cancelled = !!this.data.cancelled;
   }
 
   checkValidity(): boolean {
+    if (this.data.cancelled) {
+      return true;
+    }
     if (!this.startInput.checkValidity()) {
       return false;
     }

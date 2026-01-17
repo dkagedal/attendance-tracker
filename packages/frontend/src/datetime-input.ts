@@ -18,6 +18,9 @@ export class DatetimeInput extends LitElement {
   @property({ type: Boolean })
   required = false;
 
+  @property({ type: Boolean })
+  disabled = false;
+
   @query("#date")
   date: AppInput;
 
@@ -71,6 +74,7 @@ export class DatetimeInput extends LitElement {
         label="Datum"
         id="date"
         type="date"
+        ?disabled=${this.disabled}
         .value=${this._date}
         @input=${(e: CustomEvent) => { this._date = (e.target as AppInput).value; }}
       ></app-input>
@@ -78,6 +82,7 @@ export class DatetimeInput extends LitElement {
         label="Tid"
         id="time"
         type="time"
+        ?disabled=${this.disabled}
         .value=${this._time}
         @input=${(e: CustomEvent) => { this._time = (e.target as AppInput).value; }}
       ></app-input>

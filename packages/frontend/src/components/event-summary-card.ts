@@ -9,72 +9,82 @@ import "./app-icon";
 
 @customElement("event-summary-card")
 export class EventSummaryCard extends LitElement {
-    @property({ type: Object })
-    event: BandEvent | null = null;
+  @property({ type: Object })
+  event: BandEvent | null = null;
 
-    @property({ type: Array })
-    members: Member[] = [];
+  @property({ type: Boolean, reflect: true })
+  cancelled = false;
 
-    @property({ type: String })
-    uid: string = "";
+  @property({ type: Array })
+  members: Member[] = [];
 
-    @state()
-    participants: { [uid: string]: Participant } = {};
+  @property({ type: String })
+  uid: string = "";
 
-    @state()
-    loading = true;
+  @state()
+  participants: { [uid: string]: Participant } = {};
 
-    unsubscribe: () => void = () => { };
+  @state()
+  loading = true;
 
-    connectedCallback() {
-        super.connectedCallback();
-        if (this.event) {
-            this.fetchParticipants();
-        }
+  unsubscribe: () => void = () => { };
+
+  connectedCallback() {
+    super.connectedCallback();
+    if (this.event) {
+      this.fetchParticipants();
     }
+  }
 
-    disconnectedCallback() {
-        super.disconnectedCallback();
-        this.unsubscribe();
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.unsubscribe();
+  }
+
+  willUpdate(changedProperties: any) {
+    if (changedProperties.has("event") && this.event) {
+      this.cancelled = !!this.event.cancelled;
+      console.log(`[event-summary-card] Event ${this.event.ref.id} updated. Cancelled: ${this.cancelled}`);
     }
+  }
 
-    updated(changedProperties: any) {
-        if (changedProperties.has("event") && this.event) {
-            this.fetchParticipants();
-        }
+  updated(changedProperties: any) {
+    if (changedProperties.has("event") && this.event) {
+      this.fetchParticipants();
     }
+  }
 
-    fetchParticipants() {
-        this.unsubscribe();
-        this.loading = true;
-        this.unsubscribe = onSnapshot(
-            this.event!.ref.participants().dbref,
-            snapshot => {
-                const participants: { [uid: string]: Participant } = {};
-                snapshot.docs.forEach(doc => {
-                    const p = doc.data();
-                    participants[p.uid] = p;
-                });
-                this.participants = participants;
-                this.loading = false;
-            }
-        );
-    }
+  fetchParticipants() {
+    this.unsubscribe();
+    this.loading = true;
+    this.unsubscribe = onSnapshot(
+      this.event!.ref.participants().dbref,
+      snapshot => {
+        const participants: { [uid: string]: Participant } = {};
+        snapshot.docs.forEach(doc => {
+          const p = doc.data();
+          participants[p.uid] = p;
+        });
+        this.participants = participants;
+        this.loading = false;
+      }
+    );
+  }
 
-    get attendanceCount() {
-        return Object.values(this.participants).filter(p => p.attending === "yes")
-            .length;
-    }
+  get attendanceCount() {
+    return Object.values(this.participants).filter(p => p.attending === "yes")
+      .length;
+  }
 
-    get userResponse() {
-        return this.participants[this.uid]?.attending;
-    }
+  get userResponse() {
+    return this.participants[this.uid]?.attending;
+  }
 
-    get actionRequired() {
-        return !this.userResponse && !this.event?.cancelled;
-    }
+  get actionRequired() {
+    return !this.userResponse && !this.event?.cancelled;
+  }
 
-    static styles = css`
+  static styles = css`
     :host {
       display: block;
       margin-bottom: var(--app-spacing-md);
@@ -221,7 +231,7 @@ export class EventSummaryCard extends LitElement {
     }
 
     .badge.cancelled {
-      background-color: var(--app-color-secondary);
+      background-color: var(--app-color-text-secondary);
       color: white;
     }
 
@@ -266,51 +276,55 @@ export class EventSummaryCard extends LitElement {
     .response-icon.no { color: var(--app-color-error); }
     .response-icon.sub { color: var(--app-color-warning); }
     .response-icon.na { color: var(--app-color-text-secondary); opacity: 0.5; }
+
+    :host([cancelled]) {
+      opacity: 0.6;
+    }
   `;
 
-    renderResponseStatus() {
-        const response = this.userResponse || "na";
-        let icon = "help_outline";
-        let statusClass = "na";
+  renderResponseStatus() {
+    const response = this.userResponse || "na";
+    let icon = "help_outline";
+    let statusClass = "na";
 
-        switch (response) {
-            case "yes":
-                icon = "check_circle";
-                statusClass = "yes";
-                break;
-            case "no":
-                icon = "cancel";
-                statusClass = "no";
-                break;
-            case "sub":
-                icon = "swap_horiz";
-                statusClass = "sub";
-                break;
-            case "na":
-            default:
-                icon = "help_outline";
-                statusClass = "na";
-                break;
-        }
-
-        return html`<app-icon icon="${icon}" class="response-icon ${statusClass}"></app-icon>`;
+    switch (response) {
+      case "yes":
+        icon = "check_circle";
+        statusClass = "yes";
+        break;
+      case "no":
+        icon = "cancel";
+        statusClass = "no";
+        break;
+      case "sub":
+        icon = "swap_horiz";
+        statusClass = "sub";
+        break;
+      case "na":
+      default:
+        icon = "help_outline";
+        statusClass = "na";
+        break;
     }
 
-    render() {
-        if (!this.event) return html``;
+    return html`<app-icon icon="${icon}" class="response-icon ${statusClass}"></app-icon>`;
+  }
 
-        const dateObj = this.event.start ? new Date(this.event.start) : new Date();
-        const month = dateObj.toLocaleDateString("sv-SE", { month: "short" }).replace(".", "");
-        const day = dateObj.getDate();
-        const time = dateObj.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+  render() {
+    if (!this.event) return html``;
 
-        const total = this.members.length || 1; // Avoid division by zero
-        const attending = this.attendanceCount;
-        const percentage = Math.min(100, Math.max(0, (attending / total) * 100));
-        const isLow = percentage < 50;
+    const dateObj = this.event.start ? new Date(this.event.start) : new Date();
+    const month = dateObj.toLocaleDateString("sv-SE", { month: "short" }).replace(".", "");
+    const day = dateObj.getDate();
+    const time = dateObj.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
 
-        return html`
-      <app-card clickable>
+    const total = this.members.length || 1; // Avoid division by zero
+    const attending = this.attendanceCount;
+    const percentage = Math.min(100, Math.max(0, (attending / total) * 100));
+    const isLow = percentage < 50;
+
+    return html`
+      <app-card clickable ?disabled=${this.cancelled}>
         <div class="content">
           
           <div class="date-box">
@@ -319,7 +333,10 @@ export class EventSummaryCard extends LitElement {
           </div>
 
           <div class="info">
-            <h3 class="title">${this.event.type}</h3>
+            <h3 class="title">
+              ${this.event.type}
+              ${this.event.cancelled ? html`<span class="badge cancelled" style="margin-left: 8px; vertical-align: middle;">Inställt</span>` : ""}
+            </h3>
             <div class="meta">
               <div class="meta-item">
                 <app-icon icon="schedule" style="font-size: 16px;"></app-icon>
@@ -336,22 +353,23 @@ export class EventSummaryCard extends LitElement {
 
           <div class="status">
             ${this.event.cancelled
-                ? html`<span class="badge cancelled">Inställt</span>`
-                : this.renderResponseStatus()}
-            
-            <div class="attendance-container">
-              <span class="attendance-text">${attending} / ${total} kommer</span>
-              <div class="progress-bar">
-                <div 
-                  class="progress-fill ${isLow ? 'low' : ''}" 
-                  style="width: ${percentage}%"
-                ></div>
-              </div>
-            </div>
+        ? html`<span class="badge cancelled">Inställt</span>`
+        : html`
+                  ${this.renderResponseStatus()}
+                  <div class="attendance-container">
+                    <span class="attendance-text">${attending} / ${total} kommer</span>
+                    <div class="progress-bar">
+                      <div 
+                        class="progress-fill ${isLow ? 'low' : ''}" 
+                        style="width: ${percentage}%"
+                      ></div>
+                    </div>
+                  </div>
+                `}
           </div>
 
         </div>
       </app-card>
     `;
-    }
+  }
 }
