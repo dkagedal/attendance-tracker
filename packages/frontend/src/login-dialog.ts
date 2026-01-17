@@ -8,7 +8,7 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithEmailAndPassword,
-  signInWithPopup
+  signInWithRedirect
 } from "firebase/auth";
 import { FirebaseApp } from "firebase/app";
 
@@ -88,8 +88,9 @@ export class LoginDialog extends LitElement {
   }
 
   loginWithGoogle() {
+    const auth = getAuth(this.app);
     const provider = new GoogleAuthProvider();
-    signInWithPopup(getAuth(this.app), provider)
+    signInWithRedirect(auth, provider)
       .then(result => {
         console.log("[google login] Success:", result);
       })
