@@ -3,31 +3,31 @@ import { customElement, property, query } from "lit/decorators.js";
 
 @customElement("app-input")
 export class AppInput extends LitElement {
-    @property({ type: String })
-    label = "";
+  @property({ type: String })
+  label = "";
 
-    @property({ type: String })
-    value = "";
+  @property({ type: String })
+  value = "";
 
-    @property({ type: String })
-    type = "text";
+  @property({ type: String })
+  type = "text";
 
-    @property({ type: String })
-    placeholder = "";
+  @property({ type: String })
+  placeholder = "";
 
-    @property({ type: String })
-    errorMessage = "";
+  @property({ type: String })
+  errorMessage = "";
 
-    @property({ type: Boolean })
-    disabled = false;
+  @property({ type: Boolean })
+  disabled = false;
 
-    @property({ type: Boolean })
-    required = false;
+  @property({ type: Boolean })
+  required = false;
 
-    @query("input")
-    inputElement: HTMLInputElement;
+  @query("input")
+  inputElement: HTMLInputElement;
 
-    static styles = css`
+  static styles = css`
     :host {
       display: block;
       margin-bottom: var(--app-spacing-md);
@@ -42,6 +42,7 @@ export class AppInput extends LitElement {
     }
 
     input {
+      box-sizing: border-box;
       width: 100%;
       padding: var(--app-spacing-sm) var(--app-spacing-md);
       font-family: var(--app-font-family);
@@ -76,8 +77,8 @@ export class AppInput extends LitElement {
     }
   `;
 
-    render() {
-        return html`
+  render() {
+    return html`
       ${this.label ? html`<label class="label">${this.label}</label>` : ""}
       <input
         type="${this.type}"
@@ -88,23 +89,23 @@ export class AppInput extends LitElement {
         @input="${this.handleInput}"
       />
       ${this.errorMessage
-                ? html`<div class="error-message">${this.errorMessage}</div>`
-                : ""}
+        ? html`<div class="error-message">${this.errorMessage}</div>`
+        : ""}
     `;
-    }
+  }
 
-    private handleInput(e: Event) {
-        const input = e.target as HTMLInputElement;
-        this.value = input.value;
-        this.dispatchEvent(new CustomEvent("input", { bubbles: true, composed: true }));
-        this.dispatchEvent(new CustomEvent("change", { bubbles: true, composed: true }));
-    }
+  private handleInput(e: Event) {
+    const input = e.target as HTMLInputElement;
+    this.value = input.value;
+    this.dispatchEvent(new CustomEvent("input", { bubbles: true, composed: true }));
+    this.dispatchEvent(new CustomEvent("change", { bubbles: true, composed: true }));
+  }
 
-    checkValidity() {
-        return this.inputElement ? this.inputElement.checkValidity() : true;
-    }
+  checkValidity() {
+    return this.inputElement ? this.inputElement.checkValidity() : true;
+  }
 
-    reportValidity() {
-        return this.inputElement ? this.inputElement.reportValidity() : true;
-    }
+  reportValidity() {
+    return this.inputElement ? this.inputElement.reportValidity() : true;
+  }
 }

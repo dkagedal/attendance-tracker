@@ -255,11 +255,10 @@ export class EventCard extends LitElement {
         <event-editor .data=${this.event} .editing=${true}></event-editor>
       ` : html`
         <div class="header">
-          <div class="type">
-            ${this.event.type}
-            ${this.cancelled ? html`<span class="chip cancelled">Inställt</span>` : ""}
-          </div>
           <div class="meta">
+            ${this.cancelled ? html`<div class="meta-row">
+              <span class="chip cancelled">Inställt</span>
+            </div>` : ""}
             <div class="meta-row">
               <app-icon icon="schedule"></app-icon>
               <time-range
@@ -270,7 +269,7 @@ export class EventCard extends LitElement {
             ${this.event.location ? html`
               <div class="meta-row">
                 <app-icon icon="place"></app-icon>
-                <span>${this.event.location}</span>
+                <a href="http://maps.google.se/maps?q=${this.event.location}">${this.event.location}</a>
               </div>
             ` : ""}
           </div>
