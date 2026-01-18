@@ -255,18 +255,17 @@ export class EventSummaryCard extends LitElement {
     }
 
     .progress-bar {
-      display: block;
+      display: flex;
       width: 100%;
       height: 6px;
-      background-color: var(--app-color-border);
+      background-color: #eeeeee; /* Light grey for empty space */
       border-radius: var(--app-radius-full);
       overflow: hidden;
+      border: 1px solid var(--app-color-border);
     }
 
     .progress-fill {
       height: 100%;
-      position: relative;
-      border-radius: var(--app-radius-full);
       transition: width 0.3s ease;
     }
     
@@ -375,16 +374,16 @@ export class EventSummaryCard extends LitElement {
                   <div class="attendance-container">
                     <div class="progress-bar">
                       <div 
-                        class="progress-fill sub" 
-                        style="width: ${yes_percentage + no_percentage + sub_percentage}%"
+                        class="progress-fill yes" 
+                        style="width: ${yes_percentage}%"
                       ></div>
                       <div 
                         class="progress-fill no" 
-                        style="width: ${yes_percentage + no_percentage}%; top: -6px"
+                        style="width: ${no_percentage}%"
                       ></div>
                       <div 
-                        class="progress-fill yes" 
-                        style="width: ${yes_percentage}%; top: -12px"
+                        class="progress-fill sub" 
+                        style="width: ${sub_percentage}%"
                       ></div>
                     </div>
                   </div>
