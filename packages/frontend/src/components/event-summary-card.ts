@@ -6,6 +6,7 @@ import { Participant } from "../model/participant";
 import { onSnapshot } from "firebase/firestore";
 import "./app-card";
 import "./app-icon";
+import "./attendance-progress-bar";
 
 @customElement("event-summary-card")
 export class EventSummaryCard extends LitElement {
@@ -245,42 +246,6 @@ export class EventSummaryCard extends LitElement {
       color: white;
     }
 
-    /* Attendance Bar */
-    .attendance-container {
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 4px;
-    }
-
-    .progress-bar {
-      display: flex;
-      width: 100%;
-      height: 6px;
-      background-color: #eeeeee; /* Light grey for empty space */
-      border-radius: var(--app-radius-full);
-      overflow: hidden;
-      border: 1px solid var(--app-color-border);
-    }
-
-    .progress-fill {
-      height: 100%;
-      transition: width 0.3s ease;
-    }
-    
-    .progress-fill.yes {
-      background-color: var(--app-color-success);
-    }
-    
-    .progress-fill.no {
-      background-color: var(--app-color-error);
-    }
-
-    .progress-fill.sub {
-      background-color: var(--app-color-warning);
-    }
-
     .response-icon {
       font-size: 24px;
     }
@@ -331,12 +296,6 @@ export class EventSummaryCard extends LitElement {
     const time = dateObj.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
 
     const total = this.members.length || 1; // Avoid division by zero
-    const yes_count = this.yesCount;
-    const no_count = this.noCount;
-    const sub_count = this.subCount;
-    const yes_percentage = Math.min(100, Math.max(0, (yes_count / total) * 100));
-    const no_percentage = Math.min(100, Math.max(0, (no_count / total) * 100));
-    const sub_percentage = Math.min(100, Math.max(0, (sub_count / total) * 100));
 
     return html`
       <app-card clickable ?disabled=${this.cancelled}>
@@ -371,22 +330,12 @@ export class EventSummaryCard extends LitElement {
         ? html`<span class="badge cancelled">Inställt</span>`
         : html`
                   ${this.renderResponseStatus()}
-                  <div class="attendance-container">
-                    <div class="progress-bar">
-                      <div 
-                        class="progress-fill yes" 
-                        style="width: ${yes_percentage}%"
-                      ></div>
-                      <div 
-                        class="progress-fill no" 
-                        style="width: ${no_percentage}%"
-                      ></div>
-                      <div 
-                        class="progress-fill sub" 
-                        style="width: ${sub_percentage}%"
-                      ></div>
-                    </div>
-                  </div>
+                  <attendance-progress-bar
+                    .yes=${this.yesCount}
+                    .no=${this.noCount}
+                    .sub=${this.subCount}
+                    .total=${total}
+                  ></attendance-progress-bar>
                 `}
           </div>
 
