@@ -1,8 +1,8 @@
-import "./components/app-input";
-import { AppInput } from "./components/app-input";
+import "./app-input";
+import { AppInput } from "./app-input";
 import { LitElement, html, css } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
-import "./time-range.js";
+import "./time-range";
 
 @customElement("datetime-input")
 export class DatetimeInput extends LitElement {

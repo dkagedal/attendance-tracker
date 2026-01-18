@@ -3,20 +3,20 @@ import { LitElement, html, css } from "lit";
 import { ifDefined } from "lit/directives/if-defined";
 import "./time-range";
 import "./mini-roster";
-import "./components/app-button";
-import "./components/app-icon";
-import { auth } from "./storage";
+import "./app-button";
+import "./app-icon";
+import { auth } from "../storage";
 import { EventEditor } from "./event-editor";
 import { deleteDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { customElement, property, query, state } from "lit/decorators.js";
-import { UID } from "./datamodel";
-import { BandEvent } from "./model/bandevent";
+import { UID } from "../datamodel";
+import { BandEvent } from "../model/bandevent";
 import {
   emptyParticipant,
   Participant,
   ParticipantResponse
-} from "./model/participant";
-import { Member } from "./model/member";
+} from "../model/participant";
+import { Member } from "../model/member";
 
 @customElement("event-card")
 export class EventCard extends LitElement {

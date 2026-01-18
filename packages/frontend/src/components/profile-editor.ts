@@ -1,14 +1,14 @@
-import "./components/app-input";
-import "./components/app-switch";
-import { AppInput } from "./components/app-input";
-import { AppSwitch } from "./components/app-switch";
+import "./app-input";
+import "./app-switch";
+import { AppInput } from "./app-input";
+import { AppSwitch } from "./app-switch";
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { auth, db } from "./storage";
+import { auth, db } from "../storage";
 import { classMap } from "lit/directives/class-map";
-import { Member } from "./model/member";
-import { MemberSettings } from "./model/membersettings";
-import { band } from "./model/band";
+import { Member } from "../model/member";
+import { MemberSettings } from "../model/membersettings";
+import { band } from "../model/band";
 
 @customElement("profile-editor")
 export class ProfileEditor extends LitElement {

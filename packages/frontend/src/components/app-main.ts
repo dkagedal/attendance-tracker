@@ -1,9 +1,10 @@
 import "./profile-editor";
 import { LitElement, html, css } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
-import "./components";
-import { AppDrawer } from "./components/app-drawer";
-import { AppDialog } from "./components/app-dialog";
+import "./app-drawer";
+import { AppDrawer } from "./app-drawer";
+import "./app-dialog";
+import { AppDialog } from "./app-dialog";
 import { FirebaseApp } from "firebase/app";
 import {
   deleteDoc,
@@ -19,17 +20,17 @@ import {
   signOut,
   User as FirebaseUser
 } from "firebase/auth";
-import { CreateJoinRequest, db, getHostBand } from "./storage";
+import { CreateJoinRequest, db, getHostBand } from "../storage";
 import "./login-dialog";
 import "./band-schedule";
 import "./event-editor";
 import { EventEditor } from "./event-editor";
 import { repeat } from "lit/directives/repeat";
-import { User } from "./datamodel";
-import { band } from "./model/band";
+import { User } from "../datamodel";
+import { band } from "../model/band";
 import { ProfileEditor } from "./profile-editor";
-import { Member } from "./model/member";
-import { JoinRequest, JoinRequestReference } from "./model/joinrequest";
+import { Member } from "../model/member";
+import { JoinRequest, JoinRequestReference } from "../model/joinrequest";
 
 interface BandMap {
   [key: string]: { display_name: string };
@@ -135,6 +136,8 @@ export class AppMain extends LitElement {
 
   constructor() {
     super();
+    // Force registration of side-effect components
+    console.log("[app-main] Ensuring components:", AppDrawer, AppDialog);
     console.log("[app-main] Constructed");
   }
 

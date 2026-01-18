@@ -1,6 +1,6 @@
-import "./components/app-input";
-import "./components/app-button";
-import { AppInput } from "./components/app-input";
+import "./app-input";
+import "./app-button";
+import { AppInput } from "./app-input";
 import { css, html, LitElement } from "lit";
 import { customElement, property, query } from "lit/decorators.js";
 import {

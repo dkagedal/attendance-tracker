@@ -1,12 +1,12 @@
-import "./components/app-input";
-import "./components/app-button";
-import { AppInput } from "./components/app-input";
+import "./app-input";
+import "./app-button";
+import { AppInput } from "./app-input";
 import { css, html, LitElement } from "lit";
 import { ifDefined } from "lit/directives/if-defined.js";
 import "./datetime-input";
 import { DatetimeInput } from "./datetime-input";
 import { customElement, property, query } from "lit/decorators.js";
-import { BandEvent } from "./model/bandevent";
+import { BandEvent } from "../model/bandevent";
 
 @customElement("event-editor")
 export class EventEditor extends LitElement {
