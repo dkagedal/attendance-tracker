@@ -254,14 +254,8 @@ export class EventSummaryCard extends LitElement {
       gap: 4px;
     }
 
-    .attendance-text {
-      font-size: 0.75rem;
-      color: var(--app-color-text-secondary);
-      font-weight: var(--app-font-weight-medium);
-    }
-
     .progress-bar {
-      display: flex;
+      display: block;
       width: 100%;
       height: 6px;
       background-color: var(--app-color-border);
@@ -271,6 +265,7 @@ export class EventSummaryCard extends LitElement {
 
     .progress-fill {
       height: 100%;
+      position: relative;
       border-radius: var(--app-radius-full);
       transition: width 0.3s ease;
     }
@@ -378,19 +373,18 @@ export class EventSummaryCard extends LitElement {
         : html`
                   ${this.renderResponseStatus()}
                   <div class="attendance-container">
-                    <span class="attendance-text">${yes_count} / ${total} kommer</span>
                     <div class="progress-bar">
                       <div 
-                        class="progress-fill yes" 
-                        style="width: ${yes_percentage}%"
+                        class="progress-fill sub" 
+                        style="width: ${yes_percentage + no_percentage + sub_percentage}%"
                       ></div>
                       <div 
                         class="progress-fill no" 
-                        style="width: ${no_percentage}%"
+                        style="width: ${yes_percentage + no_percentage}%; top: -6px"
                       ></div>
                       <div 
-                        class="progress-fill sub" 
-                        style="width: ${sub_percentage}%"
+                        class="progress-fill yes" 
+                        style="width: ${yes_percentage}%; top: -12px"
                       ></div>
                     </div>
                   </div>
