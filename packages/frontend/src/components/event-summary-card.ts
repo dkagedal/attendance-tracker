@@ -110,19 +110,19 @@ export class EventSummaryCard extends LitElement {
     }
 
     /* Desktop Layout */
-    .date-box { grid-column: 1; }
-    .info { grid-column: 2; }
-    .status { grid-column: 3; }
+    .date-box { grid-column: 1; align-self: start; }
+    .info { grid-column: 2; align-self: start; }
+    .status { grid-column: 3; align-self: start; }
 
     @media (max-width: 768px) {
       .content {
-        grid-template-columns: auto 1fr;
+        grid-template-columns: auto 1fr auto;
         grid-template-rows: auto auto;
         gap: var(--app-spacing-sm);
       }
 
       .info {
-        padding-right: 40px; /* Space for the absolute icon */
+        padding-right: 8px;
       }
 
       .status {
@@ -134,9 +134,7 @@ export class EventSummaryCard extends LitElement {
       }
 
       .response-icon {
-        position: absolute;
-        top: var(--app-spacing-md);
-        right: 0;
+        grid-column: 3;
       }
 
       .attendance-container {
@@ -193,6 +191,7 @@ export class EventSummaryCard extends LitElement {
       display: flex;
       flex-direction: column;
       gap: 4px;
+      min-width: 0;
     }
 
     .title {
@@ -208,12 +207,27 @@ export class EventSummaryCard extends LitElement {
       gap: var(--app-spacing-md);
       font-size: var(--app-font-size-sm);
       color: var(--app-color-text-secondary);
+      min-width: 0;
+      width: 100%;
     }
 
     .meta-item {
       display: flex;
       align-items: center;
       gap: 4px;
+    }
+
+    .meta-item.location {
+      min-width: 0;
+      flex: 1;
+      align-items: center;
+    }
+
+    .meta-item.location span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
     }
 
     /* Status Section */
@@ -317,19 +331,22 @@ export class EventSummaryCard extends LitElement {
                 ${time}
               </div>
               ${this.event.location ? html`
-                <div class="meta-item">
+                <div class="meta-item location">
                   <app-icon icon="place" style="font-size: 16px;"></app-icon>
-                  ${this.event.location}
+                  <span>${this.event.location}</span>
                 </div>
               ` : ""}
             </div>
+            <div class="description">
+              ${this.event.description}
+            </div>
           </div>
+          ${this.renderResponseStatus()}
 
           <div class="status">
             ${this.event.cancelled
         ? html`<span class="badge cancelled">Inställt</span>`
         : html`
-                  ${this.renderResponseStatus()}
                   <attendance-progress-bar
                     .yes=${this.yesCount}
                     .no=${this.noCount}
