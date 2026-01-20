@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "lit";
-import { customElement, property, state, query } from "lit/decorators.js";
+import { customElement, property, query } from "lit/decorators.js";
 import { ParticipantResponse } from "../model/participant";
 import "./app-button";
 import "./app-input";
@@ -14,7 +14,7 @@ export class ResponseCard extends LitElement {
     @property({ type: String })
     comment: string = "";
 
-    @state()
+    @property({ type: String })
     mode: "view" | "edit" = "edit";
 
     @query("#comment-input")

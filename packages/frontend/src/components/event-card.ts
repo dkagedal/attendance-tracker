@@ -242,8 +242,9 @@ export class EventCard extends LitElement {
 
     return html`
       <response-card
-        .response=${currentResponse}
+        response=${currentResponse}
         .comment=${currentComment}
+        mode=${currentResponse == "na" ? "edit" : "view"}
         @update-response=${this.handleResponseUpdate}
       ></response-card>
     `;
