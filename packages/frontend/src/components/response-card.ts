@@ -4,6 +4,7 @@ import { ParticipantResponse } from "../model/participant";
 import "./app-button";
 import "./app-input";
 import "./app-icon";
+import "./response-icon";
 
 @customElement("response-card")
 export class ResponseCard extends LitElement {
@@ -59,11 +60,9 @@ export class ResponseCard extends LitElement {
     }
 
     .response-icon {
-      font-size: 24px;
+      /* font-size: 24px; - handled by component */
     }
-    .response-icon.yes { color: var(--app-color-success); }
-    .response-icon.no { color: var(--app-color-error); }
-    .response-icon.sub { color: var(--app-color-warning); }
+    /* Colors handled by component */
 
     .response-text {
       flex: 1;
@@ -89,24 +88,16 @@ export class ResponseCard extends LitElement {
     }
 
     private getIconAndText() {
-        let icon = "help_outline";
-        let iconClass = "na";
         let text = "Inget svar";
 
         switch (this.response) {
             case "yes":
-                icon = "check_circle";
-                iconClass = "yes";
                 text = "Kommer";
                 break;
             case "no":
-                icon = "cancel";
-                iconClass = "no";
                 text = "Kan inte";
                 break;
             case "sub":
-                icon = "swap_horiz";
-                iconClass = "sub";
                 text = "Vikarie";
                 break;
         }
@@ -115,7 +106,7 @@ export class ResponseCard extends LitElement {
             text = this.comment;
         }
 
-        return { icon, iconClass, text };
+        return { text };
     }
 
     private handleResponseClick(newResponse: ParticipantResponse) {
@@ -141,12 +132,12 @@ export class ResponseCard extends LitElement {
 
     render() {
         if (this.mode === "view" && this.response) {
-            const { icon, iconClass, text } = this.getIconAndText();
+            const { text } = this.getIconAndText();
             return html`
         <div class="response-section" @click=${() => this.mode = "edit"}>
           <span class="response-title">Ditt svar</span>
           <div class="view-container">
-            <app-icon icon="${icon}" class="response-icon ${iconClass}"></app-icon>
+            <response-icon .response=${this.response}></response-icon>
             <span class="response-text">${text}</span>
             <app-icon icon="edit" style="color: var(--app-color-text-secondary);"></app-icon>
           </div>
@@ -162,18 +153,21 @@ export class ResponseCard extends LitElement {
             variant="${this.response === 'yes' ? 'primary' : 'secondary'}"
             @click=${() => this.handleResponseClick('yes')}
           >
+            <response-icon slot="icon" response="yes" style="font-size: 20px;"></response-icon>
             Kommer
           </app-button>
           <app-button 
             variant="${this.response === 'sub' ? 'primary' : 'secondary'}"
             @click=${() => this.handleResponseClick('sub')}
           >
+            <response-icon slot="icon" response="sub" style="font-size: 20px;"></response-icon>
             Vikarie
           </app-button>
           <app-button 
             variant="${this.response === 'no' ? 'primary' : 'secondary'}"
             @click=${() => this.handleResponseClick('no')}
           >
+            <response-icon slot="icon" response="no" style="font-size: 20px;"></response-icon>
             Kan inte
           </app-button>
         </div>

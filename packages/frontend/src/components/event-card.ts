@@ -10,6 +10,7 @@ import "./app-button";
 import "./app-input";
 import "./app-icon";
 import "./response-card";
+import "./response-icon";
 import { auth } from "../storage";
 import { EventEditor } from "./event-editor";
 import { onSnapshot, setDoc } from "firebase/firestore";
@@ -191,6 +192,10 @@ export class EventCard extends LitElement {
     .comment-text {
       color: var(--app-color-text-secondary);
     }
+
+    .comment-item response-icon {
+      font-size: 16px;
+    }
   `;
 
   setResponse(response: ParticipantResponse, comment?: string) {
@@ -252,7 +257,8 @@ export class EventCard extends LitElement {
         return {
           name: member ? member.display_name : "Okänd",
           comment: p.comment,
-          uid: p.uid
+          uid: p.uid,
+          response: p.attending
         };
       });
 
@@ -264,6 +270,7 @@ export class EventCard extends LitElement {
           ${comments.map(c => html`
             <div class="comment-item">
               <span class="comment-author">${c.name}:</span>
+              <response-icon .response=${c.response}></response-icon>
               <span class="comment-text">${c.comment}</span>
             </div>
           `)}

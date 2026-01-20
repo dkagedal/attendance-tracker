@@ -107,7 +107,7 @@ export class AppButton extends LitElement {
       >
         ${this.icon
         ? html`<span class="material-icons">${this.icon}</span>`
-        : ""}
+        : html`<slot name="icon"></slot>`}
         <slot></slot>
       </button>
     `;

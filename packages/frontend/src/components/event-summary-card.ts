@@ -7,6 +7,7 @@ import { onSnapshot } from "firebase/firestore";
 import "./app-card";
 import "./app-icon";
 import "./attendance-progress-bar";
+import "./response-icon";
 
 @customElement("event-summary-card")
 export class EventSummaryCard extends LitElement {
@@ -260,13 +261,7 @@ export class EventSummaryCard extends LitElement {
       color: white;
     }
 
-    .response-icon {
-      font-size: 24px;
-    }
-    .response-icon.yes { color: var(--app-color-success); }
-    .response-icon.no { color: var(--app-color-error); }
-    .response-icon.sub { color: var(--app-color-warning); }
-    .response-icon.na { color: var(--app-color-text-secondary); opacity: 0.5; }
+
 
     :host([cancelled]) {
       opacity: 0.6;
@@ -274,31 +269,7 @@ export class EventSummaryCard extends LitElement {
   `;
 
   renderResponseStatus() {
-    const response = this.userResponse || "na";
-    let icon = "help_outline";
-    let statusClass = "na";
-
-    switch (response) {
-      case "yes":
-        icon = "check_circle";
-        statusClass = "yes";
-        break;
-      case "no":
-        icon = "cancel";
-        statusClass = "no";
-        break;
-      case "sub":
-        icon = "swap_horiz";
-        statusClass = "sub";
-        break;
-      case "na":
-      default:
-        icon = "help_outline";
-        statusClass = "na";
-        break;
-    }
-
-    return html`<app-icon icon="${icon}" class="response-icon ${statusClass}"></app-icon>`;
+    return html`<response-icon .response=${this.userResponse}></response-icon>`;
   }
 
   render() {
