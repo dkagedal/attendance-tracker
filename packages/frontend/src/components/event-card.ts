@@ -7,7 +7,9 @@ import DOMPurify from "dompurify";
 import "./time-range";
 import "./mini-roster";
 import "./app-button";
+import "./app-input";
 import "./app-icon";
+import "./response-card";
 import { auth } from "../storage";
 import { EventEditor } from "./event-editor";
 import { onSnapshot, setDoc } from "firebase/firestore";
@@ -43,6 +45,8 @@ export class EventCard extends LitElement {
     return this.event?.cancelled || false;
   }
 
+
+
   @query("event-editor")
   editor: EventEditor;
 
@@ -71,6 +75,7 @@ export class EventCard extends LitElement {
           const participant: Participant = doc.data();
           if (participant.uid == auth.currentUser.uid) {
             this.needsResponse = !participant.hasResponded();
+
           }
           this.participants[participant.uid] = participant;
         });
@@ -129,24 +134,7 @@ export class EventCard extends LitElement {
       line-height: 1.5;
     }
 
-    .response-section {
-      background-color: var(--app-color-background);
-      padding: var(--app-spacing-md);
-      border-radius: var(--app-radius-md);
-      margin-bottom: var(--app-spacing-lg);
-    }
 
-    .response-title {
-      font-weight: var(--app-font-weight-bold);
-      margin-bottom: var(--app-spacing-sm);
-      display: block;
-    }
-
-    .response-buttons {
-      display: flex;
-      gap: var(--app-spacing-sm);
-      flex-wrap: wrap;
-    }
 
     .roster-section {
       margin-top: var(--app-spacing-lg);
@@ -179,9 +167,33 @@ export class EventCard extends LitElement {
       display: flex;
       justify-content: flex-end;
     }
+
+    .comments-section {
+      margin-top: var(--app-spacing-lg);
+    }
+
+    .comment-list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--app-spacing-sm);
+    }
+
+    .comment-item {
+      display: flex;
+      gap: var(--app-spacing-sm);
+      font-size: var(--app-font-size-sm);
+    }
+
+    .comment-author {
+      font-weight: bold;
+    }
+
+    .comment-text {
+      color: var(--app-color-text-secondary);
+    }
   `;
 
-  setResponse(response: ParticipantResponse) {
+  setResponse(response: ParticipantResponse, comment?: string) {
     const uid = auth.currentUser.uid;
     const ref = this.event.ref.participant(uid);
     let participant = this.participants[uid];
@@ -189,11 +201,20 @@ export class EventCard extends LitElement {
       participant = emptyParticipant(uid);
     }
     participant.attending = response;
+    // If a comment is passed, update it. Otherwise keep existing (or empty).
+    if (comment !== undefined) {
+      participant.comment = comment;
+    }
 
     setDoc(ref.dbref, participant, { merge: false }).then(
       () => console.log("Update successful"),
       reason => console.log("Update failed:", reason)
     );
+  }
+
+  handleResponseUpdate(e: CustomEvent) {
+    const { response, comment } = e.detail;
+    this.setResponse(response, comment);
   }
 
   async save() {
@@ -210,30 +231,42 @@ export class EventCard extends LitElement {
   }
 
   renderResponseButtons() {
-    const currentResponse = this.participants[auth.currentUser.uid]?.attending;
+    const participant = this.participants[auth.currentUser.uid];
+    const currentResponse = participant?.attending;
+    const currentComment = participant?.comment || "";
 
     return html`
-      <div class="response-section">
-        <span class="response-title">Ditt svar</span>
-        <div class="response-buttons">
-          <app-button 
-            variant="${currentResponse === 'yes' ? 'primary' : 'secondary'}"
-            @click=${() => this.setResponse('yes')}
-          >
-            Kommer
-          </app-button>
-          <app-button 
-            variant="${currentResponse === 'sub' ? 'primary' : 'secondary'}"
-            @click=${() => this.setResponse('sub')}
-          >
-            Vikarie
-          </app-button>
-          <app-button 
-            variant="${currentResponse === 'no' ? 'primary' : 'secondary'}"
-            @click=${() => this.setResponse('no')}
-          >
-            Kan inte
-          </app-button>
+      <response-card
+        .response=${currentResponse}
+        .comment=${currentComment}
+        @update-response=${this.handleResponseUpdate}
+      ></response-card>
+    `;
+  }
+
+  renderComments() {
+    const comments = Object.values(this.participants)
+      .filter(p => p.comment && p.comment.trim().length > 0)
+      .map(p => {
+        const member = this.getMemberData(p.uid);
+        return {
+          name: member ? member.display_name : "Okänd",
+          comment: p.comment,
+          uid: p.uid
+        };
+      });
+
+    if (comments.length === 0) return html``;
+
+    return html`
+      <div class="comments-section">
+        <div class="comment-list">
+          ${comments.map(c => html`
+            <div class="comment-item">
+              <span class="comment-author">${c.name}:</span>
+              <span class="comment-text">${c.comment}</span>
+            </div>
+          `)}
         </div>
       </div>
     `;
@@ -281,6 +314,7 @@ export class EventCard extends LitElement {
             .event=${this.event}
             .responses=${Object.fromEntries(Object.entries(this.participants).map(([k, v]) => [k, v.attending]))}
           ></mini-roster>
+          ${this.renderComments()}
         ` : ""}
       </div>
 
