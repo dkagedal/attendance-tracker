@@ -1,18 +1,14 @@
-import "@material/mwc-formfield/mwc-formfield";
-import "@material/mwc-button/mwc-button";
-import "@material/mwc-textfield/mwc-textfield";
-import "@material/mwc-dialog/mwc-dialog";
-import "@material/mwc-switch/mwc-switch";
+import "./app-input";
+import "./app-switch";
+import { AppInput } from "./app-input";
+import { AppSwitch } from "./app-switch";
 import { LitElement, html, css } from "lit";
-import { customElement, property, query, state } from "lit/decorators";
-import { TextField } from "@material/mwc-textfield/mwc-textfield";
-import { auth, db } from "./storage";
-import { Switch } from "@material/mwc-switch/mwc-switch";
+import { customElement, property, state } from "lit/decorators.js";
+import { auth, db } from "../storage";
 import { classMap } from "lit/directives/class-map";
-import { Dialog } from "@material/mwc-dialog/mwc-dialog";
-import { Member } from "./model/member";
-import { MemberSettings } from "./model/membersettings";
-import { band } from "./model/band";
+import { Member } from "../model/member";
+import { MemberSettings } from "../model/membersettings";
+import { band } from "../model/band";
 
 @customElement("profile-editor")
 export class ProfileEditor extends LitElement {
@@ -28,8 +24,6 @@ export class ProfileEditor extends LitElement {
   @property({ type: Object, attribute: false })
   membership: Member = null;
 
-  @query("mwc-dialog")
-  dialog: Dialog;
 
   show() {
     band(db, this.bandid)
@@ -66,9 +60,14 @@ export class ProfileEditor extends LitElement {
     #notify {
       padding: 1em;
     }
-    mwc-formfield {
-      width: 100%;
+    .form-field {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       padding: 8px 0;
+    }
+    .form-field label {
+      color: var(--app-color-text);
     }
   `;
 
@@ -76,45 +75,42 @@ export class ProfileEditor extends LitElement {
     const classes = { admin: !!this.membership?.admin };
     return html`
       <div id="contents" class=${classMap(classes)}>
-        <mwc-textfield
+        <app-input
           id="display_name"
           label="Namn"
           type="text"
           placeholder="Ditt namn som det syns för andra"
-          required
-          value=${this.membership?.display_name}
-        ></mwc-textfield>
+          value=${this.membership?.display_name || ""}
+        ></app-input>
         <p>Notifieringar</p>
-        <mwc-textfield
+        <app-input
           id="email"
           label="E-post"
           type="email"
-          value=${this.settings.email}
-        ></mwc-textfield>
+          value=${this.settings.email || ""}
+        ></app-input>
         <div id="notify">
-          <mwc-formfield alignEnd spaceBetween label="Nya händelser">
-            <mwc-switch
+          <div class="form-field">
+            <label>Nya händelser</label>
+            <app-switch
               id="new_event"
               ?selected=${this.settings.notify.new_event}
-            ></mwc-switch>
-          </mwc-formfield>
-          <mwc-formfield
-            alignEnd
-            spaceBetween
-            label="Ny ansökning om medlemskap"
-            class="admin"
-          >
-            <mwc-switch
+            ></app-switch>
+          </div>
+          <div class="form-field admin">
+            <label>Ny ansökning om medlemskap</label>
+            <app-switch
               id="new_join_request"
               ?selected=${this.settings.notify.new_join_request}
-            ></mwc-switch>
-          </mwc-formfield>
-          <mwc-formfield alignEnd spaceBetween label="Ny medlem" class="admin">
-            <mwc-switch
+            ></app-switch>
+          </div>
+          <div class="form-field admin">
+            <label>Ny medlem</label>
+            <app-switch
               id="new_member"
               ?selected=${this.settings.notify.new_member}
-            ></mwc-switch>
-          </mwc-formfield>
+            ></app-switch>
+          </div>
         </div>
       </div>
     `;
@@ -122,11 +118,10 @@ export class ProfileEditor extends LitElement {
 
   // Returns true if valid settings were successfully saved, and false if there was a validation problem.
   async save(): Promise<boolean> {
-    const nameField: TextField = this.shadowRoot.querySelector("#display_name");
-    const emailField: TextField = this.shadowRoot.querySelector("#email");
-    nameField.reportValidity();
-    emailField.reportValidity();
-    if (!nameField.checkValidity() || !emailField.checkValidity()) {
+    const nameField: AppInput = this.shadowRoot.querySelector("#display_name");
+    const emailField: AppInput = this.shadowRoot.querySelector("#email");
+    // app-input doesn't support reportValidity yet, but we can check value
+    if (!nameField.value || !emailField.value) {
       return false;
     }
 
@@ -138,7 +133,7 @@ export class ProfileEditor extends LitElement {
     }
 
     const getSwitch = (id: string) =>
-      this.shadowRoot.querySelector("#" + id) as Switch;
+      this.shadowRoot.querySelector("#" + id) as AppSwitch;
     const settings = new MemberSettings(emailField.value, {
       new_event: getSwitch("new_event").selected,
       new_join_request: getSwitch("new_join_request").selected,

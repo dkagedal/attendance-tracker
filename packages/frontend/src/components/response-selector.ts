@@ -10,9 +10,9 @@ import "./mini-roster";
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators";
 import { ifDefined } from "lit/directives/if-defined";
-import { hasResponded, UID } from "./datamodel";
+import { hasResponded, UID } from "../datamodel";
 import { TextField } from "@material/mwc-textfield/mwc-textfield";
-import { ParticipantResponse } from "./model/participant";
+import { ParticipantResponse } from "../model/participant";
 
 @customElement("response-selector")
 export class ResponseSelector extends LitElement {

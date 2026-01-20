@@ -4,6 +4,7 @@ import {
   CollectionReference,
   doc,
   DocumentReference,
+  FirestoreDataConverter,
   setDoc,
   SetOptions
 } from "firebase/firestore";
@@ -24,7 +25,7 @@ export class BandEventReference {
   }
 
   update(data: any, options?: SetOptions): Promise<void> {
-    return setDoc(this.dbref.withConverter(null), data, options);
+    return setDoc(this.dbref, data, options);
   }
 
   participants(): ParticipantCollectionReference {
@@ -60,10 +61,11 @@ export interface BandEvent {
   cancelled?: boolean;
   year: () => string;
   hasStopTime: () => boolean;
+  clone: () => BandEvent;
 }
 
-class BandEventConverter {
-  static toFirestore(event: BandEvent): object {
+const BandEventConverter: FirestoreDataConverter<BandEvent> = {
+  toFirestore(event: BandEvent): object {
     const data: any = {
       type: event.type,
       start: event.start
@@ -77,13 +79,15 @@ class BandEventConverter {
     if (event.description) {
       data.description = event.description;
     }
-    if (event.cancelled) {
-      data.cancelled = event.cancelled;
+    if (event.cancelled !== undefined) {
+      data.cancelled = !!event.cancelled;
+    } else {
+      data.cancelled = false;
     }
     return data;
-  }
+  },
 
-  static fromFirestore(snapshot: any, options: any): BandEvent {
+  fromFirestore(snapshot: any, options: any): BandEvent {
     const data = snapshot.data(options);
     return new BandEventFromDb(
       new BandEventReference(snapshot.ref),
@@ -92,10 +96,10 @@ class BandEventConverter {
       data.stop,
       data.location,
       data.description,
-      data.cancelled
+      !!data.cancelled
     );
   }
-}
+};
 
 // A band event.
 class BandEventFromDb implements BandEvent {
@@ -107,7 +111,7 @@ class BandEventFromDb implements BandEvent {
     public location?: string,
     public description?: string,
     public cancelled?: boolean
-  ) {}
+  ) { }
 
   get id() {
     return this.ref.id;
@@ -119,5 +123,17 @@ class BandEventFromDb implements BandEvent {
 
   hasStopTime(): boolean {
     return !!this.stop;
+  }
+
+  clone(): BandEvent {
+    return new BandEventFromDb(
+      this.ref,
+      this.type,
+      this.start,
+      this.stop,
+      this.location,
+      this.description,
+      this.cancelled
+    );
   }
 }

@@ -3,8 +3,10 @@
 import { initializeApp } from "firebase/app";
 import { FirebaseConfig } from "./config";
 import { initDB } from "./storage";
-import { AppMain } from "./app-main";
-import "./app-main";
+import "./components/app-drawer";
+import "./components/app-dialog";
+import { AppMain } from "./components/app-main";
+import "./components/app-main";
 
 const app = initializeApp(FirebaseConfig());
 // const app = getApp();

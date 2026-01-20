@@ -1,0 +1,66 @@
+:root {
+  /* Colors */
+  --app-color-primary: #2563eb;
+  /* Blue 600 */
+  --app-color-primary-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  --app-color-primary-dark: #1d4ed8;
+  /* Blue 700 */
+  --app-color-secondary: #64748b;
+  /* Slate 500 */
+  --app-color-background: #f8fafc;
+  /* Slate 50 */
+  --app-color-surface: #ffffff;
+  --app-color-text: #0f172a;
+  /* Slate 900 */
+  --app-color-text-secondary: #475569;
+  /* Slate 600 */
+  --app-color-border: #e2e8f0;
+  /* Slate 200 */
+  --app-color-error: #ef4444;
+  /* Red 500 */
+  --app-color-success: #22c55e;
+  /* Green 500 */
+  --app-color-warning: #f59e0b;
+  /* Amber 500 */
+
+  /* Typography */
+  --app-font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+  --app-font-size-base: 16px;
+  --app-font-size-sm: 0.875rem;
+  --app-font-size-lg: 1.125rem;
+  --app-font-size-xl: 1.25rem;
+  --app-font-weight-regular: 400;
+  --app-font-weight-medium: 500;
+  --app-font-weight-bold: 700;
+
+  /* Spacing */
+  --app-spacing-xs: 4px;
+  --app-spacing-sm: 8px;
+  --app-spacing-md: 16px;
+  --app-spacing-lg: 24px;
+  --app-spacing-xl: 32px;
+
+  /* Border Radius */
+  --app-radius-sm: 4px;
+  --app-radius-md: 8px;
+  --app-radius-lg: 12px;
+  --app-radius-full: 9999px;
+
+  /* Shadows */
+  --app-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --app-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --app-shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+body {
+  background-color: var(--app-color-background);
+  color: var(--app-color-text);
+  font-family: var(--app-font-family);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}

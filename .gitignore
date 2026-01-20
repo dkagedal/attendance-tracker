@@ -71,9 +71,12 @@ node_modules/
 *.d.ts
 *.d.ts.map
 *.js.map
+.firebaserc
 packages/backend/lib/*.js
 packages/frontend/public/bundle.js
 packages/frontend/build
 packages/frontend/src/config.ts
+packages/frontend/src/config-live.ts
+packages/frontend/src/config-test.ts
 packages/frontend/src/*.js
 packages/frontend/src/model/*.js
