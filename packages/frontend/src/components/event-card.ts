@@ -1,6 +1,9 @@
 import "./event-editor";
 import { LitElement, html, css } from "lit";
 import { ifDefined } from "lit/directives/if-defined";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 import "./time-range";
 import "./mini-roster";
 import "./app-button";
@@ -274,7 +277,7 @@ export class EventCard extends LitElement {
             ` : ""}
           </div>
           ${this.event.description ? html`
-            <div class="description">${this.event.description}</div>
+            <div class="description">${unsafeHTML(DOMPurify.sanitize(marked.parse(this.event.description) as string))}</div>
           ` : ""}
         </div>
       `}
