@@ -10,7 +10,7 @@ import "./app-button";
 import "./app-icon";
 import { auth } from "../storage";
 import { EventEditor } from "./event-editor";
-import { deleteDoc, onSnapshot, setDoc } from "firebase/firestore";
+import { onSnapshot, setDoc } from "firebase/firestore";
 import { customElement, property, query, state } from "lit/decorators.js";
 import { UID } from "../datamodel";
 import { BandEvent } from "../model/bandevent";
@@ -31,6 +31,9 @@ export class EventCard extends LitElement {
 
   @property({ type: Boolean })
   admin: boolean = false;
+
+  @property({ type: Boolean })
+  editing: boolean = false;
 
   @state()
   participants: { [uid: UID]: Participant } = {};
@@ -172,7 +175,7 @@ export class EventCard extends LitElement {
     .admin-actions {
       margin-top: var(--app-spacing-lg);
       padding-top: var(--app-spacing-md);
-      border-top: 1px solid var(--app-color-border);
+      // border-top: 1px solid var(--app-color-border);
       display: flex;
       justify-content: flex-end;
     }
@@ -203,20 +206,6 @@ export class EventCard extends LitElement {
       } else {
         throw new Error("Invalid data");
       }
-    }
-  }
-
-  deleteEvent() {
-    if (confirm("Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.")) {
-      deleteDoc(this.event.ref.dbref).then(
-        () => {
-          console.log("Delete successful");
-          this.dispatchEvent(new CustomEvent("closed", { bubbles: true, composed: true }));
-        },
-        reason => {
-          console.log("Delete failed:", reason);
-        }
-      );
     }
   }
 
@@ -254,8 +243,8 @@ export class EventCard extends LitElement {
     if (!this.event) return html``;
 
     return html`
-      ${this.admin ? html`
-        <event-editor .data=${this.event} .editing=${true}></event-editor>
+      ${this.editing ? html`
+        <event-editor .data=${this.event}></event-editor>
       ` : html`
         <div class="header">
           <div class="meta">
@@ -282,9 +271,9 @@ export class EventCard extends LitElement {
         </div>
       `}
 
-      ${!this.cancelled ? this.renderResponseButtons() : ""}
+      ${(!this.cancelled && !this.editing) ? this.renderResponseButtons() : ""}
 
-      <div class="roster-section">
+      <div class="roster-section" style="display: ${(this.cancelled || this.editing) ? "none" : "block"}">
         ${!this.cancelled ? html`
           <span class="roster-title">Vilka kommer?</span>
           <mini-roster
@@ -296,8 +285,10 @@ export class EventCard extends LitElement {
       </div>
 
       ${this.admin ? html`
-        <div class="admin-actions">
-          <app-button variant="secondary" icon="delete" @click=${this.deleteEvent}>Radera händelse</app-button>
+        <div class="admin-actions" style="display: ${(this.cancelled || this.editing) ? "none" : "block"}">
+          ${this.editing ? "" : html`
+            <app-button variant="secondary" icon="edit" @click=${() => this.dispatchEvent(new CustomEvent("edit"))}>Redigera</app-button>
+          `}
         </div>
       ` : ""}
     `;

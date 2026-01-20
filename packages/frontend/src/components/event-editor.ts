@@ -7,6 +7,7 @@ import "./datetime-input";
 import { DatetimeInput } from "./datetime-input";
 import { customElement, property, query } from "lit/decorators.js";
 import { BandEvent } from "../model/bandevent";
+import { deleteDoc } from "firebase/firestore";
 
 @customElement("event-editor")
 export class EventEditor extends LitElement {
@@ -23,9 +24,6 @@ export class EventEditor extends LitElement {
   @property({ type: Boolean, reflect: true })
   range: boolean = false;
 
-  @property({ type: Boolean })
-  editing: boolean = false;
-
   @query("#type")
   typeInput: AppInput;
 
@@ -40,6 +38,20 @@ export class EventEditor extends LitElement {
 
   @query("#stop")
   stopInput: DatetimeInput;
+
+  deleteEvent() {
+    if (confirm("Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.")) {
+      deleteDoc(this.data.ref.dbref).then(
+        () => {
+          console.log("Delete successful");
+          this.dispatchEvent(new CustomEvent("closed", { bubbles: true, composed: true }));
+        },
+        reason => {
+          console.log("Delete failed:", reason);
+        }
+      );
+    }
+  }
 
   static styles = css`
     app-input {
@@ -118,19 +130,18 @@ export class EventEditor extends LitElement {
         >Lägg till sluttid</app-button
       >
 
-      ${this.editing ? html`
-        <div class="cancel-section">
-          ${isCancelled ? html`
-            <app-button variant="secondary" icon="history" @click=${() => { this.data.cancelled = false; this.requestUpdate(); }}>
-              Återställ händelse
-            </app-button>
-          ` : html`
-            <app-button variant="secondary" icon="cancel" @click=${() => { this.data.cancelled = true; this.requestUpdate(); }}>
-              Ställ in händelse
-            </app-button>
-          `}
-        </div>
-      ` : ""}
+      <div class="cancel-section">
+        <app-button variant="secondary" icon="delete" @click=${this.deleteEvent}>Radera</app-button>
+        ${isCancelled ? html`
+          <app-button variant="secondary" icon="history" @click=${() => { this.data.cancelled = false; this.requestUpdate(); }}>
+            Återställ
+          </app-button>
+        ` : html`
+          <app-button variant="secondary" icon="cancel" @click=${() => { this.data.cancelled = true; this.requestUpdate(); }}>
+            Ställ in
+          </app-button>
+        `}
+      </div>
     `;
   }
 

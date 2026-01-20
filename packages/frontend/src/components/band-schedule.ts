@@ -47,6 +47,9 @@ export class BandSchedule extends LitElement {
   @state()
   admin_data_copy: BandEvent | null = null;
 
+  @state()
+  isEditing = false;
+
   @property({ type: Array, attribute: false })
   members: Member[] = [];
 
@@ -147,7 +150,7 @@ export class BandSchedule extends LitElement {
       </div>
       
       <app-dialog 
-        heading="${this.selected_event?.type || 'Händelse'}" 
+        heading="${this.isEditing ? 'Redigera händelse' : this.selected_event?.type || 'Händelse'}" 
         ?open=${this.selected_event != null}
         @closed=${() => this.selected_event = null}
         hideCloseButton
@@ -157,13 +160,15 @@ export class BandSchedule extends LitElement {
             .event=${this.admin_data_copy || this.selected_event}
             .members=${this.members}
             .admin=${this.admin}
+            .editing=${this.isEditing}
+            @edit=${() => this.isEditing = true}
             @closed=${() => this.selected_event = null}
           ></event-card>
         ` : ""}
         
-        ${this.admin ? html`
+        ${this.admin && this.isEditing ? html`
           <app-button slot="primaryAction" variant="primary" @click=${this.saveAndClose}>Spara</app-button>
-          <app-button slot="secondaryAction" variant="secondary" @click=${() => this.selected_event = null}>Avbryt</app-button>
+          <app-button slot="secondaryAction" variant="secondary" @click=${this.cancelEdit}>Avbryt</app-button>
         ` : html`
           <app-button slot="primaryAction" variant="primary" @click=${() => this.selected_event = null}>Stäng</app-button>
         `}
@@ -178,6 +183,14 @@ export class BandSchedule extends LitElement {
       this.admin_data_copy = null;
     }
     this.selected_event = gig;
+    this.isEditing = false;
+  }
+
+  cancelEdit() {
+    this.isEditing = false;
+    if (this.selected_event) {
+      this.admin_data_copy = this.selected_event.clone();
+    }
   }
 
   async saveAndClose() {
