@@ -135,7 +135,6 @@ export class ResponseCard extends LitElement {
             const { text } = this.getIconAndText();
             return html`
         <div class="response-section" @click=${() => this.mode = "edit"}>
-          <span class="response-title">Ditt svar</span>
           <div class="view-container">
             <response-icon .response=${this.response}></response-icon>
             <span class="response-text">${text}</span>
@@ -147,27 +146,26 @@ export class ResponseCard extends LitElement {
 
         return html`
       <div class="response-section">
-        <span class="response-title">Ditt svar</span>
         <div class="response-buttons">
           <app-button 
             variant="${this.response === 'yes' ? 'primary' : 'secondary'}"
             @click=${() => this.handleResponseClick('yes')}
           >
-            <response-icon slot="icon" response="yes" style="font-size: 20px;"></response-icon>
+            <response-icon slot="icon" response="yes"></response-icon>
             Kommer
           </app-button>
           <app-button 
             variant="${this.response === 'sub' ? 'primary' : 'secondary'}"
             @click=${() => this.handleResponseClick('sub')}
           >
-            <response-icon slot="icon" response="sub" style="font-size: 20px;"></response-icon>
+            <response-icon slot="icon" response="sub"></response-icon>
             Vikarie
           </app-button>
           <app-button 
             variant="${this.response === 'no' ? 'primary' : 'secondary'}"
             @click=${() => this.handleResponseClick('no')}
           >
-            <response-icon slot="icon" response="no" style="font-size: 20px;"></response-icon>
+            <response-icon slot="icon" response="no"></response-icon>
             Kan inte
           </app-button>
         </div>

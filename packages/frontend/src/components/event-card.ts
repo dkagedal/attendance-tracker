@@ -174,27 +174,25 @@ export class EventCard extends LitElement {
     }
 
     .comment-list {
-      display: flex;
-      flex-direction: column;
-      gap: var(--app-spacing-sm);
-    }
-
-    .comment-item {
-      display: flex;
+      display: grid;
+      grid-template-columns: auto auto 1fr;
       gap: var(--app-spacing-sm);
       font-size: var(--app-font-size-sm);
     }
 
     .comment-author {
       font-weight: bold;
+      grid-column: 1
     }
 
     .comment-text {
       color: var(--app-color-text-secondary);
+      grid-column: 3;
     }
 
-    .comment-item response-icon {
+    .comment-list response-icon {
       font-size: 16px;
+      grid-column: 2;
     }
   `;
 
@@ -269,11 +267,9 @@ export class EventCard extends LitElement {
       <div class="comments-section">
         <div class="comment-list">
           ${comments.map(c => html`
-            <div class="comment-item">
-              <span class="comment-author">${c.name}:</span>
-              <response-icon .response=${c.response}></response-icon>
-              <span class="comment-text">${c.comment}</span>
-            </div>
+            <span class="comment-author">${c.name}</span>
+            <response-icon .response=${c.response}></response-icon>
+            <span class="comment-text">${c.comment}</span>
           `)}
         </div>
       </div>
