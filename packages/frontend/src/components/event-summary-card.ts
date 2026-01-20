@@ -338,7 +338,7 @@ export class EventSummaryCard extends LitElement {
               ` : ""}
             </div>
             <div class="description">
-              ${this.event.description}
+              ${this.event.description?.split("\n\n")[0]}
             </div>
           </div>
           ${this.renderResponseStatus()}

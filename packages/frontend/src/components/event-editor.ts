@@ -87,7 +87,7 @@ export class EventEditor extends LitElement {
       <app-input
         label="Beskrivning"
         id="desc"
-        type="text"
+        multiline
         ?disabled=${isCancelled}
         value="${ifDefined(this.data.description)}"
         @input=${(e: CustomEvent) => { this.data.description = (e.target as AppInput).value; }}

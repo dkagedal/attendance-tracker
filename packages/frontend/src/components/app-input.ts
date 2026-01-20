@@ -22,10 +22,16 @@ export class AppInput extends LitElement {
   disabled = false;
 
   @property({ type: Boolean })
+  multiline = false;
+
+  @property({ type: Number })
+  rows = 3;
+
+  @property({ type: Boolean })
   required = false;
 
-  @query("input")
-  inputElement: HTMLInputElement;
+  @query("input, textarea")
+  inputElement: HTMLInputElement | HTMLTextAreaElement;
 
   static styles = css`
     :host {
@@ -41,7 +47,7 @@ export class AppInput extends LitElement {
       margin-bottom: var(--app-spacing-xs);
     }
 
-    input {
+    input, textarea {
       box-sizing: border-box;
       width: 100%;
       padding: var(--app-spacing-sm) var(--app-spacing-md);
@@ -55,12 +61,12 @@ export class AppInput extends LitElement {
       transition: border-color 0.2s, box-shadow 0.2s;
     }
 
-    input:focus {
+    input:focus, textarea:focus {
       border-color: var(--app-color-primary);
       box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
     }
 
-    input:disabled {
+    input:disabled, textarea:disabled {
       background-color: var(--app-color-background);
       cursor: not-allowed;
       opacity: 0.7;
@@ -72,7 +78,7 @@ export class AppInput extends LitElement {
       margin-top: var(--app-spacing-xs);
     }
 
-    :host([invalid]) input {
+    :host([invalid]) input, :host([invalid]) textarea {
       border-color: var(--app-color-error);
     }
   `;
@@ -80,14 +86,25 @@ export class AppInput extends LitElement {
   render() {
     return html`
       ${this.label ? html`<label class="label">${this.label}</label>` : ""}
-      <input
-        type="${this.type}"
-        .value="${this.value}"
-        placeholder="${this.placeholder}"
-        ?disabled="${this.disabled}"
-        ?required="${this.required}"
-        @input="${this.handleInput}"
-      />
+      ${this.multiline ? html`
+        <textarea
+          .value="${this.value}"
+          rows="${this.rows}"
+          placeholder="${this.placeholder}"
+          ?disabled="${this.disabled}"
+          ?required="${this.required}"
+          @input="${this.handleInput}"
+        ></textarea>
+      ` : html`
+        <input
+          type="${this.type}"
+          .value="${this.value}"
+          placeholder="${this.placeholder}"
+          ?disabled="${this.disabled}"
+          ?required="${this.required}"
+          @input="${this.handleInput}"
+        />
+      `}
       ${this.errorMessage
         ? html`<div class="error-message">${this.errorMessage}</div>`
         : ""}
