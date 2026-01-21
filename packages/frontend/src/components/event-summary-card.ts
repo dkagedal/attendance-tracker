@@ -133,6 +133,9 @@ export class EventSummaryCard extends LitElement {
         width: 100%;
         margin-top: var(--app-spacing-xs);
       }
+      .status[hidden] {
+        display: none;
+      }
 
       .response-icon {
         grid-column: 3;
@@ -314,17 +317,13 @@ export class EventSummaryCard extends LitElement {
           </div>
           ${this.renderResponseStatus()}
 
-          <div class="status">
-            ${this.event.cancelled
-        ? html`<span class="badge cancelled">Inställt</span>`
-        : html`
-                  <attendance-progress-bar
-                    .yes=${this.yesCount}
-                    .no=${this.noCount}
-                    .sub=${this.subCount}
-                    .total=${total}
-                  ></attendance-progress-bar>
-                `}
+          <div class="status" ?hidden=${this.cancelled}>
+            <attendance-progress-bar
+              .yes=${this.yesCount}
+              .no=${this.noCount}
+              .sub=${this.subCount}
+              .total=${total}
+            ></attendance-progress-bar>
           </div>
 
         </div>

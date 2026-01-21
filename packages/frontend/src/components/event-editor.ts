@@ -65,14 +65,6 @@ export class EventEditor extends LitElement {
     :host([range]) .notranged {
       display: none;
     }
-
-    .cancel-section {
-      margin-top: var(--app-spacing-md);
-      padding-top: var(--app-spacing-md);
-      border-top: 1px solid var(--app-color-border);
-      display: flex;
-      justify-content: center;
-    }
   `;
 
   render() {
@@ -129,19 +121,6 @@ export class EventEditor extends LitElement {
       <app-button variant="secondary" icon="add" class="notranged" ?disabled=${isCancelled} @click=${this.addStop}
         >Lägg till sluttid</app-button
       >
-
-      <div class="cancel-section">
-        <app-button variant="secondary" icon="delete" @click=${this.deleteEvent}>Radera</app-button>
-        ${isCancelled ? html`
-          <app-button variant="secondary" icon="history" @click=${() => { this.data.cancelled = false; this.requestUpdate(); }}>
-            Återställ
-          </app-button>
-        ` : html`
-          <app-button variant="secondary" icon="cancel" @click=${() => { this.data.cancelled = true; this.requestUpdate(); }}>
-            Ställ in
-          </app-button>
-        `}
-      </div>
     `;
   }
 
@@ -153,7 +132,12 @@ export class EventEditor extends LitElement {
     }
   }
 
-  save() {
+  async save() {
+    console.log("Saving event", this.data);
+    if (!this.checkValidity()) {
+      throw new Error("Invalid data");
+    }
+
     this.data.type = this.typeInput.value;
     this.data.location = this.locationInput.value;
     this.data.description = this.descriptionInput.value;
@@ -174,6 +158,10 @@ export class EventEditor extends LitElement {
     // Cancellation state is already updated on this.data via click handlers,
     // but we ensure it persists through the save call if we ever re-assign.
     this.data.cancelled = !!this.data.cancelled;
+
+    const ref = this.data.ref;
+    await ref.update(this.data);
+    console.log("Update successful");
   }
 
   checkValidity(): boolean {

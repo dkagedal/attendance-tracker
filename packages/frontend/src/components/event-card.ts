@@ -12,9 +12,8 @@ import "./app-icon";
 import "./response-card";
 import "./response-icon";
 import { auth } from "../storage";
-import { EventEditor } from "./event-editor";
 import { onSnapshot, setDoc } from "firebase/firestore";
-import { customElement, property, query, state } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { UID } from "../datamodel";
 import { BandEvent } from "../model/bandevent";
 import {
@@ -32,8 +31,6 @@ export class EventCard extends LitElement {
   @property({ type: Object, attribute: false })
   event: BandEvent = null;
 
-  @property({ type: Boolean })
-  editing: boolean = false;
 
   @state()
   participants: { [uid: UID]: Participant } = {};
@@ -42,11 +39,6 @@ export class EventCard extends LitElement {
   get cancelled() {
     return this.event?.cancelled || false;
   }
-
-
-
-  @query("event-editor")
-  editor: EventEditor;
 
   cancelParticipantsListener: () => void = () => { };
 
@@ -158,14 +150,6 @@ export class EventCard extends LitElement {
       color: white;
     }
 
-    .admin-actions {
-      margin-top: var(--app-spacing-lg);
-      padding-top: var(--app-spacing-md);
-      // border-top: 1px solid var(--app-color-border);
-      display: flex;
-      justify-content: flex-end;
-    }
-
     .comments-section {
       margin-top: var(--app-spacing-lg);
     }
@@ -217,20 +201,6 @@ export class EventCard extends LitElement {
     this.setResponse(response, comment);
   }
 
-  async save() {
-    console.log("Saving event", this.event);
-    if (this.editor) {
-      if (this.editor.checkValidity()) {
-        this.editor.save();
-        const ref = this.event.ref;
-        await ref.update(this.event);
-        console.log("Update successful");
-      } else {
-        throw new Error("Invalid data");
-      }
-    }
-  }
-
   renderResponseButtons() {
     const participant = this.participants[auth.currentUser.uid];
     const currentResponse = participant?.attending;
@@ -278,37 +248,33 @@ export class EventCard extends LitElement {
     if (!this.event) return html``;
 
     return html`
-      ${this.editing ? html`
-        <event-editor .data=${this.event}></event-editor>
-      ` : html`
-        <div class="header">
-          <div class="meta">
-            ${this.cancelled ? html`<div class="meta-row">
-              <span class="chip cancelled">Inställt</span>
-            </div>` : ""}
-            <div class="meta-row">
-              <app-icon icon="schedule"></app-icon>
-              <time-range
-                start=${ifDefined(this.event.start)}
-                stop=${ifDefined(this.event.stop)}
-              ></time-range>
-            </div>
-            ${this.event.location ? html`
-              <div class="meta-row">
-                <app-icon icon="place"></app-icon>
-                <a href="http://maps.google.se/maps?q=${this.event.location}">${this.event.location}</a>
-              </div>
-            ` : ""}
+      <div class="header">
+        <div class="meta">
+          ${this.cancelled ? html`<div class="meta-row">
+            <span class="chip cancelled">Inställt</span>
+          </div>` : ""}
+          <div class="meta-row">
+            <app-icon icon="schedule"></app-icon>
+            <time-range
+              start=${ifDefined(this.event.start)}
+              stop=${ifDefined(this.event.stop)}
+            ></time-range>
           </div>
-          ${this.event.description ? html`
-            <div class="description">${unsafeHTML(DOMPurify.sanitize(marked.parse(this.event.description) as string))}</div>
+          ${this.event.location ? html`
+            <div class="meta-row">
+              <app-icon icon="place"></app-icon>
+              <a href="http://maps.google.se/maps?q=${this.event.location}">${this.event.location}</a>
+            </div>
           ` : ""}
         </div>
-      `}
+        ${this.event.description ? html`
+          <div class="description">${unsafeHTML(DOMPurify.sanitize(marked.parse(this.event.description) as string))}</div>
+        ` : ""}
+      </div>
 
-      ${(!this.cancelled && !this.editing) ? this.renderResponseButtons() : ""}
+      ${!this.cancelled ? this.renderResponseButtons() : ""}
 
-      <div class="roster-section" style="display: ${(this.cancelled || this.editing) ? "none" : "block"}">
+      <div class="roster-section" style="display: ${this.cancelled ? "none" : "block"}">
         ${!this.cancelled ? html`
           <span class="roster-title">Vilka kommer?</span>
           <mini-roster
@@ -318,12 +284,6 @@ export class EventCard extends LitElement {
           ></mini-roster>
           ${this.renderComments()}
         ` : ""}
-      </div>
-
-      <div class="admin-actions" style="display: ${this.editing ? "none" : "block"}">
-        ${this.editing ? "" : html`
-          <app-button variant="secondary" icon="edit" @click=${() => this.dispatchEvent(new CustomEvent("edit"))}>Redigera</app-button>
-        `}
       </div>
     `;
   }

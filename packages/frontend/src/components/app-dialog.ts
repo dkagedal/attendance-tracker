@@ -76,7 +76,9 @@ export class AppDialog extends LitElement {
     .actions {
       padding: var(--app-spacing-lg);
       display: flex;
-      justify-content: flex-end;
+      flex-direction: row-reverse;
+      flex-wrap: wrap-reverse;
+      justify-content: flex-start;
       gap: var(--app-spacing-md);
       border-top: 1px solid var(--app-color-border);
     }

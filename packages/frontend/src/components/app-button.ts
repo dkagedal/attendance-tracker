@@ -83,7 +83,7 @@ export class AppButton extends LitElement {
       font-family: "Material Icons";
       font-weight: normal;
       font-style: normal;
-      font-size: 20px;
+      font-size: var(--app-font-size-sm);
       display: inline-block;
       line-height: 1;
       text-transform: none;

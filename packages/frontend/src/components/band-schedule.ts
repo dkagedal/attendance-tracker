@@ -9,7 +9,8 @@ import {
   orderBy,
   query as firestoreQuery,
   Timestamp,
-  where
+  where,
+  deleteDoc
 } from "firebase/firestore";
 import { css, html, LitElement } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
@@ -25,7 +26,7 @@ import "./app-dialog";
 import "./app-button";
 import "./mini-roster";
 import "./event-card";
-import { EventCard } from "./event-card";
+import { EventEditor } from "./event-editor";
 
 @customElement("band-schedule")
 export class BandSchedule extends LitElement {
@@ -41,20 +42,20 @@ export class BandSchedule extends LitElement {
   @state()
   loaded = false;
 
-  @property({ type: Object })
+  @property({ type: String, attribute: "selected" })
+  selected_event_id: string | null = null;
+
+  @state()
   selected_event: BandEvent | null = null;
 
   @state()
-  selected_event_snapshot: BandEvent | null = null;
-
-  @state()
-  isEditing = false;
+  edit_snapshot: BandEvent | null = null;
 
   @property({ type: Array, attribute: false })
   members: Member[] = [];
 
-  @query("event-card")
-  card: EventCard;
+  @query("event-editor")
+  editor: EventEditor;
 
   private _unsubscribeGigs: () => void = () => { };
   private _unsubscribeMembers: () => void = () => { };
@@ -94,6 +95,13 @@ export class BandSchedule extends LitElement {
     this._unsubscribeGigs = onSnapshot(q, (snapshot) => {
       this.events = snapshot.docs.map(doc => doc.data());
       this.loaded = true;
+
+      for (const event of this.events) {
+        if (event.ref.id === this.selected_event_id) {
+          this.selected_event = event;
+          break;
+        }
+      }
     });
   }
 
@@ -147,54 +155,81 @@ export class BandSchedule extends LitElement {
       </div>
       
       <app-dialog 
-        heading="${this.isEditing ? 'Redigera händelse' : this.selected_event?.type || 'Händelse'}" 
+        heading="${this.edit_snapshot ? 'Redigera händelse' : this.selected_event?.type || 'Händelse'}" 
         ?open=${this.selected_event != null}
-        @closed=${() => this.selected_event = null}
+        @closed=${this.closeDialog}
         hideCloseButton
       >
         ${this.selected_event ? html`
-          <event-card
-            .event=${this.isEditing ? this.selected_event_snapshot : this.selected_event}
-            .members=${this.members}
-            .editing=${this.isEditing}
-            @edit=${() => this.isEditing = true}
-            @closed=${() => this.selected_event = null}
-          ></event-card>
+          ${this.edit_snapshot ? html`
+            <event-editor .data=${this.edit_snapshot}></event-editor>
+            <app-button slot="primaryAction" variant="primary" @click=${this.saveAndClose}>Spara</app-button>
+            <app-button slot="secondaryAction" variant="secondary" @click=${() => this.edit_snapshot = null}>Avbryt</app-button>
+          ` : html`
+            <event-card
+              .event=${this.selected_event}
+              .members=${this.members}
+             ></event-card>
+            <app-button slot="primaryAction" variant="primary" @click=${this.closeDialog}>Stäng</app-button>
+            ${this.selected_event.cancelled ? html`
+              <app-button slot="secondaryAction" variant="secondary" icon="history" @click=${() => this.setCancelled(false)}>
+                Återställ
+              </app-button>
+              <app-button slot="secondaryAction" variant="secondary" icon="delete" @click=${this.deleteEvent}>Radera</app-button>
+            ` : html`
+              <app-button slot="secondaryAction" variant="secondary" icon="edit" @click=${() => this.edit_snapshot = this.selected_event.clone()}>Redigera</app-button>
+              <app-button slot="secondaryAction" variant="secondary" icon="cancel" @click=${() => this.setCancelled(true)}>
+                Ställ in
+              </app-button>
+            `}
+          `}
         ` : ""}
-        
-        ${this.isEditing ? html`
-          <app-button slot="primaryAction" variant="primary" @click=${this.saveAndClose}>Spara</app-button>
-          <app-button slot="secondaryAction" variant="secondary" @click=${this.cancelEdit}>Avbryt</app-button>
-        ` : html`
-          <app-button slot="primaryAction" variant="primary" @click=${() => this.selected_event = null}>Stäng</app-button>
-        `}
       </app-dialog>
     `;
   }
 
-  selected(_selectEvent: any, gig: BandEvent) {
-    this.selected_event_snapshot = gig.clone();
-    this.selected_event = gig;
-    this.isEditing = false;
+  async setCancelled(cancelled: boolean) {
+    this.selected_event.cancelled = cancelled;
+    await this.selected_event.ref.update(this.selected_event);
+    this.requestUpdate();
   }
 
-  cancelEdit() {
-    this.isEditing = false;
-    if (this.selected_event) {
-      this.selected_event_snapshot = this.selected_event.clone();
+  deleteEvent() {
+    if (confirm("Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.")) {
+      deleteDoc(this.selected_event.ref.dbref).then(
+        () => {
+          this.closeDialog();
+          console.log("Delete successful");
+        },
+        reason => {
+          console.log("Delete failed:", reason);
+        }
+      );
     }
   }
 
+  selected(_selectEvent: any, gig: BandEvent) {
+    this.selected_event_id = gig.ref.id;
+    this.selected_event = gig;
+    this.edit_snapshot = null;
+  }
+
+  closeDialog() {
+    this.selected_event_id = null;
+    this.selected_event = null;
+    this.edit_snapshot = null;
+  }
+
   async saveAndClose() {
-    if (this.card) {
+    if (this.editor) {
       try {
-        await this.card.save();
+        await this.editor.save();
       } catch (e) {
         console.error("Save failed:", e);
         return; // Don't close on error
       }
     }
-    this.selected_event = null;
+    this.closeDialog();
   }
 }
 
