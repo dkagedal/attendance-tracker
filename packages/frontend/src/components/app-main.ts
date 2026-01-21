@@ -542,7 +542,6 @@ export class AppMain extends LitElement {
           id="band"
           bandid=${this.bandid}
           uid=${this.firebaseUser.uid}
-          .admin=${this.membership?.admin || false}
           @loaded=${() => {
         this.loadingSchedule = false;
       }}
