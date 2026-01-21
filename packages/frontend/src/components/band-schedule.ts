@@ -45,7 +45,7 @@ export class BandSchedule extends LitElement {
   selected_event: BandEvent | null = null;
 
   @state()
-  admin_data_copy: BandEvent | null = null;
+  selected_event_snapshot: BandEvent | null = null;
 
   @state()
   isEditing = false;
@@ -55,9 +55,6 @@ export class BandSchedule extends LitElement {
 
   @query("event-card")
   card: EventCard;
-
-  @property({ type: Boolean })
-  admin: boolean = false;
 
   private _unsubscribeGigs: () => void = () => { };
   private _unsubscribeMembers: () => void = () => { };
@@ -157,16 +154,15 @@ export class BandSchedule extends LitElement {
       >
         ${this.selected_event ? html`
           <event-card
-            .event=${this.admin_data_copy || this.selected_event}
+            .event=${this.isEditing ? this.selected_event_snapshot : this.selected_event}
             .members=${this.members}
-            .admin=${this.admin}
             .editing=${this.isEditing}
             @edit=${() => this.isEditing = true}
             @closed=${() => this.selected_event = null}
           ></event-card>
         ` : ""}
         
-        ${this.admin && this.isEditing ? html`
+        ${this.isEditing ? html`
           <app-button slot="primaryAction" variant="primary" @click=${this.saveAndClose}>Spara</app-button>
           <app-button slot="secondaryAction" variant="secondary" @click=${this.cancelEdit}>Avbryt</app-button>
         ` : html`
@@ -177,11 +173,7 @@ export class BandSchedule extends LitElement {
   }
 
   selected(_selectEvent: any, gig: BandEvent) {
-    if (this.admin) {
-      this.admin_data_copy = gig.clone();
-    } else {
-      this.admin_data_copy = null;
-    }
+    this.selected_event_snapshot = gig.clone();
     this.selected_event = gig;
     this.isEditing = false;
   }
@@ -189,12 +181,12 @@ export class BandSchedule extends LitElement {
   cancelEdit() {
     this.isEditing = false;
     if (this.selected_event) {
-      this.admin_data_copy = this.selected_event.clone();
+      this.selected_event_snapshot = this.selected_event.clone();
     }
   }
 
   async saveAndClose() {
-    if (this.admin && this.card) {
+    if (this.card) {
       try {
         await this.card.save();
       } catch (e) {

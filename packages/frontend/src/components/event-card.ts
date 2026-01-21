@@ -33,9 +33,6 @@ export class EventCard extends LitElement {
   event: BandEvent = null;
 
   @property({ type: Boolean })
-  admin: boolean = false;
-
-  @property({ type: Boolean })
   editing: boolean = false;
 
   @state()
@@ -221,7 +218,8 @@ export class EventCard extends LitElement {
   }
 
   async save() {
-    if (this.admin && this.editor) {
+    console.log("Saving event", this.event);
+    if (this.editor) {
       if (this.editor.checkValidity()) {
         this.editor.save();
         const ref = this.event.ref;
@@ -322,13 +320,11 @@ export class EventCard extends LitElement {
         ` : ""}
       </div>
 
-      ${this.admin ? html`
-        <div class="admin-actions" style="display: ${this.editing ? "none" : "block"}">
-          ${this.editing ? "" : html`
-            <app-button variant="secondary" icon="edit" @click=${() => this.dispatchEvent(new CustomEvent("edit"))}>Redigera</app-button>
-          `}
-        </div>
-      ` : ""}
+      <div class="admin-actions" style="display: ${this.editing ? "none" : "block"}">
+        ${this.editing ? "" : html`
+          <app-button variant="secondary" icon="edit" @click=${() => this.dispatchEvent(new CustomEvent("edit"))}>Redigera</app-button>
+        `}
+      </div>
     `;
   }
 }
