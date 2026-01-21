@@ -323,7 +323,7 @@ export class EventCard extends LitElement {
       </div>
 
       ${this.admin ? html`
-        <div class="admin-actions" style="display: ${(this.cancelled || this.editing) ? "none" : "block"}">
+        <div class="admin-actions" style="display: ${this.editing ? "none" : "block"}">
           ${this.editing ? "" : html`
             <app-button variant="secondary" icon="edit" @click=${() => this.dispatchEvent(new CustomEvent("edit"))}>Redigera</app-button>
           `}
