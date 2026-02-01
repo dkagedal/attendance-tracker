@@ -8,7 +8,8 @@ import {
   getAuth,
   GoogleAuthProvider,
   signInWithEmailAndPassword,
-  signInWithRedirect
+  signInWithRedirect,
+  signInWithPopup,
 } from "firebase/auth";
 import { FirebaseApp } from "firebase/app";
 
@@ -22,6 +23,9 @@ export class LoginDialog extends LitElement {
 
   @property({ type: String })
   errormsg: string = null;
+
+  @property({ type: Boolean })
+  useRedirect: boolean = false;
 
   @query("#email")
   emailField: AppInput;
@@ -90,13 +94,24 @@ export class LoginDialog extends LitElement {
   loginWithGoogle() {
     const auth = getAuth(this.app);
     const provider = new GoogleAuthProvider();
-    signInWithRedirect(auth, provider)
-      .then(result => {
-        console.log("[google login] Success:", result);
-      })
-      .catch(error => {
-        console.log("[google login] Failure:", error);
-      });
+
+    if (this.useRedirect) {
+      signInWithRedirect(auth, provider)
+        .then(() => {
+          console.log("[google login] Redirecting...");
+        })
+        .catch(error => {
+          console.log("[google login] Failure:", error);
+        });
+    } else {
+      signInWithPopup(auth, provider)
+        .then(result => {
+          console.log("[google login] Success:", result);
+        })
+        .catch(error => {
+          console.log("[google login] Failure:", error);
+        });
+    }
   }
 
   loginWithPassword() {

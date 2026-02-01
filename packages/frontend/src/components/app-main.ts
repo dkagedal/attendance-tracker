@@ -16,6 +16,7 @@ import {
 import {
   Auth,
   getAuth,
+  getRedirectResult,
   onAuthStateChanged,
   signOut,
   User as FirebaseUser
@@ -141,20 +142,25 @@ export class AppMain extends LitElement {
     console.log("[app-main] Constructed");
   }
 
-  updated(changedProperties: Map<string, any>) {
+  async updated(changedProperties: Map<string, any>) {
+    console.log("[app-main] Properties changed:", changedProperties);
     if (changedProperties.has("app") && this.app) {
-      console.log("[app-main] Connected to app", this.app);
+      console.log("[app-main] Connected to app");
       this.auth = getAuth(this.app);
       this.auth.useDeviceLanguage();
-      onAuthStateChanged(this.auth, this.authStateChanged.bind(this));
-      extractBandId().then(bandid => {
-        console.log("[app-main] Band id:", bandid);
-        this.bandid = bandid;
-        this.loading.delete("bandid");
-        if (!bandid) {
-          return;
-        }
-      });
+
+      // Check if we're back after a redirect login.
+      const loginResult = await getRedirectResult(this.auth);
+      if (loginResult) {
+        // We don't really need this result, since we'll also get it in the onAuthStateChanged callback.
+        console.log("[app-main] User:", loginResult.user);
+      }
+
+      this.subscribe("auth", onAuthStateChanged(this.auth, this.authStateChanged.bind(this)));
+      const bandid = await extractBandId();
+      console.log("[app-main] Band id:", bandid);
+      this.bandid = bandid;
+      this.loading.delete("bandid");
     }
 
     if (changedProperties.has("firebaseUser")) {
@@ -270,6 +276,9 @@ export class AppMain extends LitElement {
     console.log("[app-main] Bands:", bands);
     this.loading.delete("bands");
     this.bands = bands;
+    if (!this.bandid && Object.keys(bands).length == 1) {
+      this.selectBand(Object.keys(bands)[0]);
+    }
   }
 
   addErrorMessage(message: string, details?: any) {
@@ -663,19 +672,42 @@ export class AppMain extends LitElement {
     if (this.isLoading()) {
       return "";
     }
-    if (!this.bandid) {
-      return html`
-        <app-dialog open heading="Konfigurationsfel">
-          <p>Okänd organisation.</p>
-        </app-dialog>
-      `;
-    }
     if (this.firebaseUser == null) {
       return html`
         <app-dialog open heading="Välkommen">
           <login-dialog .app=${this.app}></login-dialog>
         </app-dialog>
       `;
+    }
+    if (!this.bandid) {
+      console.log("No band selected");
+      if (Object.keys(this.bands).length == 0) {
+        console.log("No bands available for this user.");
+        return html`
+          <app-dialog open heading="Konfigurationsfel">
+            <p>Du verkar inte vara medlem i något band än.</p>
+          </app-dialog>
+        `;
+      } else {
+        console.log("Showing band selector");
+        return html`
+          <app-dialog open hideCloseButton heading="Välj band">
+            <div style="display: flex; flex-direction: column; gap: 8px; padding: 16px 0;">
+              ${Object.keys(this.bands).map(
+          (id) => html`
+                  <app-button
+                    variant="secondary"
+                    style="width: 100%;"
+                    @click=${() => this.selectBand(id)}
+                  >
+                    ${this.bands[id].display_name}
+                  </app-button>
+                `
+        )}
+            </div>
+          </app-dialog>
+        `;
+      }
     }
     if (!(this.bandid in this.bands)) {
       return this.renderRegister();
