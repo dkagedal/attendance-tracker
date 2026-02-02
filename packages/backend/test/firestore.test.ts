@@ -1,23 +1,32 @@
-// import assert from 'assert';
 import {
     assertFails,
     assertSucceeds,
-    initializeTestEnvironment
-} from "@firebase/rules-unit-testing"
+    initializeTestEnvironment,
+    RulesTestEnvironment,
+} from "@firebase/rules-unit-testing";
 
-// const PROJECT_ID = "attendance-tracker-b8e9f";
+
 const PROJECT_ID = "demo-kommer";
+let testEnv: RulesTestEnvironment;
 
-let testEnv = await initializeTestEnvironment({
-    projectId: PROJECT_ID,
-    firestore: {
-        //   rules: fs.readFileSync("firestore.rules", "utf8"),
-    },
+before(async () => {
+    testEnv = await initializeTestEnvironment({
+        projectId: PROJECT_ID,
+        firestore: {
+            // Rules are loaded by the emulator from firebase.json/firestore.rules
+            // If running without emulator wrapper, we would need:
+            // rules: fs.readFileSync("../../firestore.rules", "utf8"),
+        },
+    });
 });
 
 beforeEach(async () => {
     await testEnv.clearFirestore();
-})
+});
+
+after(async () => {
+    await testEnv.cleanup();
+});
 
 describe("Access rules", () => {
     describe("User documents", () => {
@@ -46,7 +55,7 @@ describe("Access rules", () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
                 await db.doc("users/user1").set({ display_name: "User One" });
-            })
+            });
 
             const context = testEnv.authenticatedContext("user1");
             const db = context.firestore();
@@ -58,7 +67,7 @@ describe("Access rules", () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
                 await db.doc("users/user1").set({ display_name: "User One" });
-            })
+            });
 
             const context = testEnv.authenticatedContext("user1");
             const db = context.firestore();
@@ -72,7 +81,7 @@ describe("Access rules", () => {
             const context = testEnv.unauthenticatedContext();
             const db = context.firestore();
             const doc = db.collection("hosts").doc("beatles.com");
-            await assertSucceeds(doc.get({}));
+            await assertSucceeds(doc.get());
         });
 
         it("can't be written", async () => {
@@ -102,7 +111,7 @@ describe("Access rules", () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
                 await db.collection("bands").doc("beatles").set({ acl: ["user1"] });
-            })
+            });
 
             const user1 = testEnv.authenticatedContext("user1");
             const db = user1.firestore();
@@ -136,117 +145,116 @@ describe("Access rules", () => {
         it("can be listed by members", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.doc("users/ringo").set({ bands: { beatles: {} } })
+                await db.doc("users/ringo").set({ bands: { beatles: {} } });
                 await db.doc("bands/beatles").set({ display_name: "The Beatles" });
                 await db.doc("bands/beatles/members/ringo").set({ displan_name: "Ringo" });
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const query = ringo.firestore().collection("bands/beatles/members");
             await assertSucceeds(query.get());
-        })
+        });
 
         it("can't be listed by non-members", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const query = ringo.firestore().collection("bands").doc("beatles").collection("members");
             await assertFails(query.get());
-        })
+        });
 
         it("members can get other members", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
                 await db.collection("bands").doc("beatles").collection("members").doc("ringo").set({});
                 await db.collection("bands").doc("beatles").collection("members").doc("paul").set({});
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const doc = ringo.firestore().collection("bands").doc("beatles").collection("members").doc("paul");
             await assertSucceeds(doc.get());
-        })
+        });
 
         it("non-members can't get other members", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
                 await db.collection("bands").doc("beatles").collection("members").doc("paul").set({});
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const doc = ringo.firestore().collection("bands").doc("beatles").collection("members").doc("paul");
             await assertFails(doc.get());
-        })
+        });
 
         it("can't be self-added", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const query = ringo.firestore().collection("bands").doc("beatles").collection("members").doc("ringo");
             await assertFails(query.set({}));
-        })
-
+        });
     });
 
     describe("Join Requests", () => {
         it("request members can get their own request", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
                 await db.collection("bands").doc("beatles").collection("join_requests").doc("ringo").set({ status: "request" });
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const doc = ringo.firestore().collection("bands").doc("beatles").collection("join_requests").doc("ringo");
             await assertSucceeds(doc.get());
-        })
+        });
 
         it("can be self-added", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const query = ringo.firestore().collection("bands").doc("beatles").collection("join_requests").doc("ringo");
             await assertSucceeds(query.set({ approved: false }));
-        })
+        });
 
         it("can't be pre-approved", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const query = ringo.firestore().collection("bands").doc("beatles").collection("join_requests").doc("ringo");
             await assertFails(query.set({ approved: true }));
-        })
+        });
 
         it("requires the user to exist", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const query = ringo.firestore().collection("bands").doc("beatles").collection("join_requests").doc("ringo");
             await assertFails(query.set({}));
-        })
+        });
     });
 
     describe("Events", () => {
@@ -261,66 +269,66 @@ describe("Access rules", () => {
         it("can be listed by active members", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
                 await db.collection("bands").doc("beatles").collection("members").doc("ringo").set({ status: "active" });
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const query = ringo.firestore().collection("bands").doc("beatles").collection("events");
             await assertSucceeds(query.get());
-        })
+        });
 
         it("can't be listed by non-members", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const query = ringo.firestore().collection("bands").doc("beatles").collection("events");
             await assertFails(query.get());
-        })
+        });
 
         it("can be added by members", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
                 await db.collection("bands").doc("beatles").collection("members").doc("ringo").set({ status: "active" });
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const events = ringo.firestore().collection("bands").doc("beatles").collection("events");
             await assertSucceeds(events.add(EVENT));
-        })
+        });
 
         it("can be updated by members", async () => {
             await testEnv.withSecurityRulesDisabled(async (context) => {
                 const db = context.firestore();
-                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                 await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
                 await db.collection("bands").doc("beatles").collection("members").doc("ringo").set({ status: "active" });
                 await db.collection("bands").doc("beatles").collection("events").doc("ev1").set(EVENT);
-            })
+            });
 
             const ringo = testEnv.authenticatedContext("ringo");
             const event = ringo.firestore().collection("bands").doc("beatles").collection("events").doc("ev1");
-            const data = EVENT;
+            const data = { ...EVENT }; // clone
             data.location = "Abbey Road Studios";
             await assertSucceeds(event.set(data));
-        })
+        });
 
         describe("Participants", () => {
             it("can be listed by members", async () => {
                 await testEnv.withSecurityRulesDisabled(async (context) => {
                     const db = context.firestore();
-                    await db.collection("users").doc("ringo").set({ bands: { beatles: {} } })
+                    await db.collection("users").doc("ringo").set({ bands: { beatles: {} } });
                     await db.collection("bands").doc("beatles").set({ display_name: "The Beatles" });
                     await db.collection("bands").doc("beatles").collection("members").doc("ringo").set({ status: "active" });
                     await db.collection("bands").doc("beatles").collection("events").doc("ev1").set(EVENT);
-                })
+                });
 
                 const ringo = testEnv.authenticatedContext("ringo");
                 const query = ringo.firestore().collection("bands").doc("beatles").collection("events").doc("ev1").collection("participants");
@@ -329,7 +337,3 @@ describe("Access rules", () => {
         });
     });
 });
-
-after(async () => {
-    // await testEnv.clearFirestore();
-})
