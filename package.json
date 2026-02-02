@@ -14,6 +14,7 @@
     "dev": "ln -sf config-emulator.ts packages/frontend/src/config.ts && npm run build && firebase emulators:start --project demo-project --import packages/backend/testdata --export-on-exit",
     "deploy-all": "ln -sf config-live.ts packages/frontend/src/config.ts && firebase deploy",
     "deploy-live": "ln -sf config-live.ts packages/frontend/src/config.ts && npm run build && firebase deploy --only hosting",
+    "deploy-staging": "ln -sf config-staging.ts packages/frontend/src/config.ts && npm run build && firebase deploy",
     "deploy-test": "ln -sf config-test.ts packages/frontend/src/config.ts && npm run build && firebase hosting:channel:deploy test",
     "seed": "npm run seed -w backend"
   },

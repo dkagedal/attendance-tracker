@@ -49,6 +49,7 @@ The entire project is deployed to Firebase. The project uses configuration swapp
     -   `npm run deploy-live`: Deploys to partial hosting (Live environment) with `config-live.ts`.
     -   `npm run deploy-test`: Deploys to a preview channel (Test environment) with `config-test.ts`.
     -   `npm run deploy-all`: Deploys everything (including functions) with `config-live.ts`.
+    -   `npm run deploy-staging`: Deploys everything (including functions) with `config-staging.ts`.
 -   **Backend**: Deployed as Firebase Functions.
 -   **Frontend**: Deployed to Firebase Hosting.
 

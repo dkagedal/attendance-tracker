@@ -14,7 +14,7 @@ firebase-debug.log*
 # Uncomment this if you'd like others to create their own Firebase project.
 # For a team working on the same Firebase project(s), it is recommended to leave
 # it commented so all members can deploy to the same project(s) in .firebaserc.
-# .firebaserc
+.firebaserc
 
 # Runtime data
 pids
@@ -71,13 +71,12 @@ node_modules/
 *.d.ts
 *.d.ts.map
 *.js.map
-.firebaserc
 .vscode/settings.json
 packages/backend/lib/*.js
+packages/backend/lib/src/*.js
 packages/frontend/public/bundle.js
 packages/frontend/build
 packages/frontend/src/config.ts
-packages/frontend/src/config-live.ts
-packages/frontend/src/config-test.ts
+packages/frontend/src/config-*.ts
 packages/frontend/src/*.js
 packages/frontend/src/model/*.js
