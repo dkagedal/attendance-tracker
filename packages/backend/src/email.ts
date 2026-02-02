@@ -1,3 +1,5 @@
+import { marked } from "marked";
+
 function escape(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -63,13 +65,13 @@ function eventRowHtml(event: BandEvent): string {
   }
 
   const loc = event.location ? escape(event.location) : "";
-  const desc = event.description ? escape(event.description) : "";
+  const desc = event.description ? marked.parse(event.description) : "";
   return `<tr valign="top">
   <td width=32>&nbsp;</td>
   <td>
     <span style="font-weight: 600">${etype}</span> <span>${start}</span><br>
     <span style="font-style: italic; font-size: 0.875em">${loc}</span><br>
-    <span style="font-size: 0.875em">${desc}</span><br>
+    <div style="font-size: 0.875em">${desc}</div><br>
   </td>
 </tr>`;
 }
