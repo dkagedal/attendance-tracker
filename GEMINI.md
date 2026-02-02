@@ -26,7 +26,7 @@ The backend is a set of Firebase Functions written in TypeScript.
 The frontend is a web application.
 
 -   **Framework**: Lit
--   **UI Components**: Material Web Components (`@material/mwc-*`)
+-   **UI Components**: Custom App Components (`app-*`)
 -   **Project Structure**: Source code is in `src`. Web components are located in `src/components`.
 -   **Key Dependencies**: `marked` (Markdown rendering), `dompurify` (HTML sanitization)
 -   **Language**: TypeScript

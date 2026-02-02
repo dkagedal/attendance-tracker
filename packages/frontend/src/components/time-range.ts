@@ -1,8 +1,4 @@
-import "@material/mwc-icon";
-import "@material/mwc-button";
-import "@material/mwc-linear-progress";
-import "@material/mwc-list/mwc-list";
-import "@material/mwc-list/mwc-list-item";
+
 import { customElement, property } from "lit/decorators";
 import { css, html, LitElement } from "lit";
 
@@ -61,8 +57,8 @@ export class TimeRange extends LitElement {
       ${this.start && this.stop
         ? range(this.start, this.stop)
         : this.start
-        ? single(this.start)
-        : ""}
+          ? single(this.start)
+          : ""}
     `;
   }
 }
