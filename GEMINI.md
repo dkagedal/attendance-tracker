@@ -14,6 +14,7 @@ This is a monorepo using npm workspaces. The project is divided into two main pa
 The backend is a set of Firebase Functions written in TypeScript.
 
 -   **Framework**: Firebase Functions
+-   **Runtime**: Node.js 20
 -   **Language**: TypeScript
 -   **Dependencies**: `firebase-admin`, `firebase-functions`
 -   **Building**: The backend is built using `tsc`. The build command is `npm run build` in the `packages/backend` directory.
@@ -25,7 +26,9 @@ The backend is a set of Firebase Functions written in TypeScript.
 The frontend is a web application.
 
 -   **Framework**: Lit
---  **UI Components**: Material Web Components (`@material/mwc-*`)
+-   **UI Components**: Material Web Components (`@material/mwc-*`)
+-   **Project Structure**: Source code is in `src`. Web components are located in `src/components`.
+-   **Key Dependencies**: `marked` (Markdown rendering), `dompurify` (HTML sanitization)
 -   **Language**: TypeScript
 -   **Building**: The frontend is built using `rollup` and `tsc`. The build command is `npm run build` in the `packages/frontend` directory.
 -   **Testing**: The frontend uses `eslint` for linting and `prettier` for formatting.
@@ -40,9 +43,12 @@ The project has a dedicated test suite in the `test` directory for testing Fires
 
 ## Deployment
 
-The entire project is deployed to Firebase.
+The entire project is deployed to Firebase. The project uses configuration swapping to point to the correct environment (live, test, or emulator).
 
--   **Deployment Command**: `firebase deploy` from the root directory.
+-   **Deployment Commands**:
+    -   `npm run deploy-live`: Deploys to partial hosting (Live environment) with `config-live.ts`.
+    -   `npm run deploy-test`: Deploys to a preview channel (Test environment) with `config-test.ts`.
+    -   `npm run deploy-all`: Deploys everything (including functions) with `config-live.ts`.
 -   **Backend**: Deployed as Firebase Functions.
 -   **Frontend**: Deployed to Firebase Hosting.
 
@@ -51,7 +57,10 @@ The entire project is deployed to Firebase.
 
 To run the application locally with Firebase emulators:
 
-1.  Run `npm run dev` in the root directory. This will build the project and start the emulators.
+1.  Run `npm run dev` in the root directory. This will:
+    -   Symlink `packages/frontend/src/config-emulator.ts` to `config.ts`.
+    -   Build both packages.
+    -   Start the Firebase emulators with imported test data.
 2.  Access the application at `http://localhost:5002/beatles`.
 3.  Access the Emulator UI at `http://localhost:4000`.
 
