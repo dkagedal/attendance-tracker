@@ -1,5 +1,6 @@
 import nodeResolve from '@rollup/plugin-node-resolve'
 import copy from 'rollup-plugin-copy';
+import replace from '@rollup/plugin-replace';
 
 const copyConfig = {
   targets: [
@@ -15,6 +16,10 @@ const config = {
     format: 'iife',
   },
   plugins: [
+    replace({
+      preventAssignment: true,
+      'process.env.APP_ENV': JSON.stringify(process.env.APP_ENV || 'emulator'),
+    }),
     // minifyHTML(),
     copy(copyConfig),
     nodeResolve(),

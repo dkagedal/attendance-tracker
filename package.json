@@ -9,16 +9,20 @@
     "packages/backend"
   ],
   "scripts": {
-    "build": "npm run build -w frontend && npm run build -w backend",
+    "build": "APP_ENV=live npm run build -w frontend && npm run build -w backend",
     "serve": "npm run serve -w backend",
-    "dev": "ln -sf config-emulator.ts packages/frontend/src/config.ts && npm run build && firebase emulators:start --project demo-project --import packages/backend/testdata --export-on-exit",
-    "deploy-all": "ln -sf config-live.ts packages/frontend/src/config.ts && firebase deploy",
-    "deploy-live": "ln -sf config-live.ts packages/frontend/src/config.ts && npm run build && firebase deploy --only hosting",
-    "deploy-staging": "ln -sf config-staging.ts packages/frontend/src/config.ts && npm run build && firebase deploy",
-    "deploy-test": "ln -sf config-test.ts packages/frontend/src/config.ts && npm run build && firebase hosting:channel:deploy test",
+    "watch:backend": "npm run build:watch -w backend",
+    "watch:frontend": "npm run build:watch -w frontend",
+    "dev": "APP_ENV=emulator npm run build && npm-run-all --parallel emulators watch:backend watch:frontend",
+    "emulators": "firebase emulators:start --project demo-project --import packages/backend/testdata --export-on-exit",
+    "deploy-all": "APP_ENV=live npm run build && firebase deploy",
+    "deploy-live": "APP_ENV=live npm run build -w frontend && firebase deploy --only hosting",
+    "deploy-staging": "APP_ENV=staging npm run build -w frontend && firebase deploy",
+    "deploy-test": "APP_ENV=test npm run build -w frontend && firebase hosting:channel:deploy test",
     "seed": "npm run seed -w backend"
   },
   "devDependencies": {
-    "firebase-tools": "^14.18.0"
+    "firebase-tools": "^14.18.0",
+    "npm-run-all": "^4.1.5"
   }
 }

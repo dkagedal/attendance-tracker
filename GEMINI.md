@@ -46,10 +46,10 @@ The project has a dedicated test suite in the `test` directory for testing Fires
 The entire project is deployed to Firebase. The project uses configuration swapping to point to the correct environment (live, test, or emulator).
 
 -   **Deployment Commands**:
-    -   `npm run deploy-live`: Deploys to partial hosting (Live environment) with `config-live.ts`.
-    -   `npm run deploy-test`: Deploys to a preview channel (Test environment) with `config-test.ts`.
-    -   `npm run deploy-all`: Deploys everything (including functions) with `config-live.ts`.
-    -   `npm run deploy-staging`: Deploys everything (including functions) with `config-staging.ts`.
+    -   `npm run deploy-live`: Deploys to partial hosting (Live environment) utilizing the `live` configuration.
+    -   `npm run deploy-test`: Deploys to a preview channel (Test environment) utilizing the `test` configuration.
+    -   `npm run deploy-all`: Deploys everything (including functions) utilizing the `live` configuration.
+    -   `npm run deploy-staging`: Deploys everything (including functions) utilizing the `staging` configuration.
 -   **Backend**: Deployed as Firebase Functions.
 -   **Frontend**: Deployed to Firebase Hosting.
 
@@ -58,10 +58,11 @@ The entire project is deployed to Firebase. The project uses configuration swapp
 
 To run the application locally with Firebase emulators:
 
-1.  Run `npm run dev` in the root directory. This will:
-    -   Symlink `packages/frontend/src/config-emulator.ts` to `config.ts`.
-    -   Build both packages.
-    -   Start the Firebase emulators with imported test data.
+1.  Ensure you are running **Node 20** (e.g. `nvm use`, configured via `.nvmrc`).
+2.  Run `npm run dev` in the root directory. This will:
+    -   Run an initial build of both packages.
+    -   Start `tsc:watch` and `rollup:watch` for both frontend and backend to auto-rebuild on file changes.
+    -   Start the Firebase emulators with imported test data and the `emulator` configuration injected via rollup.
 2.  Access the application at `http://localhost:5002/beatles`.
 3.  Access the Emulator UI at `http://localhost:4000`.
 
