@@ -74,6 +74,7 @@ node_modules/
 .vscode/settings.json
 packages/backend/lib/*.js
 packages/backend/lib/src/*.js
+packages/backend/testdata
 packages/frontend/public/bundle.js
 packages/frontend/build
 packages/frontend/src/config.ts
