@@ -15,10 +15,11 @@
     "watch:frontend": "npm run build:watch -w frontend",
     "dev": "APP_ENV=emulator npm run build && npm-run-all --parallel emulators watch:backend watch:frontend",
     "emulators": "firebase emulators:start --project demo-project --import packages/backend/testdata --export-on-exit",
-    "deploy-all": "APP_ENV=live npm run build && firebase deploy",
-    "deploy-live": "APP_ENV=live npm run build -w frontend && firebase deploy --only hosting",
-    "deploy-staging": "APP_ENV=staging npm run build -w frontend && firebase deploy",
-    "deploy-test": "APP_ENV=test npm run build -w frontend && firebase hosting:channel:deploy test",
+    "deploy-prod": "APP_ENV=live           npm run build -w frontend && firebase --project prod    deploy --only hosting",
+    "deploy-prod-all": "APP_ENV=live       npm run build -w frontend && firebase --project prod    deploy",
+    "deploy-staging": "APP_ENV=staging     npm run build -w frontend && firebase --project staging deploy --only hosting",
+    "deploy-staging-all": "APP_ENV=staging npm run build -w frontend && firebase --project staging deploy",
+    "deploy-prod-test": "APP_ENV=test      npm run build -w frontend && firebase --project prod    hosting:channel:deploy test",
     "seed": "npm run seed -w backend"
   },
   "devDependencies": {
