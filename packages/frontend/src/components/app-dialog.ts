@@ -90,9 +90,12 @@ export class AppDialog extends LitElement {
         <div class="dialog">
           <div class="header">
             <h2 class="title">${this.heading}</h2>
-            ${!this.hideCloseButton
+            <div style="display: flex; align-items: center; gap: var(--app-spacing-sm);">
+              <slot name="headerActions"></slot>
+              ${!this.hideCloseButton
         ? html`<app-button variant="icon" icon="close" @click=${this.close}></app-button>`
         : ""}
+            </div>
           </div>
           <div class="content">
             <slot></slot>
