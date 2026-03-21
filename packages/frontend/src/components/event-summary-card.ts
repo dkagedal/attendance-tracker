@@ -1,5 +1,8 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { marked } from "marked";
+import DOMPurify from "dompurify";
 import { BandEvent } from "../model/bandevent";
 import { Member } from "../model/member";
 import { Participant } from "../model/participant";
@@ -312,7 +315,7 @@ export class EventSummaryCard extends LitElement {
               ` : ""}
             </div>
             <div class="description">
-              ${this.event.description?.split("\n\n")[0]}
+              ${this.event.description ? html`${unsafeHTML(DOMPurify.sanitize(marked.parse(this.event.description.split("\n\n")[0]) as string))}` : ""}
             </div>
           </div>
           ${this.renderResponseStatus()}
