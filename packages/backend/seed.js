@@ -18,7 +18,7 @@ async function seed() {
 
     // Create band
     await bandRef.set({
-        name: 'The Beatles',
+        display_name: 'The Beatles',
     });
 
     // Create members
@@ -29,11 +29,20 @@ async function seed() {
         { id: 'ringo', display_name: 'Ringo Starr', admin: false },
     ];
 
-    console.log('Seeding members...');
+    console.log('Seeding members and users...');
     for (const m of members) {
         await bandRef.collection('members').doc(m.id).set({
             display_name: m.display_name,
             admin: m.admin,
+        });
+
+        // Populate users collection to ensure initial lookup succeeds
+        await db.collection('users').doc(m.id).set({
+            bands: {
+                [bandId]: {
+                    display_name: 'The Beatles'
+                }
+            }
         });
     }
 
