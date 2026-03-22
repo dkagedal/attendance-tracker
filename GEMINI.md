@@ -4,10 +4,11 @@ This document provides an overview of the project structure, technologies used, 
 
 ## Project Structure
 
-This is a monorepo using npm workspaces. The project is divided into two main packages:
+This is a monorepo using npm workspaces. The main directories are:
 
 -   `packages/frontend`: A web application.
 -   `packages/backend`: A set of Firebase Functions.
+-   `specs/`: Project specifications and data models.
 
 ## Backend
 
@@ -32,6 +33,13 @@ The frontend is a web application.
 -   **Language**: TypeScript
 -   **Building**: The frontend is built using `rollup` and `tsc`. The build command is `npm run build` in the `packages/frontend` directory.
 -   **Testing**: The frontend uses `eslint` for linting and `prettier` for formatting.
+
+## Specifications
+
+The `specs/` directory contains all written specifications for new features and data models.
+-   **CRITICAL**: ALWAYS read `specs/0000-how-to-write-specifications.md` before attempting to write or modify any specifications.
+-   **Data Model**: The current Firestore schema is defined in `specs/0002-firestore-data-model.md`. Check this file before making database changes.
+-   **Naming**: Specifications must follow the zero-padded 4-digit formatting (e.g., `0000-name.md`).
 
 ## Testing
 
