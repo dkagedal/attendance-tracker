@@ -122,6 +122,12 @@ export class AppInput extends LitElement {
     return this.inputElement ? this.inputElement.checkValidity() : true;
   }
 
+  focus() {
+    if (this.inputElement) {
+      this.inputElement.focus();
+    }
+  }
+
   reportValidity() {
     return this.inputElement ? this.inputElement.reportValidity() : true;
   }

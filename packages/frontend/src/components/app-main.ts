@@ -24,6 +24,7 @@ import {
 import { CreateJoinRequest, db, getHostBand } from "../storage";
 import "./login-dialog";
 import "./band-schedule";
+import "./band-overview";
 import "./event-editor";
 import { EventEditor } from "./event-editor";
 import { repeat } from "lit/directives/repeat";
@@ -99,6 +100,9 @@ export class AppMain extends LitElement {
 
   @state()
   viewingJoinRequest: string = null;
+
+  @state()
+  currentView: "schedule" | "overview" = "schedule";
 
   @state()
   membership: Member = null;
@@ -500,6 +504,15 @@ export class AppMain extends LitElement {
             `
     )}
       </div>
+      <div class="menu-divider"></div>
+      <div class="drawer-list">
+        <div class="drawer-item ${this.currentView === 'schedule' ? 'selected' : ''}" @click=${() => { this.currentView = 'schedule'; this.drawer.close(); }}>
+          Schema
+        </div>
+        <div class="drawer-item ${this.currentView === 'overview' ? 'selected' : ''}" @click=${() => { this.currentView = 'overview'; this.drawer.close(); }}>
+          Översikt
+        </div>
+      </div>
     `;
   }
 
@@ -713,7 +726,13 @@ export class AppMain extends LitElement {
       return this.renderRegister();
     }
     return html`
-      ${this.renderSchedule()}
+      ${this.currentView === 'overview' ? html`
+        <band-overview
+          bandid=${this.bandid}
+          uid=${this.firebaseUser.uid}
+          .membership=${this.membership}
+        ></band-overview>
+      ` : this.renderSchedule()}
       <app-dialog id="settings" heading="Inställningar för ${this.bandid}">
         <profile-editor
           bandid=${this.bandid}

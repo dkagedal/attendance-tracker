@@ -58,16 +58,17 @@ export function band(db: Firestore, bandid: string): BandReference {
 class BandConverter {
   static toFirestore(band: Band) {
     return {
-      display_name: band.display_name
+      display_name: band.display_name,
+      ...(band.logo && { logo: band.logo })
     };
   }
 
   static fromFirestore(snapshot, options): Band {
     const data = snapshot.data(options);
-    return new Band(new BandReference(snapshot.ref), data.display_name);
+    return new Band(new BandReference(snapshot.ref), data.display_name, data.logo);
   }
 }
 
 export class Band {
-  constructor(public ref: BandReference, public display_name: string) {}
+  constructor(public ref: BandReference, public display_name: string, public logo?: string) {}
 }
