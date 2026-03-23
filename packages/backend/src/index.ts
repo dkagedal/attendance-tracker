@@ -11,6 +11,7 @@ import {
   onDocumentCreated,
   onDocumentUpdated,
   onDocumentDeleted,
+  onDocumentWritten,
   QueryDocumentSnapshot,
 } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
@@ -394,22 +395,22 @@ export const userDeleted = onDocumentDeleted("users/{uid}", async (event) => {
   }
 });
 
-export const settingsChanged = functions.firestore
-  .document("bands/{bandid}/members/{uid}/private/settings")
-  .onWrite(async (_snapshot, context) => {
-    const bandid = context.params.bandid;
-    const uid = context.params.uid;
+export const settingsChanged = onDocumentWritten("bands/{bandid}/members/{uid}/private/settings",
+  async (event) => {
+    const bandid = event.params.bandid;
+    const uid = event.params.uid;
     const logger = createLogger({ bandid, uid });
     logger.info("Settings changed");
     // TODO: Only update for this user once we're in a steady state.
     await calculateNotifications(bandid);
   });
 
-export const eventCreated = functions.firestore
-  .document("bands/{bandid}/events/{eventid}")
-  .onCreate(async (snapshot, context) => {
-    const bandid = context.params.bandid;
-    const eventid = context.params.eventid;
+export const eventCreated = onDocumentCreated("bands/{bandid}/events/{eventid}",
+  async (eventSnapshot) => {
+    const bandid = eventSnapshot.params.bandid;
+    const eventid = eventSnapshot.params.eventid;
+    const snapshot = eventSnapshot.data;
+    if (!snapshot) return;
     const event = snapshot.data() as BandEvent;
     const band = await getBand(bandid);
     notify(
@@ -424,11 +425,12 @@ export const eventCreated = functions.firestore
     );
   });
 
-export const eventUpdated = functions.firestore
-  .document("bands/{bandid}/events/{eventid}")
-  .onUpdate(async (snapshot, context) => {
-    const bandid = context.params.bandid;
-    const eventid = context.params.eventid;
+export const eventUpdated = onDocumentUpdated("bands/{bandid}/events/{eventid}",
+  async (eventSnapshot) => {
+    const bandid = eventSnapshot.params.bandid;
+    const eventid = eventSnapshot.params.eventid;
+    const snapshot = eventSnapshot.data;
+    if (!snapshot) return;
     const event = snapshot.after.data() as BandEvent;
     const band = await getBand(bandid);
     notify(
