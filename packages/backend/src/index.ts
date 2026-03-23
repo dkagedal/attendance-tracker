@@ -32,6 +32,7 @@ import {
   newEventHtml,
   newEventText,
 } from "./email";
+import { Band, BandEvent } from "./types";
 
 // Start writing Firebase Functions
 // https://firebase.google.com/docs/functions/typescript
@@ -120,9 +121,22 @@ function NewEnvelope(from: string | null): Envelope {
   return env;
 }
 
-async function calculateNotifications(bandid: string) {
+/**
+ * recalculates and caches the list of email recipients for various types of band notifications.
+ * It reads the notification preferences for each member (and their admin status) from Firestore,
+ * and updates `bands/{bandid}/admin/notify` with a compiled `Envelope` for each notification type.
+ *
+ * @param bandid - The snapshot ID of the band.
+ */
+export async function calculateNotifications(bandid: string) {
   const logger = createLogger({ bandid });
-  const bandSettings = await getBandSettings(bandid);
+  const bandRef = db.collection("bands").doc(bandid);
+
+  const [bandSettings, members] = await Promise.all([
+    getBandSettings(bandid),
+    bandRef.collection("members").get()
+  ]);
+
   const notifications = {
     new_event: NewEnvelope(bandSettings.from_address)
   };
@@ -130,43 +144,44 @@ async function calculateNotifications(bandid: string) {
     new_join_request: NewEnvelope(bandSettings.from_address),
     new_member: NewEnvelope(bandSettings.from_address)
   };
-  const bandRef = db.collection("bands").doc(bandid);
-  const members = await bandRef.collection("members").get();
-  for (const doc of members.docs) {
+
+  const memberSettingsPromises = members.docs.map(async (doc) => {
+    const settingsDoc = await doc.ref.collection("private").doc("settings").get();
+    return { doc, settingsDoc };
+  });
+  
+  const memberSettings = await Promise.all(memberSettingsPromises);
+
+  for (const { doc, settingsDoc } of memberSettings) {
     const member = doc.data();
     logger.info(
       "Checking member:",
       member.display_name,
       member.admin ? "(admin)" : "(non-admin)"
     );
-    const settingsDoc = await doc.ref
-      .collection("private")
-      .doc("settings")
-      .get();
-    if (!settingsDoc.exists) {
-      continue;
-    }
+
+    if (!settingsDoc.exists) continue;
     const settings = settingsDoc.data()!;
-    if (!settings.email) {
-      continue;
-    }
+    if (!settings.email) continue;
+    
     logger.info("Email:", settings.email);
-    for (const [k, envelope] of Object.entries(notifications)) {
+    
+    const targetEnvelopes = member.admin 
+      ? { ...notifications, ...admin_notifications } 
+      : notifications;
+      
+    for (const [k, envelope] of Object.entries(targetEnvelopes)) {
       if (settings.notify[k]) {
         envelope.to.push(settings.email);
       }
     }
-    if (member.admin) {
-      for (const [k, envelope] of Object.entries(admin_notifications)) {
-        if (settings.notify[k]) {
-          envelope.to.push(settings.email);
-        }
-      }
-    }
   }
+
   logger.info("Notifications:", notifications);
   logger.info("Admin notifications:", admin_notifications);
+  
   Object.assign(notifications, admin_notifications);
+  
   await bandRef
     .collection("admin")
     .doc("notify")
