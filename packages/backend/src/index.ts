@@ -108,8 +108,8 @@ async function approve(
 type Envelope = {
   from: string | null;
   to: string[];
-  headers?: any;
-  message?: any;
+  headers?: Record<string, string>;
+  message?: MailMessage;
 };
 
 function NewEnvelope(from: string | null): Envelope {
