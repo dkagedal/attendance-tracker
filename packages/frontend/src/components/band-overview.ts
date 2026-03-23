@@ -208,6 +208,7 @@ export class BandOverview extends LitElement {
     return html`
       <div class="card">
         <div class="header">
+          <app-button variant="icon" icon="arrow_back" @click=${() => this.dispatchEvent(new CustomEvent('back'))}></app-button>
           <div class="logo" @click=${() => {
             if (this.isAdmin() && !this.editingBandLogo) {
               this.editBandLogoValue = this.bandData.logo || "";

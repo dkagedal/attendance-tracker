@@ -731,6 +731,7 @@ export class AppMain extends LitElement {
           bandid=${this.bandid}
           uid=${this.firebaseUser.uid}
           .membership=${this.membership}
+          @back=${() => this.currentView = 'schedule'}
         ></band-overview>
       ` : this.renderSchedule()}
       <app-dialog id="settings" heading="Inställningar för ${this.bandid}">
