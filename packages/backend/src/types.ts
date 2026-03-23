@@ -1,8 +1,8 @@
-type Band = {
+export type Band = {
   display_name: string;
 };
 
-type BandEvent = {
+export type BandEvent = {
   type: string;
   start: string;
   stop?: string;

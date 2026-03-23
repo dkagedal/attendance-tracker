@@ -1,4 +1,5 @@
 import { marked } from "marked";
+import { Band, BandEvent } from "./types";
 
 function escape(s: string): string {
   return s
