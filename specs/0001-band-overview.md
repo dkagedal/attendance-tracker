@@ -8,6 +8,7 @@ The Band Overview page provides a central place to view basic information about 
 
 - **Navigation**:
   - The page is accessed via a link in the main navigation menu.
+  - A "Back" button is visible at the top of the page, allowing the user to easily return to the schedule.
   - The default landing page of the application is the schedule.
 - **Viewing**:
   - All users (admins and regular members) see the band's name, the band's logo, and a simple list of band members (displaying names only).
@@ -19,6 +20,7 @@ The Band Overview page provides a central place to view basic information about 
 ## Functional Requirements
 
 - A link to the Band Overview is available in the main navigation menu without changing the default route.
+- A clear back navigation control (e.g., a "Back" button or an app bar action) is present to return the user to the schedule.
 - The band name and band logo are displayed on the page.
 - A list of band members is displayed, showing only their names.
 - Inline editing UI controls for the band name, band logo, and member names are provided _only_ to users with the 'admin' role.
