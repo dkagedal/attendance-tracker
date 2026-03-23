@@ -378,20 +378,18 @@ export const userDeleted = onDocumentDeleted("users/{uid}", async (event) => {
     return;
   }
   logger.info("User was deleted. Snapshot:", snapshot.data());
-  const deleteDoc = (ref: DocumentReference<DocumentData>) => {
-    ref.delete().then(
-      () => {
-        logger.info("Deleted", ref.path);
-      },
-      error => {
-        logger.warn("Failed to delete", ref.path, ":", error);
-      }
-    );
+  const deleteDoc = async (ref: DocumentReference<DocumentData>) => {
+    try {
+      await ref.delete();
+      logger.info("Deleted", ref.path);
+    } catch (error) {
+      logger.warn("Failed to delete", ref.path, ":", error);
+    }
   };
   const bands = await db.collection("bands").listDocuments();
   for (const bandRef of bands) {
-    deleteDoc(bandRef.collection("members").doc(uid));
-    deleteDoc(bandRef.collection("join_requests").doc(uid));
+    await deleteDoc(bandRef.collection("members").doc(uid));
+    await deleteDoc(bandRef.collection("join_requests").doc(uid));
   }
 });
 
