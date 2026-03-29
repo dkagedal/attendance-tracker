@@ -281,10 +281,31 @@ export class EventSummaryCard extends LitElement {
   render() {
     if (!this.event) return html``;
 
-    const dateObj = this.event.start ? new Date(this.event.start) : new Date();
-    const month = dateObj.toLocaleDateString("sv-SE", { month: "short" }).replace(".", "");
-    const day = dateObj.getDate();
-    const time = dateObj.toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
+    let month = "";
+    let day: number | string = "";
+    let time = "";
+
+    if (this.event.start) {
+      const [datePart, timePart] = this.event.start.split("T");
+      const [y, m, d] = datePart.split("-").map(Number);
+      
+      // Use UTC to prevent local timezone offsets from changing the day
+      const dateObj = new Date(Date.UTC(y, m - 1, d));
+      month = dateObj.toLocaleDateString("sv-SE", { month: "short", timeZone: "UTC" }).replace(".", "");
+      day = dateObj.getUTCDate();
+      
+      if (timePart) {
+        let isZeroTime = timePart === "00:00" || timePart === "00:00:00" || timePart.startsWith("00:00:00.");
+        if (!isZeroTime) {
+          const timeTokens = timePart.split(":");
+          time = `${timeTokens[0]}:${timeTokens[1]}`;
+        }
+      }
+    } else {
+      const dateObj = new Date();
+      month = dateObj.toLocaleDateString("sv-SE", { month: "short" }).replace(".", "");
+      day = dateObj.getDate();
+    }
 
     const total = this.members.length || 1; // Avoid division by zero
 
@@ -303,10 +324,12 @@ export class EventSummaryCard extends LitElement {
               ${this.event.cancelled ? html`<span class="badge cancelled" style="margin-left: 8px; vertical-align: middle;">Inställt</span>` : ""}
             </h3>
             <div class="meta">
-              <div class="meta-item">
-                <app-icon icon="schedule" style="font-size: 16px;"></app-icon>
-                ${time}
-              </div>
+              ${time ? html`
+                <div class="meta-item">
+                  <app-icon icon="schedule" style="font-size: 16px;"></app-icon>
+                  ${time}
+                </div>
+              ` : ""}
               ${this.event.location ? html`
                 <div class="meta-item location">
                   <app-icon icon="place" style="font-size: 16px;"></app-icon>

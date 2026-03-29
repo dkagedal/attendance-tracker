@@ -27,8 +27,18 @@ function utcDate(timestring: string): number {
   }
 }
 
+function isZeroTime(t: string | undefined): boolean {
+  if (!t) return true;
+  return t === "00:00" || t === "00:00:00" || t.startsWith("00:00:00.");
+}
+
+function hasTime(timestring: string): boolean {
+  let parts = timestring.split("T");
+  return parts.length > 1 && !isZeroTime(parts[1]);
+}
+
 function range(start: string, stop: string): string {
-  let fmt = start.indexOf("T") > 0 ? dateTimeFmt : dateFmt;
+  let fmt = hasTime(start) || hasTime(stop) ? dateTimeFmt : dateFmt;
   if ("formatRange" in fmt) {
     return (fmt as any).formatRange(utcDate(start), utcDate(stop));
   } else {
@@ -37,7 +47,7 @@ function range(start: string, stop: string): string {
 }
 
 function single(start: string): string {
-  const fmt = start.indexOf("T") > 0 ? dateTimeFmt : dateFmt;
+  const fmt = hasTime(start) ? dateTimeFmt : dateFmt;
   const milliseconds = utcDate(start);
   return fmt.format(milliseconds);
 }
