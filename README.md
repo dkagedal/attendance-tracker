@@ -1,15 +1,5 @@
 # Development environment
 
-## Nix
-
-The instructions here assume you will be using Nix to set up the environment, using the included `shell.nix` file.
-
-Read more at <https://nixos.org/> or just install it with
-
-```shell
-curl -L https://nixos.org/nix/install | sh -s -- --daemon
-```
-
 ## Clone Git repository
 
 ```shell
@@ -17,21 +7,11 @@ git clone whatever:attendance-tracker
 cd attendance-tracker
 ```
 
-## Enter the Nix environment
-
-```shell
-nix-shell
-```
-
-If you want to install dependencies yourself, check the `shell.nix` file for details.
-
 ## Install npm modules
 
 ```shell
 npm ci
 ```
-
-Note that in Nix, you typically don't use the `-g` flag too `npm install`.
 
 ## Set up Firebase
 
