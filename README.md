@@ -49,6 +49,14 @@ Set the current project to work with, and pick an alias for it:
 firebase use --add
 ```
 
+## Set up Email Extension
+
+This project uses the `firestore-send-email` extension to handle email delivery. 
+To set this up for your project:
+1. Go to the [Firebase Extensions Console](https://console.firebase.google.com/project/_/extensions).
+2. Install the **Trigger Email from Firestore** (`firestore-send-email`) extension.
+3. Configure it using your SMTP provider's details and set the appropriate mail collections (e.g. `mail`).
+
 ## Build functions
 
 ```shell
