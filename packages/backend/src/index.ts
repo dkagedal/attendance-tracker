@@ -39,6 +39,7 @@ import { Band, BandEvent } from "./types";
 
 initializeApp();
 const db = getFirestore();
+db.settings({ ignoreUndefinedProperties: true });
 
 function createLogger(context: object) {
   return {
@@ -212,6 +213,9 @@ async function notify(
     return;
   }
   let envelope: Envelope = notifyDoc.data()![notificationType];
+  if (!envelope) {
+    return;
+  }
   // TODO: delete this:
   if (Array.isArray(envelope)) {
     envelope = {
@@ -239,7 +243,7 @@ async function notify(
       message.messageId = baseMessageId;
     }
   }
-  db.collection("mail").add(envelope);
+  await db.collection("mail").add(envelope);
 }
 
 ///
@@ -333,7 +337,7 @@ Inloggad som:
 ${authUser.displayName ? authUser.displayName : " "} <${authUser.email}>
 `
     };
-    notify(bandId, "new_member", message, uid);
+    await notify(bandId, "new_member", message, uid);
   }
 );
 
@@ -426,7 +430,7 @@ export const eventCreated = onDocumentCreated("bands/{bandid}/events/{eventid}",
     if (!snapshot) return;
     const event = snapshot.data() as BandEvent;
     const band = await getBand(bandid);
-    notify(
+    await notify(
       bandid,
       "new_event",
       {
@@ -440,23 +444,27 @@ export const eventCreated = onDocumentCreated("bands/{bandid}/events/{eventid}",
 
 export const eventUpdated = onDocumentUpdated("bands/{bandid}/events/{eventid}",
   async (eventSnapshot) => {
-    const bandid = eventSnapshot.params.bandid;
-    const eventid = eventSnapshot.params.eventid;
-    const snapshot = eventSnapshot.data;
-    if (!snapshot) return;
-    const event = snapshot.after.data() as BandEvent;
-    const band = await getBand(bandid);
-    notify(
-      bandid,
-      "new_event",
-      {
-        subject: `${band.display_name}: ${event.type}`,
-        text: changedEventText(band, event),
-        html: changedEventHtml(band, event)
-      },
-      eventid,
-      true
-    );
+    try {
+      const bandid = eventSnapshot.params.bandid;
+      const eventid = eventSnapshot.params.eventid;
+      const snapshot = eventSnapshot.data;
+      if (!snapshot) return;
+      const event = snapshot.after.data() as BandEvent;
+      const band = await getBand(bandid);
+      await notify(
+        bandid,
+        "new_event",
+        {
+          subject: `${band.display_name}: ${event.type}`,
+          text: changedEventText(band, event),
+          html: changedEventHtml(band, event)
+        },
+        eventid,
+        true
+      );
+    } catch (e: any) {
+      logger.error("Error in eventUpdated:", e, e.stack);
+    }
   });
 
 // export const scheduled = functions.pubsub
