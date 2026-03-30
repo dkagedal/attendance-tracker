@@ -220,7 +220,7 @@ async function notify(
     };
   }
   envelope.message = message;
-  functions.logger.info(
+  logger.info(
     "Notify",
     bandid,
     notificationType,
