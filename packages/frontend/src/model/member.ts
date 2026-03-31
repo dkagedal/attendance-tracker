@@ -38,13 +38,15 @@ export interface Member {
   id: UID;
   display_name: string;
   admin: boolean;
+  section_id?: string;
 }
 
 class MemberConverter {
   static toFirestore(member: Member) {
     return {
       display_name: member.display_name,
-      admin: member.admin
+      admin: member.admin,
+      ...(member.section_id && { section_id: member.section_id })
     };
   }
 
@@ -53,7 +55,8 @@ class MemberConverter {
     return new MemberFromDb(
       new MemberReference(snapshot.ref),
       data.display_name,
-      data.admin
+      data.admin,
+      data.section_id
     );
   }
 }
@@ -62,7 +65,8 @@ class MemberFromDb implements Member {
   constructor(
     public ref: MemberReference,
     public display_name: string,
-    public admin: boolean
+    public admin: boolean,
+    public section_id?: string
   ) {}
 
   get id(): UID {

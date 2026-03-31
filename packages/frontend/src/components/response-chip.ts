@@ -20,7 +20,7 @@ export class ResponseChip extends LitElement {
         white-space: nowrap;
         overflow: hidden;
         text-align: center;
-        text-overflow: clip;
+        text-overflow: ellipsis;
         color: rgba(0, 0, 0, 0.54);
         transition: background 0.4s;
       }

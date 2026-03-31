@@ -36,7 +36,7 @@ npm run dev
 This will build both packages, start watch tasks, and boot up the Firebase Emulators.
 You can then access:
 
-- **Application**: <http://localhost:5002/beatles>
+- **Application**: <http://localhost:5002/test>
 - **Emulator UI**: <http://localhost:4000>
 
 **Local Login Flow**: Click "Logga in med Google". In the emulator widget, click "Add new account", select "Auto-generate user information", and click "Sign in".

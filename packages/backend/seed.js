@@ -11,22 +11,43 @@ admin.initializeApp({
 const db = admin.firestore();
 
 async function seed() {
-    const bandId = 'beatles';
+    const bandId = 'test';
     const bandRef = db.collection('bands').doc(bandId);
 
     console.log(`Seeding band: ${bandId}...`);
 
     // Create band
     await bandRef.set({
-        display_name: 'The Beatles',
+        display_name: 'Duke Ellington Orchestra',
+        sections: [
+            { id: 'trumpets', name: 'Trumpets', emoji: '🎺' },
+            { id: 'trombones', name: 'Trombones', emoji: '🎷' },
+            { id: 'reeds', name: 'Reeds', emoji: '🎷' },
+            { id: 'rhythm', name: 'Rhythm', emoji: '🥁' },
+            { id: 'vocals', name: 'Vocals', emoji: '🎤' },
+        ],
     });
 
     // Create members
     const members = [
-        { id: 'john', display_name: 'John Lennon', admin: true },
-        { id: 'paul', display_name: 'Paul McCartney', admin: true },
-        { id: 'george', display_name: 'George Harrison', admin: false },
-        { id: 'ringo', display_name: 'Ringo Starr', admin: false },
+        { id: 'duke', display_name: 'Duke', admin: true, section_id: 'rhythm' },
+        { id: 'nance', display_name: 'Ray Nance', admin: false, section_id: 'trumpets' },
+        { id: 'stewart', display_name: 'Rex Stewart', admin: false, section_id: 'trumpets' },
+        { id: 'jones', display_name: 'Wallace Jones', admin: false, section_id: 'trumpets' },
+        { id: 'brown', display_name: 'Lawrence Brown', admin: false, section_id: 'trombones' },
+        { id: 'nanton', display_name: 'Tricky Sam', admin: false, section_id: 'trombones' },
+        { id: 'tizol', display_name: 'Juan Tizol', admin: false, section_id: 'trombones' },
+        { id: 'hodges', display_name: 'Johnny Hodges', admin: false, section_id: 'reeds' },
+        { id: 'hardwick', display_name: 'Otto Hardwick', admin: false, section_id: 'reeds' },
+        { id: 'webster', display_name: 'Ben Webster', admin: false, section_id: 'reeds' },
+        { id: 'bigard', display_name: 'Barney Bigard', admin: false, section_id: 'reeds' },
+        { id: 'carney', display_name: 'Harry Carney', admin: false, section_id: 'reeds' },
+        { id: 'blanton', display_name: 'Jimmy Blanton', admin: false, section_id: 'rhythm' },
+        { id: 'raglin', display_name: 'Junior', admin: false, section_id: 'rhythm' },
+        { id: 'guy', display_name: 'Fred Guy', admin: false, section_id: 'rhythm' },
+        { id: 'greer', display_name: 'Sonny Greer', admin: false, section_id: 'rhythm' },
+        { id: 'anderson', display_name: 'Ivie Anderson', admin: false, section_id: 'vocals' },
+        { id: 'jeffries', display_name: 'Herb Jeffries', admin: false, section_id: 'vocals' },
     ];
 
     console.log('Seeding members and users...');
@@ -34,13 +55,14 @@ async function seed() {
         await bandRef.collection('members').doc(m.id).set({
             display_name: m.display_name,
             admin: m.admin,
+            section_id: m.section_id,
         });
 
         // Populate users collection to ensure initial lookup succeeds
         await db.collection('users').doc(m.id).set({
             bands: {
                 [bandId]: {
-                    display_name: 'The Beatles'
+                    display_name: 'Duke Ellington Orchestra'
                 }
             }
         });
@@ -68,36 +90,36 @@ async function seed() {
             type: 'Rehearsal',
             start: formatDate(addDays(now, 2), '19:00:00'),
             stop: formatDate(addDays(now, 2), '21:00:00'),
-            location: 'Abbey Road',
+            location: 'The Cotton Club',
             description: 'Preparing for the winter tour',
         },
         {
             type: 'Rehearsal',
             start: formatDate(addDays(now, 9), '19:00:00'),
             stop: formatDate(addDays(now, 9), '21:00:00'),
-            location: 'Abbey Road',
-            description: 'New songs',
+            location: 'The Cotton Club',
+            description: 'New arrangements',
         },
         {
             type: 'Gig',
             start: formatDate(addDays(now, 14), '20:00:00'),
             stop: formatDate(addDays(now, 14), '23:00:00'),
-            location: 'The Cavern Club',
-            description: 'Homecoming show',
+            location: 'Carnegie Hall',
+            description: 'Historical performance',
         },
         {
             type: 'Recording',
             start: formatDate(addDays(now, 20), '10:00:00'),
             stop: formatDate(addDays(now, 20), '18:00:00'),
-            location: 'Studio 2',
-            description: 'Recording session',
+            location: 'Columbia Records Studio',
+            description: 'Recording session for the new hits',
         },
         {
             type: 'Christmas Party',
             start: formatDate(addDays(now, 30), '18:00:00'),
             stop: formatDate(addDays(now, 31), '02:00:00'),
-            location: 'Apple Corps HQ',
-            description: 'Annual party',
+            location: 'Hotel Sherman',
+            description: 'Annual party for members and friends',
         }
     ];
 

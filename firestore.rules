@@ -53,10 +53,9 @@ service cloud.firestore {
         allow read: if isMember(request.auth.uid);
         allow create, delete: if false;
 
-        // Allow a user to change their own display name, or an admin to change any member's display name
-        allow update: if ((request.auth.uid == uid || isAdmin(request.auth.uid))
-                          && request.resource.data.diff(resource.data).affectedKeys()
-                              .hasOnly(['display_name']));
+        allow update: if
+          (request.auth.uid == uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['display_name'])) ||
+          (isAdmin(request.auth.uid) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['display_name', 'section_id']));
 
         match /private/settings {
           allow read: if request.auth.uid == uid;
