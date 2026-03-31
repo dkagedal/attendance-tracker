@@ -12,6 +12,12 @@ import {
 } from "./joinrequest";
 import { MemberCollectionReference, MemberReference } from "./member";
 
+export interface Section {
+  id: string;
+  name: string;
+  emoji: string;
+}
+
 export class BandReference {
   dbref: DocumentReference<Band>;
   constructor(ref: DocumentReference<any>) {
@@ -59,16 +65,27 @@ class BandConverter {
   static toFirestore(band: Band) {
     return {
       display_name: band.display_name,
-      ...(band.logo && { logo: band.logo })
+      ...(band.logo && { logo: band.logo }),
+      ...(band.sections && band.sections.length > 0 && { sections: band.sections })
     };
   }
 
   static fromFirestore(snapshot, options): Band {
     const data = snapshot.data(options);
-    return new Band(new BandReference(snapshot.ref), data.display_name, data.logo);
+    return new Band(
+      new BandReference(snapshot.ref),
+      data.display_name,
+      data.logo,
+      data.sections || []
+    );
   }
 }
 
 export class Band {
-  constructor(public ref: BandReference, public display_name: string, public logo?: string) {}
+  constructor(
+    public ref: BandReference,
+    public display_name: string,
+    public logo?: string,
+    public sections: Section[] = []
+  ) {}
 }

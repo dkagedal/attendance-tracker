@@ -13,7 +13,7 @@ import { repeat } from "lit/directives/repeat";
 import { UID } from "../datamodel";
 import { db } from "../storage";
 import { BandEvent } from "../model/bandevent";
-import { band } from "../model/band";
+import { band, Band } from "../model/band";
 import { Member } from "../model/member";
 import "./time-range";
 import "./event-summary-card";
@@ -56,13 +56,18 @@ export class BandSchedule extends LitElement {
   @query("event-editor")
   editor: EventEditor;
 
+  @state()
+  bandData: Band | null = null;
+
   private _unsubscribeGigs: () => void = () => { };
   private _unsubscribeMembers: () => void = () => { };
+  private _unsubscribeBand: () => void = () => { };
 
   updated(changedProperties: any) {
     if (changedProperties.has("bandid")) {
       this.fetchGigs();
       this.fetchMembers();
+      this.fetchBandData();
     }
   }
 
@@ -70,6 +75,7 @@ export class BandSchedule extends LitElement {
     super.disconnectedCallback();
     this._unsubscribeGigs();
     this._unsubscribeMembers();
+    this._unsubscribeBand();
   }
 
   fetchGigs() {
@@ -117,6 +123,21 @@ export class BandSchedule extends LitElement {
     this._unsubscribeMembers = onSnapshot(q, (snapshot) => {
       this.members = snapshot.docs.map(doc => doc.data());
       this.members.sort((m1, m2) => m1.id.localeCompare(m2.id));
+    });
+  }
+
+  fetchBandData() {
+    this._unsubscribeBand();
+    if (!this.bandid) {
+      this.bandData = null;
+      return;
+    }
+
+    const bandRef = band(db, this.bandid);
+    this._unsubscribeBand = onSnapshot(bandRef.dbref, (snapshot) => {
+      if (snapshot.exists()) {
+        this.bandData = snapshot.data();
+      }
     });
   }
 
@@ -234,6 +255,7 @@ export class BandSchedule extends LitElement {
             <event-card
               .event=${this.selected_event}
               .members=${this.members}
+              .sections=${this.bandData?.sections || []}
              ></event-card>
             <app-button slot="primaryAction" variant="primary" @click=${this.closeDialog}>Stäng</app-button>
           `}

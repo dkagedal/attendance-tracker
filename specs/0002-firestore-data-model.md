@@ -11,6 +11,10 @@ The database is structured as follows:
 * `/bands/{bandId}`: Represents a band.
   * `display_name`: (string) Human-readable name of the band.
   * `logo`: (optional, string) URL to the band's logo.
+  * `sections`: (optional, array) A list of section objects, each having:
+    * `id`: (string) Unique identifier for the section.
+    * `name`: (string) The name of the section.
+    * `emoji`: (string) An emoji representing the section.
   * `/bands/{bandId}/events/{eventId}`: Sub-collection of events for the band.
     * `type`: (string) The type of event (e.g., "rehearsal", "gig").
     * `start`: (string) ISO 8601 timestamp for when the event starts.
@@ -24,6 +28,7 @@ The database is structured as follows:
   * `/bands/{bandId}/members/{uid}`: Sub-collection of members in the band.
     * `display_name`: (string) The user's display name within the context of this band.
     * `admin`: (boolean) True if the user is an administrator for the band.
+    * `section_id`: (optional, string) The ID of the section this member is assigned to.
     * `/bands/{bandId}/members/{uid}/private/settings`: Private settings for the member.
       * `email`: (string) The user's email address.
       * `notify`: (map) Notification preferences.

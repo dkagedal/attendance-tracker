@@ -22,6 +22,7 @@ import {
   ParticipantResponse
 } from "../model/participant";
 import { Member } from "../model/member";
+import { Section } from "../model/band";
 
 @customElement("event-card")
 export class EventCard extends LitElement {
@@ -30,6 +31,9 @@ export class EventCard extends LitElement {
 
   @property({ type: Object, attribute: false })
   event: BandEvent = null;
+
+  @property({ type: Array, attribute: false })
+  sections: Section[] = [];
 
 
   @state()
@@ -124,16 +128,28 @@ export class EventCard extends LitElement {
       line-height: 1.5;
     }
 
-
-
     .roster-section {
       margin-top: var(--app-spacing-lg);
     }
 
-    .roster-title {
+    .section-grid {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      column-gap: var(--app-spacing-md);
+      // row-gap: var(--app-spacing-sm);
+      align-items: baseline;
+      margin-top: var(--app-spacing-md);
+    }
+
+    .section-header {
       font-weight: var(--app-font-weight-bold);
-      margin-bottom: var(--app-spacing-sm);
-      display: block;
+      font-size: var(--app-font-size-sm);
+      color: var(--app-color-text-secondary);
+      white-space: nowrap;
+    }
+
+    .section-roster {
+      min-width: 0;
     }
 
     .chip {
@@ -169,6 +185,11 @@ export class EventCard extends LitElement {
     .comment-text {
       color: var(--app-color-text-secondary);
       grid-column: 3;
+    }
+
+    .comment-list response-icon {
+      font-size: 16px;
+      grid-column: 2;
     }
 
     .comment-list response-icon {
@@ -213,6 +234,46 @@ export class EventCard extends LitElement {
         mode=${currentResponse == "na" ? "edit" : "view"}
         @update-response=${this.handleResponseUpdate}
       ></response-card>
+    `;
+  }
+
+  renderSectionRosters() {
+    if (!this.event || this.cancelled) return html``;
+
+    const sectionIds = new Set(this.sections.map(s => s.id));
+    const sectionsWithMembers = this.sections.map(section => ({
+      id: section.id,
+      name: section.name,
+      emoji: section.emoji,
+      members: this.members.filter(m => m.section_id === section.id)
+    }));
+
+    const unassignedMembers = this.members.filter(m => !m.section_id || !sectionIds.has(m.section_id));
+    if (unassignedMembers.length > 0) {
+      sectionsWithMembers.push({
+        id: "unassigned",
+        name: "Övriga",
+        emoji: "🎵",
+        members: unassignedMembers
+      });
+    }
+
+    const activeSections = sectionsWithMembers.filter(s => s.members.length > 0);
+    const responses = Object.fromEntries(Object.entries(this.participants).map(([k, v]) => [k, v.attending]));
+
+    return html`
+      <div class="section-grid">
+        ${activeSections.map(s => html`
+          <div class="section-header">${s.emoji} ${s.name}</div>
+          <div class="section-roster">
+            <mini-roster
+              .members=${s.members}
+              .event=${this.event}
+              .responses=${responses}
+            ></mini-roster>
+          </div>
+        `)}
+      </div>
     `;
   }
 
@@ -276,12 +337,7 @@ export class EventCard extends LitElement {
 
       <div class="roster-section" style="display: ${this.cancelled ? "none" : "block"}">
         ${!this.cancelled ? html`
-          <span class="roster-title">Vilka kommer?</span>
-          <mini-roster
-            .members=${this.members}
-            .event=${this.event}
-            .responses=${Object.fromEntries(Object.entries(this.participants).map(([k, v]) => [k, v.attending]))}
-          ></mini-roster>
+          ${this.renderSectionRosters()}
           ${this.renderComments()}
         ` : ""}
       </div>
