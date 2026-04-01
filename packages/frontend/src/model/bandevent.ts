@@ -138,6 +138,14 @@ export class BandEventFromDb implements BandEvent {
   }
 
   static empty(): BandEvent {
-    return new BandEventFromDb(null, "", "", undefined, "", "", false);
+    return new BandEventFromDb(
+      { dbref: null } as any,
+      "",
+      "",
+      undefined,
+      "",
+      "",
+      false
+    );
   }
 }

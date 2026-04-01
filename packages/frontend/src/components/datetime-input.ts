@@ -37,13 +37,13 @@ export class DatetimeInput extends LitElement {
     }
   }
 
-  set value(value) {
+  set value(value: string | undefined) {
     if (!value) {
       this._date = "";
       this._time = "";
       return;
     }
-    let [dateval, timeval] = value.split("T");
+    const [dateval, timeval] = value.split("T");
     this._date = dateval || "";
     this._time = timeval || "";
   }
