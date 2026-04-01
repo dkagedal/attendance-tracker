@@ -71,7 +71,7 @@ To run the application locally with Firebase emulators:
     -   Run an initial build of both packages.
     -   Start `tsc:watch` and `rollup:watch` for both frontend and backend to auto-rebuild on file changes.
     -   Start the Firebase emulators with imported test data and the `emulator` configuration injected via rollup.
-2.  Access the application at `http://localhost:5002/beatles`.
+2.  Access the application at `http://localhost:5002/test`.
 3.  Access the Emulator UI at `http://localhost:4000`.
 
 ### Login Flow
