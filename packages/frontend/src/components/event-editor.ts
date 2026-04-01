@@ -2,7 +2,6 @@ import "./app-input";
 import "./app-button";
 import { AppInput } from "./app-input";
 import { css, html, LitElement } from "lit";
-import { ifDefined } from "lit/directives/if-defined.js";
 import "./datetime-input";
 import { DatetimeInput } from "./datetime-input";
 import { customElement, property, query } from "lit/decorators.js";
@@ -38,6 +37,12 @@ export class EventEditor extends LitElement {
 
   @query("#stop")
   stopInput: DatetimeInput;
+
+  willUpdate(changedProperties: Map<string, any>) {
+    if (changedProperties.has("data")) {
+      this.range = this.data.hasStopTime();
+    }
+  }
 
   deleteEvent() {
     if (confirm("Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.")) {
@@ -77,7 +82,7 @@ export class EventEditor extends LitElement {
         type="text"
         required
         ?disabled=${isCancelled}
-        value="${this.data.type}"
+        .value="${this.data.type}"
         @input=${(e: CustomEvent) => { this.data.type = (e.target as AppInput).value; }}
       ></app-input>
       <app-input
@@ -85,7 +90,7 @@ export class EventEditor extends LitElement {
         id="location"
         type="text"
         ?disabled=${isCancelled}
-        value="${ifDefined(this.data.location)}"
+        .value="${this.data.location || ""}"
         @input=${(e: CustomEvent) => { this.data.location = (e.target as AppInput).value; }}
       ></app-input>
       <app-input
@@ -93,21 +98,21 @@ export class EventEditor extends LitElement {
         id="desc"
         multiline
         ?disabled=${isCancelled}
-        value="${ifDefined(this.data.description)}"
+        .value="${this.data.description || ""}"
         @input=${(e: CustomEvent) => { this.data.description = (e.target as AppInput).value; }}
       ></app-input>
       <datetime-input
         id="start"
         required
         ?disabled=${isCancelled}
-        initial_value="${ifDefined(this.data.start)}"
+        .value="${this.data.start || ""}"
       ></datetime-input>
       <span class="ranged">-</span>
       <datetime-input
         id="stop"
         class="ranged"
         ?disabled=${isCancelled}
-        initial_value="${ifDefined(this.data.stop)}"
+        .value="${this.data.stop || ""}"
       ></datetime-input>
       <app-button
         variant="icon"
