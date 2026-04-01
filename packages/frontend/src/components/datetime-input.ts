@@ -6,9 +6,6 @@ import "./time-range";
 
 @customElement("datetime-input")
 export class DatetimeInput extends LitElement {
-  @property({ type: String })
-  initial_value: string; // "2020-02-29T19:50" or "2020-02-29"
-
   @state()
   private _date: string = "";
 
@@ -27,14 +24,7 @@ export class DatetimeInput extends LitElement {
   @query("#time")
   time: AppInput;
 
-  willUpdate(changedProperties: Map<string, any>) {
-    if (changedProperties.has("initial_value") && this.initial_value) {
-      const [d, t] = this.initial_value.split("T");
-      this._date = d || "";
-      this._time = t || "";
-    }
-  }
-
+  @property({ type: String })
   get value() {
     if (this._date) {
       if (this._time) {

@@ -25,9 +25,9 @@ import { CreateJoinRequest, db, getHostBand } from "../storage";
 import "./login-dialog";
 import "./band-schedule";
 import "./band-overview";
-import "./event-editor";
 import { EventEditor } from "./event-editor";
 import { repeat } from "lit/directives/repeat";
+import { BandEventFromDb } from "../model/bandevent";
 import { User } from "../datamodel";
 import { band } from "../model/band";
 import { ProfileEditor } from "./profile-editor";
@@ -305,6 +305,11 @@ export class AppMain extends LitElement {
     }
   }
 
+  addNewEvent() {
+    this.addDialogEditor.data = BandEventFromDb.empty();
+    this.addDialog.show();
+  }
+
   saveNewEvent(): void {
     const editor = this.addDialogEditor;
     console.log("[app-main] Editor:", editor);
@@ -575,7 +580,7 @@ export class AppMain extends LitElement {
           variant="primary"
           icon="add"
           style="border-radius: 9999px; padding: 16px; box-shadow: var(--app-shadow-lg);"
-          @click=${() => this.addDialog.show()}
+          @click=${() => this.addNewEvent()}
         ></app-button>
       </div>
       <app-dialog id="add-dialog" heading="Ny händelse" hideCloseButton>

@@ -102,7 +102,7 @@ const BandEventConverter: FirestoreDataConverter<BandEvent> = {
 };
 
 // A band event.
-class BandEventFromDb implements BandEvent {
+export class BandEventFromDb implements BandEvent {
   constructor(
     public ref: BandEventReference,
     public type: string,
@@ -135,5 +135,9 @@ class BandEventFromDb implements BandEvent {
       this.description,
       this.cancelled
     );
+  }
+
+  static empty(): BandEvent {
+    return new BandEventFromDb(null, "", "", undefined, "", "", false);
   }
 }
