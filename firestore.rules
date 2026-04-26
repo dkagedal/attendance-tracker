@@ -13,6 +13,10 @@ service cloud.firestore {
       allow create: if request.auth.uid == user;
       allow update: if request.auth.uid == user && request.resource.data == resource.data;
       allow delete: if false;
+
+      match /apikeys/{key} {
+        allow read, write: if request.auth.uid == user;
+      }
     }
 
     // Hosts collection.
