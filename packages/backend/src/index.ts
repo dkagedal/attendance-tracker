@@ -33,6 +33,8 @@ import {
   newEventText,
 } from "./email";
 import { Band, BandEvent } from "./types";
+import { onRequest } from "firebase-functions/v2/https";
+import { expressApp } from "./api";
 
 // Start writing Firebase Functions
 // https://firebase.google.com/docs/functions/typescript
@@ -473,3 +475,5 @@ export const eventUpdated = onDocumentUpdated("bands/{bandid}/events/{eventid}",
 //   .onRun(context => {
 //     functions.logger.info("Scheduled run");
 //   });
+
+export const api = onRequest(expressApp);

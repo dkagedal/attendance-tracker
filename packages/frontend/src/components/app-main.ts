@@ -25,6 +25,7 @@ import { CreateJoinRequest, db, getHostBand } from "../storage";
 import "./login-dialog";
 import "./band-schedule";
 import "./band-overview";
+import "./api-keys";
 import { EventEditor } from "./event-editor";
 import { repeat } from "lit/directives/repeat";
 import { BandEventFromDb } from "../model/bandevent";
@@ -102,7 +103,7 @@ export class AppMain extends LitElement {
   viewingJoinRequest: string = null;
 
   @state()
-  currentView: "schedule" | "overview" = "schedule";
+  currentView: "schedule" | "overview" | "apikeys" = "schedule";
 
   @state()
   membership: Member = null;
@@ -553,6 +554,10 @@ export class AppMain extends LitElement {
             <app-icon icon="edit" style="font-size: 20px;"></app-icon>
             <span>Redigera profil...</span>
           </div>
+          <div class="menu-item" @click=${() => { this.currentView = 'apikeys'; this.profileMenuOpen = false; }}>
+            <app-icon icon="key" style="font-size: 20px;"></app-icon>
+            <span>API-nycklar</span>
+          </div>
           <div class="menu-item" @click=${() => { signOut(this.auth); this.profileMenuOpen = false; }}>
             <app-icon icon="exit_to_app" style="font-size: 20px;"></app-icon>
             <span>Logga ut</span>
@@ -738,6 +743,13 @@ export class AppMain extends LitElement {
           .membership=${this.membership}
           @back=${() => this.currentView = 'schedule'}
         ></band-overview>
+      ` : this.currentView === 'apikeys' ? html`
+        <div style="margin-bottom: 16px;">
+          <app-button variant="text" icon="arrow_back" @click=${() => this.currentView = 'schedule'}>
+            Tillbaka
+          </app-button>
+        </div>
+        <api-keys uid=${this.firebaseUser.uid}></api-keys>
       ` : this.renderSchedule()}
       <app-dialog id="settings" heading="Inställningar för ${this.bandid}">
         <profile-editor

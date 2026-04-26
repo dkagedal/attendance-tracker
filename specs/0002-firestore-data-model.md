@@ -43,4 +43,8 @@ The database is structured as follows:
   * `bands`: (map) A map of band IDs to band information that the user is a member of.
     * `{bandId}`: (map)
       * `display_name`: (string) The display name of the band.
+  * `/users/{uid}/apikeys/{token}`: Sub-collection of custom API keys for the user.
+    * `name`: (string) The user-provided name for this API key.
+    * `createdAt`: (timestamp) When the key was created.
+    * `readonly`: (boolean) If true, this key can only be used for read operations (GET requests).
 * `/hosts/{hostname}`: Represents a custom hostname.
