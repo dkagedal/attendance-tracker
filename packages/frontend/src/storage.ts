@@ -30,15 +30,15 @@ export function initDB(app: FirebaseApp, useEmulator: boolean) {
   console.log("Initializing database and stuff");
   db = getFirestore(app);
   if (useEmulator) {
-    console.log("Connecting to Firestore emulator");
-    connectFirestoreEmulator(db, "localhost", 8080);
+    console.log(`Connecting to Firestore emulator at ${location.hostname}`);
+    connectFirestoreEmulator(db, location.hostname, 8080);
   }
 
   auth = getAuth();
   auth.languageCode = "sv";
   if (useEmulator) {
-    console.log("Connecting to Auth emulator");
-    connectAuthEmulator(auth, "http://localhost:9099");
+    console.log(`Connecting to Auth emulator at http://${location.hostname}:9099`);
+    connectAuthEmulator(auth, `http://${location.hostname}:9099`);
   }
   if (loginStateCallback) {
     onAuthStateChanged(auth, loginStateCallback);
