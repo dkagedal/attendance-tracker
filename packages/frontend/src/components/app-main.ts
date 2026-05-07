@@ -792,7 +792,7 @@ export class AppMain extends LitElement {
         this.drawer.open = true;
       }}
         ></app-button>
-        <div class="app-title">Närvarokollen</div>
+        <div class="app-title">Kommer</div>
         ${this.renderProfileMenu()}
       </div>
       ${this.renderProgress()}
