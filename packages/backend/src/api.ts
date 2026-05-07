@@ -11,7 +11,7 @@ app.use(express.json());
 const getDb = () => getFirestore();
 
 // Middleware to authenticate via Firebase Auth or Custom API Tokens
-const authMiddleware = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+const requireAuth = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Unauthorized: Missing or invalid Authorization header' });
@@ -19,7 +19,6 @@ const authMiddleware = async (req: express.Request, res: express.Response, next:
   }
 
   const token = authHeader.split('Bearer ')[1].trim();
-  const bandId = (req.params as any).bandId;
 
   let uid: string;
   let isReadOnly = false;
@@ -57,13 +56,6 @@ const authMiddleware = async (req: express.Request, res: express.Response, next:
       return;
     }
     
-    // Check if user is a member of the band to mirror frontend rules
-    const memberDoc = await getDb().collection('bands').doc(bandId).collection('members').doc(uid).get();
-    if (!memberDoc.exists) {
-      res.status(403).json({ error: 'Forbidden: User is not a member of this band' });
-      return;
-    }
-
     // Add uid to request for potential use in routes
     (req as any).uid = uid;
 
@@ -74,8 +66,45 @@ const authMiddleware = async (req: express.Request, res: express.Response, next:
   }
 };
 
+const requireBandMember = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+  const bandId = (req.params as any).bandId;
+  const uid = (req as any).uid;
+
+  try {
+    // Check if user is a member of the band to mirror frontend rules
+    const memberDoc = await getDb().collection('bands').doc(bandId).collection('members').doc(uid).get();
+    if (!memberDoc.exists) {
+      res.status(403).json({ error: 'Forbidden: User is not a member of this band' });
+      return;
+    }
+
+    next();
+  } catch (error) {
+    console.error('Error during authorization:', error);
+    res.status(500).json({ error: 'Failed to verify band membership' });
+  }
+};
+
 const bandRouter = express.Router({ mergeParams: true });
-bandRouter.use(authMiddleware);
+bandRouter.use(requireAuth);
+bandRouter.use(requireBandMember);
+
+// Get user's bands
+app.get('/users/me/bands', requireAuth, async (req, res) => {
+  try {
+    const uid = (req as any).uid;
+    const userDoc = await getDb().collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+    const userData = userDoc.data();
+    res.json(userData?.bands || {});
+  } catch (error) {
+    console.error('Error fetching user bands:', error);
+    res.status(500).json({ error: 'Failed to fetch user bands' });
+  }
+});
 
 // Get all events for a band
 bandRouter.get('/events', async (req, res) => {

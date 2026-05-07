@@ -32,7 +32,25 @@ You can generate Custom API Tokens in the web application by navigating to the *
 
 ## Endpoints
 
-### 1. List All Events
+### 1. List User's Bands
+**`GET /users/me/bands`**
+
+Retrieves a list of bands the authenticated user is a member of.
+
+**Response:**
+Returns a JSON object mapping band IDs to basic band information.
+```json
+{
+  "bandId1": {
+    "display_name": "My Band"
+  },
+  "bandId2": { ... }
+}
+```
+
+---
+
+### 2. List All Events
 **`GET /bands/:bandId/events`**
 
 Retrieves a list of all events for the specified band.
@@ -52,7 +70,7 @@ Returns a JSON object mapping event IDs to event objects.
 
 ---
 
-### 2. Get a Single Event
+### 3. Get a Single Event
 **`GET /bands/:bandId/events/:eventId`**
 
 Retrieves the details of a specific event.
@@ -70,7 +88,7 @@ Returns the event object including its `id`.
 
 ---
 
-### 3. Create a New Event
+### 4. Create a New Event
 **`POST /bands/:bandId/events`**
 
 Creates a new event for the specified band.
@@ -92,7 +110,7 @@ Returns the created event object including its generated `id`.
 
 ---
 
-### 4. Update an Event
+### 5. Update an Event
 **`PUT /bands/:bandId/events/:eventId`**
 
 Updates an existing event. This performs a partial update (merge) on the existing document.
@@ -111,7 +129,7 @@ Returns the updated event object.
 
 ---
 
-### 5. Delete an Event
+### 6. Delete an Event
 **`DELETE /bands/:bandId/events/:eventId`**
 
 Deletes the specified event from the band.
