@@ -1,7 +1,13 @@
 {
     "short_name": "Kommer",
     "name": "Kommer",
-    "icons": [],
+    "icons": [
+        {
+            "src": "images/logo-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
     "start_url": ".",
     "display": "standalone",
     "theme_color": "#000000",
