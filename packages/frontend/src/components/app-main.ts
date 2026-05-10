@@ -697,9 +697,22 @@ export class AppMain extends LitElement {
     }
     if (this.firebaseUser == null) {
       return html`
-        <app-dialog open heading="Välkommen">
-          <login-dialog .app=${this.app}></login-dialog>
-        </app-dialog>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; padding: 2rem 1rem;">
+          <div style="text-align: center; margin-bottom: 2rem; max-width: 500px;">
+            <img src="/images/logo-512x512.png" alt="Kommer Logo" style="width: 100px; height: 100px; margin-bottom: 1rem; border-radius: 20px; box-shadow: var(--app-shadow-md);">
+            <h1 style="margin: 0 0 0.5rem 0; color: var(--app-color-primary); font-size: 2.5rem;">Kommer</h1>
+            <p style="font-size: 1.1rem; color: var(--app-color-text-secondary); margin: 0; line-height: 1.5;">Ett närvarosystem för storband, körer och andra grupper.</p>
+          </div>
+          
+          <div style="background: var(--app-color-surface); padding: 2rem; border-radius: var(--app-radius-lg); box-shadow: var(--app-shadow-lg); width: 100%; max-width: 400px; border: 1px solid var(--app-color-border); display: flex; justify-content: center;">
+            <login-dialog .app=${this.app}></login-dialog>
+          </div>
+          
+          <div style="margin-top: 2rem; text-align: center; font-size: 0.85em; color: var(--app-color-text-secondary);">
+            Genom att logga in godkänner du vår 
+            <a href="/privacy.html" target="_blank" style="color: var(--app-color-primary); text-decoration: none; font-weight: 500;">Integritetspolicy</a>.
+          </div>
+        </div>
       `;
     }
     if (!this.bandid) {
