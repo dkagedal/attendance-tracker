@@ -180,7 +180,7 @@ export class EventSummaryCard extends LitElement {
     .date-month {
       font-size: 0.75rem;
       text-transform: uppercase;
-      color: var(--app-color-error);
+      color: var(--app-color-primary-700);
       font-weight: var(--app-font-weight-bold);
       line-height: 1;
       margin-bottom: 4px;
@@ -257,8 +257,8 @@ export class EventSummaryCard extends LitElement {
 
     .badge.action {
       background-color: transparent;
-      color: var(--app-color-error);
-      border: 1px solid var(--app-color-error);
+      color: var(--app-color-red-600);
+      border: 1px solid var(--app-color-red-600);
       box-shadow: none;
     }
 

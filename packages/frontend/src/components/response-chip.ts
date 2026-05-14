@@ -26,19 +26,22 @@ export class ResponseChip extends LitElement {
       }
 
       :host([response="yes"]) {
-        background: rgba(0 200 0 / 50%);
+        background: var(--app-color-green-300);
+        // color: white;
         border-width: 2px;
         padding: 0;
       }
 
       :host([response="no"]) {
-        background: rgb(200 0 0 / 50%);
+        background: var(--app-color-red-300);
+        // color: white;
         border-width: 2px;
         padding: 0;
       }
 
       :host([response="sub"]) {
-        background: rgb(0 0 0 / 20%);
+        background: var(--app-color-amber-300);
+        // color: white;
         border-width: 2px;
         padding: 0;
       }

@@ -20,7 +20,6 @@ import "./event-summary-card";
 import "./app-dialog";
 import "./app-button";
 import "./app-icon";
-import "./mini-roster";
 import "./event-card";
 import { EventEditor } from "./event-editor";
 
@@ -180,6 +179,11 @@ export class BandSchedule extends LitElement {
         cursor: pointer;
         transition: background-color 0.2s;
         font-size: var(--app-font-size-md);
+
+        &.delete {
+          background-color: var(--app-color-red-700);
+          color: white;
+        }
       }
 
       .menu-item:hover {
@@ -233,20 +237,20 @@ export class BandSchedule extends LitElement {
               <div class="action-menu ${this.actionMenuOpen ? 'open' : ''}" @click=${(e: Event) => e.stopPropagation()}>
                 ${this.selected_event.cancelled ? html`
                   <div class="menu-item" @click=${() => { this.setCancelled(false); this.actionMenuOpen = false; }}>
-                    <app-icon icon="history" style="font-size: 20px;"></app-icon>
+                    <app-icon icon="history"></app-icon>
                     <span>Återställ</span>
                   </div>
-                  <div class="menu-item" @click=${() => { this.deleteEvent(); this.actionMenuOpen = false; }}>
-                    <app-icon icon="delete" style="font-size: 20px;"></app-icon>
-                    <span style="color: var(--app-color-error);">Radera</span>
+                  <div class="menu-item delete" @click=${() => { this.deleteEvent(); this.actionMenuOpen = false; }}>
+                    <app-icon icon="delete"></app-icon>
+                    <span>Radera</span>
                   </div>
                 ` : html`
                   <div class="menu-item" @click=${() => { this.edit_snapshot = this.selected_event.clone(); this.actionMenuOpen = false; }}>
-                    <app-icon icon="edit" style="font-size: 20px;"></app-icon>
+                    <app-icon icon="edit"></app-icon>
                     <span>Redigera händelse</span>
                   </div>
                   <div class="menu-item" @click=${() => { this.setCancelled(true); this.actionMenuOpen = false; }}>
-                    <app-icon icon="cancel" style="font-size: 20px;"></app-icon>
+                    <app-icon icon="cancel"></app-icon>
                     <span>Ställ in</span>
                   </div>
                 `}

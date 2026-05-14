@@ -32,15 +32,15 @@ export class AttendanceProgressBar extends LitElement {
     }
     
     .progress-fill.yes {
-      background-color: var(--app-color-success);
+      background-color: var(--app-color-green-400);
     }
     
     .progress-fill.no {
-      background-color: var(--app-color-error);
+      background-color: var(--app-color-red-400);
     }
 
     .progress-fill.sub {
-      background-color: var(--app-color-warning);
+      background-color: var(--app-color-amber-400);
     }
   `;
 

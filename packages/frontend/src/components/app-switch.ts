@@ -36,7 +36,7 @@ export class AppSwitch extends LitElement {
       right: 0;
       bottom: 0;
       background-color: var(--app-color-border);
-      transition: .4s;
+      transition: .2s;
       border-radius: 24px;
     }
 
@@ -53,11 +53,11 @@ export class AppSwitch extends LitElement {
     }
 
     input:checked + .slider {
-      background-color: var(--app-color-primary);
+      background-color: var(--app-color-primary-700);
     }
 
     input:focus + .slider {
-      box-shadow: 0 0 1px var(--app-color-primary);
+      box-shadow: 0 0 1px var(--app-color-primary-700);
     }
 
     input:checked + .slider:before {

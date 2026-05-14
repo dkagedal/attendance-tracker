@@ -74,12 +74,12 @@ export class AppInput extends LitElement {
 
     .error-message {
       font-size: var(--app-font-size-sm);
-      color: var(--app-color-error);
+      color: var(--app-color-red-500);
       margin-top: var(--app-spacing-xs);
     }
 
     :host([invalid]) input, :host([invalid]) textarea {
-      border-color: var(--app-color-error);
+      border-color: var(--app-color-red-500);
     }
   `;
 

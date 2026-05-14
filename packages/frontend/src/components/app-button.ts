@@ -40,11 +40,11 @@ export class AppButton extends LitElement {
 
     /* Primary */
     button.primary {
-      background: var(--app-color-primary-gradient);
+      background: var(--app-color-primary-600);
       color: white;
     }
     button.primary:hover:not(:disabled) {
-      background-color: var(--app-color-primary-dark);
+      background-color: var(--app-color-primary-400);
     }
 
     /* Secondary */
@@ -60,7 +60,7 @@ export class AppButton extends LitElement {
     /* Text */
     button.text {
       background-color: transparent;
-      color: var(--app-color-primary);
+      color: var(--app-color-primary-700);
       padding: var(--app-spacing-sm);
     }
     button.text:hover:not(:disabled) {
@@ -70,20 +70,20 @@ export class AppButton extends LitElement {
     /* Icon */
     button.icon {
       background-color: transparent;
-      color: var(--app-color-text-secondary);
+      color: inherit;
       padding: var(--app-spacing-sm);
       border-radius: var(--app-radius-full);
     }
     button.icon:hover:not(:disabled) {
       background-color: rgba(0, 0, 0, 0.05);
-      color: var(--app-color-text);
+      /* color: var(--app-color-text); */
     }
 
     .material-icons {
       font-family: "Material Icons";
       font-weight: normal;
       font-style: normal;
-      font-size: var(--app-font-size-sm);
+      font-size: var(--app-font-size-lg);
       display: inline-block;
       line-height: 1;
       text-transform: none;

@@ -370,7 +370,7 @@ export class AppMain extends LitElement {
 
     .app-header {
       height: var(--header-height);
-      background: var(--app-color-primary-gradient);
+      background: var(--app-color-primary-700);
       color: white;
       display: flex;
       align-items: center;
@@ -460,8 +460,8 @@ export class AppMain extends LitElement {
     }
 
     .drawer-item.selected {
-      background-color: rgba(37, 99, 235, 0.1);
-      color: var(--app-color-primary);
+      background-color: var(--app-color-primary-200);
+      color: var(--app-color-primary-900);
       font-weight: var(--app-font-weight-medium);
     }
 
@@ -703,7 +703,7 @@ export class AppMain extends LitElement {
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; padding: 2rem 1rem;">
           <div style="text-align: center; margin-bottom: 2rem; max-width: 500px;">
             <img src="/images/logo-512x512.png" alt="Kommer Logo" style="width: 100px; height: 100px; margin-bottom: 1rem; border-radius: 20px; box-shadow: var(--app-shadow-md);">
-            <h1 style="margin: 0 0 0.5rem 0; color: var(--app-color-primary); font-size: 2.5rem;">Kommer</h1>
+            <h1 style="margin: 0 0 0.5rem 0; color: var(--app-color-primary-700); font-size: 2.5rem;">Kommer</h1>
             <p style="font-size: 1.1rem; color: var(--app-color-text-secondary); margin: 0 0 1.5rem 0; line-height: 1.5;">Ett närvarosystem för storband, körer och andra grupper.</p>
             
             <div style="background: var(--app-color-surface); padding: 1.5rem; border-radius: var(--app-radius-md); border: 1px solid var(--app-color-border); text-align: left; box-shadow: var(--app-shadow-sm);">

@@ -18,9 +18,9 @@ export class ResponseIcon extends LitElement {
       font-size: inherit;
     }
 
-    .icon.yes { color: var(--app-color-success); }
-    .icon.no { color: var(--app-color-error); }
-    .icon.sub { color: var(--app-color-warning); }
+    .icon.yes { color: var(--app-color-green-600); }
+    .icon.no { color: var(--app-color-red-600); }
+    .icon.sub { color: var(--app-color-amber-600); }
     .icon.na { color: var(--app-color-text-secondary); opacity: 0.5; }
   `;
 

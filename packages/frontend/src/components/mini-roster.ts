@@ -28,24 +28,10 @@ export class MiniRoster extends LitElement {
         flex-wrap: wrap;
         align-content: flex-start;
       }
-      .cancelled {
-        background: rgb(255, 87, 34);
-        color: white;
-        text-align: center;
-        font-weight: 600;
-        font-stretch: expanded;
-        margin: 0;
-        width: 100%;
-      }
     `;
   }
 
   render() {
-    if (this.event.cancelled) {
-      return html`
-        <p class="cancelled">I N S T Ä L L T</p>
-      `;
-    }
     return html`
       ${repeat(
       this.members,
