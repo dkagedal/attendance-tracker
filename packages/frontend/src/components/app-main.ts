@@ -126,6 +126,9 @@ export class AppMain extends LitElement {
   @state()
   profileMenuOpen = false;
 
+  @state()
+  loginDialogOpen = false;
+
   auth: Auth = null;
   subscriptions: Map<string, () => void> = new Map();
 
@@ -701,12 +704,30 @@ export class AppMain extends LitElement {
           <div style="text-align: center; margin-bottom: 2rem; max-width: 500px;">
             <img src="/images/logo-512x512.png" alt="Kommer Logo" style="width: 100px; height: 100px; margin-bottom: 1rem; border-radius: 20px; box-shadow: var(--app-shadow-md);">
             <h1 style="margin: 0 0 0.5rem 0; color: var(--app-color-primary); font-size: 2.5rem;">Kommer</h1>
-            <p style="font-size: 1.1rem; color: var(--app-color-text-secondary); margin: 0; line-height: 1.5;">Ett närvarosystem för storband, körer och andra grupper.</p>
+            <p style="font-size: 1.1rem; color: var(--app-color-text-secondary); margin: 0 0 1.5rem 0; line-height: 1.5;">Ett närvarosystem för storband, körer och andra grupper.</p>
+            
+            <div style="background: var(--app-color-surface); padding: 1.5rem; border-radius: var(--app-radius-md); border: 1px solid var(--app-color-border); text-align: left; box-shadow: var(--app-shadow-sm);">
+              <h2 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--app-color-text);">Välkommen till Kommer!</h2>
+              <p style="font-size: 0.95rem; color: var(--app-color-text-secondary); margin: 0 0 1rem 0; line-height: 1.5;">
+                Med Kommer kan du och din grupp enklare planera repetitioner och spelningar. Som inloggad medlem kan du:
+              </p>
+              <ul style="font-size: 0.95rem; color: var(--app-color-text-secondary); margin: 0 0 1rem 0; padding-left: 1.5rem; line-height: 1.5;">
+                <li>Se kalendern med alla kommande evenemang.</li>
+                <li>Rapportera om du kommer eller har förhinder.</li>
+                <li>Se närvaron för resten av gruppen och din sektion.</li>
+              </ul>
+            </div>
           </div>
           
-          <div style="background: var(--app-color-surface); padding: 2rem; border-radius: var(--app-radius-lg); box-shadow: var(--app-shadow-lg); width: 100%; max-width: 400px; border: 1px solid var(--app-color-border); display: flex; justify-content: center;">
-            <login-dialog .app=${this.app}></login-dialog>
+          <div style="margin-top: 1.5rem; display: flex; justify-content: center;">
+            <app-button variant="primary" style="font-size: 1.1rem; padding: 12px 32px;" @click=${() => this.loginDialogOpen = true}>Logga in</app-button>
           </div>
+          
+          <app-dialog ?open=${this.loginDialogOpen} heading="Logga in" @closed=${() => this.loginDialogOpen = false}>
+            <div style="display: flex; justify-content: center; padding: 1rem 0;">
+              <login-dialog .app=${this.app}></login-dialog>
+            </div>
+          </app-dialog>
           
           <div style="margin-top: 2rem; text-align: center; font-size: 0.85em; color: var(--app-color-text-secondary);">
             Genom att logga in godkänner du vår 
@@ -796,21 +817,23 @@ export class AppMain extends LitElement {
         ${this.renderDrawer()}
       </app-drawer>
 
-      <div class="app-header" @click=${() => { if (this.profileMenuOpen) this.profileMenuOpen = false; }}>
-        <app-button
-          variant="icon"
-          icon="menu"
-          style="color: white;"
-          @click=${() => {
-        this.drawer.open = true;
-      }}
-        ></app-button>
-        <div class="app-title">Kommer</div>
-        ${this.renderProfileMenu()}
-      </div>
+      ${this.firebaseUser == null && !this.isLoading() ? '' : html`
+        <div class="app-header" @click=${() => { if (this.profileMenuOpen) this.profileMenuOpen = false; }}>
+          <app-button
+            variant="icon"
+            icon="menu"
+            style="color: white;"
+            @click=${() => {
+          this.drawer.open = true;
+        }}
+          ></app-button>
+          <div class="app-title">Kommer</div>
+          ${this.renderProfileMenu()}
+        </div>
+      `}
       ${this.renderProgress()}
 
-      <div class="main-content" @click=${() => { if (this.profileMenuOpen) this.profileMenuOpen = false; }}>
+      <div class="main-content" style="${this.firebaseUser == null && !this.isLoading() ? 'margin-top: 0;' : ''}" @click=${() => { if (this.profileMenuOpen) this.profileMenuOpen = false; }}>
         <div id="body">
           ${repeat(
         this.errorMessages,
