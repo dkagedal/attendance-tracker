@@ -28,6 +28,8 @@ import "./login-dialog";
 import "./band-schedule";
 import "./band-overview";
 import "./api-keys";
+import "./app-toast";
+import { AppToast } from "./app-toast";
 import { EventEditor } from "./event-editor";
 import { repeat } from "lit/directives/repeat";
 import { BandEventFromDb } from "../model/bandevent";
@@ -100,8 +102,6 @@ export class AppMain extends LitElement {
 
   @state()
   joinRequests: QueryDocumentSnapshot<JoinRequest>[] = [];
-  @state()
-  viewingJoinRequest: string = null;
 
   @state()
   currentView: "schedule" | "overview" | "apikeys" = "schedule";
@@ -147,7 +147,12 @@ export class AppMain extends LitElement {
   constructor() {
     super();
     // Force registration of side-effect components
-    console.log("[app-main] Ensuring components:", AppDrawer, AppDialog);
+    console.log(
+      "[app-main] Ensuring components:",
+      AppDrawer,
+      AppDialog,
+      AppToast
+    );
     console.log("[app-main] Constructed");
   }
 
@@ -435,21 +440,6 @@ export class AppMain extends LitElement {
       font-weight: var(--app-font-weight-medium);
     }
 
-    .toast {
-      background: var(--app-color-amber-100);
-      border-radius: var(--app-radius-lg);
-      box-shadow: var(--app-shadow-sm);
-      padding: var(--app-spacing-md);
-      margin-bottom: var(--app-spacing-md);
-      transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
-      border: 1px solid var(--app-color-amber-300);
-      text-align: center;
-    }
-
-    .error {
-      background: #ff8888;
-    }
-
     .errormsg {
       display: block;
       color: black;
@@ -659,50 +649,30 @@ export class AppMain extends LitElement {
 
   renderJoinRequest(snapshot: QueryDocumentSnapshot<JoinRequest>) {
     return html`
-      <div class="toast">
-        ${snapshot.data().display_name} har sökt medlemsskap
-        <app-button
-          variant="text"
-          @click=${() => {
-            this.viewingJoinRequest = snapshot.id;
-          }}
-        >
-          Visa
-        </app-button>
-      </div>
-      <app-dialog
-        heading="Begäran att gå med"
-        ?open=${snapshot.id == this.viewingJoinRequest}
-        @closed=${async () => {
-          this.viewingJoinRequest = null;
-        }}
-      >
-        <p><b>Namn:</b> ${snapshot.data().display_name}</p>
-        <p>Vill du acceptera?</p>
-        <app-button
-          slot="primaryAction"
-          variant="primary"
-          @click=${async () => {
-            await new JoinRequestReference(snapshot.ref).update(
-              { approved: true },
-              { merge: true }
-            );
-            this.viewingJoinRequest = null;
-          }}
-          label="Ja"
-          >Ja</app-button
-        >
-        <app-button
-          slot="secondaryAction"
-          variant="secondary"
-          @click=${async () => {
-            await deleteDoc(snapshot.ref);
-            this.viewingJoinRequest = null;
-          }}
-          label="Nej"
-          >Nej</app-button
-        >
-      </app-dialog>
+      <app-toast>
+        <b>${snapshot.data().display_name}</b> har sökt medlemskap
+        <div slot="actions">
+          <app-button
+            variant="secondary"
+            @click=${async () => {
+              await deleteDoc(snapshot.ref);
+            }}
+          >
+            Neka
+          </app-button>
+          <app-button
+            variant="primary"
+            @click=${async () => {
+              await new JoinRequestReference(snapshot.ref).update(
+                { approved: true },
+                { merge: true }
+              );
+            }}
+          >
+            Acceptera
+          </app-button>
+        </div>
+      </app-toast>
     `;
   }
 
@@ -923,10 +893,10 @@ export class AppMain extends LitElement {
             this.errorMessages,
             (em: ErrorMessage) => em.id,
             ({ id, message, details }: ErrorMessage) => html`
-              <div class="error toast" id="error-${id}">
+              <app-toast error id="error-${id}">
                 <span class="errormsg">${message}</span>
                 <span class="errordetail">${details || ""}</span>
-              </div>
+              </app-toast>
             `
           )}
           ${repeat(
