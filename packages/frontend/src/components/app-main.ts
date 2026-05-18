@@ -436,15 +436,14 @@ export class AppMain extends LitElement {
     }
 
     .toast {
-      margin: 4px;
-      padding: 6px;
-      border: 1px solid rgba(0 0 0 / 20%);
-      border-radius: 6px;
+      background: var(--app-color-amber-100);
+      border-radius: var(--app-radius-lg);
+      box-shadow: var(--app-shadow-sm);
+      padding: var(--app-spacing-md);
+      margin-bottom: var(--app-spacing-md);
+      transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+      border: 1px solid var(--app-color-amber-300);
       text-align: center;
-    }
-
-    .joinreq {
-      background: #ffdd88;
     }
 
     .error {
@@ -660,7 +659,7 @@ export class AppMain extends LitElement {
 
   renderJoinRequest(snapshot: QueryDocumentSnapshot<JoinRequest>) {
     return html`
-      <div class="joinreq toast">
+      <div class="toast">
         ${snapshot.data().display_name} har sökt medlemsskap
         <app-button
           variant="text"
@@ -676,8 +675,6 @@ export class AppMain extends LitElement {
         ?open=${snapshot.id == this.viewingJoinRequest}
         @closed=${async () => {
           this.viewingJoinRequest = null;
-          // app-dialog doesn't use dialogAction like mwc-dialog, we need to handle it differently or assume close means cancel unless explicitly handled.
-          // But wait, app-button click handler is where we should do the action.
         }}
       >
         <p><b>Namn:</b> ${snapshot.data().display_name}</p>
