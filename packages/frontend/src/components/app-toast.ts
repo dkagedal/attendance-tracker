@@ -15,7 +15,7 @@ export class AppToast extends LitElement {
       padding: var(--app-spacing-md);
       margin-bottom: var(--app-spacing-md);
       transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
-      border: 1px solid var(--app-color-amber-300);
+      border: 1px solid var(--app-color-border);
       align-items: center;
       justify-content: space-between;
       gap: var(--app-spacing-md);

@@ -40,7 +40,7 @@
   --app-color-surface: #ffffff;
   --app-color-text: #0f172a;
   --app-color-text-secondary: #475569;
-  --app-color-border: #e2e8f0;
+  --app-color-border: rgb(0 0 0 / 10%);
 
   /* Typography */
   --app-font-family: "Roboto", system-ui, -apple-system, sans-serif;
