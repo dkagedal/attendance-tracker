@@ -5,6 +5,8 @@ import "./app-drawer";
 import { AppDrawer } from "./app-drawer";
 import "./app-dialog";
 import { AppDialog } from "./app-dialog";
+import "./app-menu";
+import { AppMenu } from "./app-menu";
 import { FirebaseApp } from "firebase/app";
 import {
   deleteDoc,
@@ -123,8 +125,8 @@ export class AppMain extends LitElement {
   @query("app-dialog#settings")
   profileEditorDialog: AppDialog;
 
-  @state()
-  profileMenuOpen = false;
+  @query("#profile-menu")
+  profileMenu!: AppMenu;
 
   @state()
   loginDialogOpen = false;
@@ -405,42 +407,6 @@ export class AppMain extends LitElement {
       z-index: 90;
     }
 
-    /* Profile Menu */
-    .profile-menu-container {
-      position: relative;
-    }
-
-    .profile-menu {
-      position: absolute;
-      top: 100%;
-      right: 0;
-      background: var(--app-color-surface);
-      border-radius: var(--app-radius-md);
-      box-shadow: var(--app-shadow-lg);
-      padding: var(--app-spacing-xs) 0;
-      min-width: 200px;
-      display: none;
-      z-index: 1000;
-      color: var(--app-color-text);
-    }
-
-    .profile-menu.open {
-      display: block;
-    }
-
-    .menu-item {
-      padding: var(--app-spacing-sm) var(--app-spacing-md);
-      display: flex;
-      align-items: center;
-      gap: var(--app-spacing-sm);
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-
-    .menu-item:hover {
-      background-color: var(--app-color-background);
-    }
-
     .menu-divider {
       height: 1px;
       background-color: var(--app-color-border);
@@ -535,38 +501,31 @@ export class AppMain extends LitElement {
       : null;
 
     return html`
-      <div class="profile-menu-container">
-        <app-button
-          variant="icon"
-          icon="account_circle"
-          style="color: white;"
-          @click=${(e: Event) => {
-        e.stopPropagation();
-        this.profileMenuOpen = !this.profileMenuOpen;
-      }}
-        ></app-button>
-        <div class="profile-menu ${this.profileMenuOpen ? "open" : ""}" @click=${(e: Event) => e.stopPropagation()}>
-          <div class="menu-item" style="cursor: default;">
-            <div style="display: flex; flex-direction: column;">
-              <span style="font-weight: bold;">${displayName}</span>
-              ${secondary ? html`<span style="font-size: 0.8em; color: var(--app-color-text-secondary);">${secondary}</span>` : ""}
-            </div>
-          </div>
-          <div class="menu-divider"></div>
-          <div class="menu-item" @click=${() => { this.editProfile(); this.profileMenuOpen = false; }}>
-            <app-icon icon="edit" style="font-size: 20px;"></app-icon>
-            <span>Redigera profil...</span>
-          </div>
-          <div class="menu-item" @click=${() => { this.currentView = 'apikeys'; this.profileMenuOpen = false; }}>
-            <app-icon icon="key" style="font-size: 20px;"></app-icon>
-            <span>API-nycklar</span>
-          </div>
-          <div class="menu-item" @click=${() => { signOut(this.auth); this.profileMenuOpen = false; }}>
-            <app-icon icon="exit_to_app" style="font-size: 20px;"></app-icon>
-            <span>Logga ut</span>
+      <app-menu
+        id="profile-menu"
+        icon="account_circle"
+        triggerStyle="color: white;"
+      >
+        <div class="menu-item" style="cursor: default;">
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-weight: bold;">${displayName}</span>
+            ${secondary ? html`<span style="font-size: 0.8em; color: var(--app-color-text-secondary);">${secondary}</span>` : ""}
           </div>
         </div>
-      </div>
+        <div class="menu-divider"></div>
+        <div class="menu-item" @click=${() => { this.editProfile(); this.profileMenu.close(); }}>
+          <app-icon icon="edit" style="font-size: 20px;"></app-icon>
+          <span>Redigera profil...</span>
+        </div>
+        <div class="menu-item" @click=${() => { this.currentView = 'apikeys'; this.profileMenu.close(); }}>
+          <app-icon icon="key" style="font-size: 20px;"></app-icon>
+          <span>API-nycklar</span>
+        </div>
+        <div class="menu-item" @click=${() => { signOut(this.auth); this.profileMenu.close(); }}>
+          <app-icon icon="exit_to_app" style="font-size: 20px;"></app-icon>
+          <span>Logga ut</span>
+        </div>
+      </app-menu>
     `;
   }
 
@@ -818,7 +777,7 @@ export class AppMain extends LitElement {
       </app-drawer>
 
       ${this.firebaseUser == null && !this.isLoading() ? '' : html`
-        <div class="app-header" @click=${() => { if (this.profileMenuOpen) this.profileMenuOpen = false; }}>
+        <div class="app-header">
           <app-button
             variant="icon"
             icon="menu"
@@ -833,7 +792,7 @@ export class AppMain extends LitElement {
       `}
       ${this.renderProgress()}
 
-      <div class="main-content" style="${this.firebaseUser == null && !this.isLoading() ? 'margin-top: 0;' : ''}" @click=${() => { if (this.profileMenuOpen) this.profileMenuOpen = false; }}>
+      <div class="main-content" style="${this.firebaseUser == null && !this.isLoading() ? 'margin-top: 0;' : ''}">
         <div id="body">
           ${repeat(
         this.errorMessages,

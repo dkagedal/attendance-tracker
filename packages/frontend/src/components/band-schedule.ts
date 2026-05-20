@@ -21,6 +21,8 @@ import "./app-dialog";
 import "./app-button";
 import "./app-icon";
 import "./event-card";
+import "./app-menu";
+import { AppMenu } from "./app-menu";
 import { EventEditor } from "./event-editor";
 
 @customElement("band-schedule")
@@ -46,8 +48,8 @@ export class BandSchedule extends LitElement {
   @state()
   edit_snapshot: BandEvent | null = null;
 
-  @state()
-  actionMenuOpen = false;
+  @query("#action-menu")
+  actionMenu!: AppMenu;
 
   @property({ type: Array, attribute: false })
   members: Member[] = [];
@@ -146,55 +148,12 @@ export class BandSchedule extends LitElement {
         display: flex;
         flex-direction: column;
       }
-
-      /* Action Menu */
-      .action-menu-container {
-        position: relative;
-      }
-
-      .action-menu {
-        position: absolute;
-        top: 100%;
-        right: 0;
-        background: var(--app-color-surface);
-        border-radius: var(--app-radius-md);
-        box-shadow: var(--app-shadow-lg);
-        padding: var(--app-spacing-xs) 0;
-        min-width: 200px;
-        display: none;
-        z-index: 1000;
-        color: var(--app-color-text);
-        text-align: left;
-      }
-
-      .action-menu.open {
-        display: block;
-      }
-
-      .menu-item {
-        padding: var(--app-spacing-sm) var(--app-spacing-md);
-        display: flex;
-        align-items: center;
-        gap: var(--app-spacing-sm);
-        cursor: pointer;
-        transition: background-color 0.2s;
-        font-size: var(--app-font-size-md);
-
-        &.delete {
-          background-color: var(--app-color-red-700);
-          color: white;
-        }
-      }
-
-      .menu-item:hover {
-        background-color: var(--app-color-background);
-      }
     `;
   }
 
   render() {
     return html`
-      <div class="list" @click=${() => { if (this.actionMenuOpen) this.actionMenuOpen = false; }}>
+      <div class="list">
         ${repeat(
       this.events,
       e => e.ref.id,
@@ -220,7 +179,6 @@ export class BandSchedule extends LitElement {
         heading="${this.edit_snapshot ? 'Redigera händelse' : this.selected_event?.type || 'Händelse'}" 
         ?open=${this.selected_event != null}
         @closed=${this.closeDialog}
-        @click=${() => { if (this.actionMenuOpen) this.actionMenuOpen = false; }}
         hideCloseButton
       >
         ${this.selected_event ? html`
@@ -229,33 +187,27 @@ export class BandSchedule extends LitElement {
             <app-button slot="primaryAction" variant="primary" @click=${this.saveAndClose}>Spara</app-button>
             <app-button slot="secondaryAction" variant="secondary" @click=${() => this.edit_snapshot = null}>Avbryt</app-button>
           ` : html`
-            <div slot="headerActions" class="action-menu-container">
-              <app-button variant="icon" icon="more_vert" @click=${(e: Event) => {
-                e.stopPropagation();
-                this.actionMenuOpen = !this.actionMenuOpen;
-              }}></app-button>
-              <div class="action-menu ${this.actionMenuOpen ? 'open' : ''}" @click=${(e: Event) => e.stopPropagation()}>
-                ${this.selected_event.cancelled ? html`
-                  <div class="menu-item" @click=${() => { this.setCancelled(false); this.actionMenuOpen = false; }}>
-                    <app-icon icon="history"></app-icon>
-                    <span>Återställ</span>
-                  </div>
-                  <div class="menu-item delete" @click=${() => { this.deleteEvent(); this.actionMenuOpen = false; }}>
-                    <app-icon icon="delete"></app-icon>
-                    <span>Radera</span>
-                  </div>
-                ` : html`
-                  <div class="menu-item" @click=${() => { this.edit_snapshot = this.selected_event.clone(); this.actionMenuOpen = false; }}>
-                    <app-icon icon="edit"></app-icon>
-                    <span>Redigera händelse</span>
-                  </div>
-                  <div class="menu-item" @click=${() => { this.setCancelled(true); this.actionMenuOpen = false; }}>
-                    <app-icon icon="cancel"></app-icon>
-                    <span>Ställ in</span>
-                  </div>
-                `}
-              </div>
-            </div>
+            <app-menu slot="headerActions" id="action-menu">
+              ${this.selected_event.cancelled ? html`
+                <div class="menu-item" @click=${() => { this.setCancelled(false); this.actionMenu.close(); }}>
+                  <app-icon icon="history"></app-icon>
+                  <span>Återställ</span>
+                </div>
+                <div class="menu-item delete" @click=${() => { this.deleteEvent(); this.actionMenu.close(); }}>
+                  <app-icon icon="delete"></app-icon>
+                  <span>Radera</span>
+                </div>
+              ` : html`
+                <div class="menu-item" @click=${() => { this.edit_snapshot = this.selected_event.clone(); this.actionMenu.close(); }}>
+                  <app-icon icon="edit"></app-icon>
+                  <span>Redigera händelse</span>
+                </div>
+                <div class="menu-item" @click=${() => { this.setCancelled(true); this.actionMenu.close(); }}>
+                  <app-icon icon="cancel"></app-icon>
+                  <span>Ställ in</span>
+                </div>
+              `}
+            </app-menu>
             <event-card
               .event=${this.selected_event}
               .members=${this.members}
@@ -298,7 +250,7 @@ export class BandSchedule extends LitElement {
     this.selected_event_id = null;
     this.selected_event = null;
     this.edit_snapshot = null;
-    this.actionMenuOpen = false;
+    this.actionMenu?.close();
   }
 
   async saveAndClose() {

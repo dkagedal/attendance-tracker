@@ -37,6 +37,13 @@
   <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css?family=Material+Icons&display=block" rel="stylesheet">
   <link href="styles/theme.css" rel="stylesheet">
+  <script type="module">
+    if (!('popover' in HTMLElement.prototype)) {
+      import('https://unpkg.com/@oddbird/popover-polyfill@latest/dist/popover-fn.js').then(({ apply }) => {
+        apply();
+      });
+    }
+  </script>
   <script type="module" src="/bundle.js"></script>
 </head>
 
