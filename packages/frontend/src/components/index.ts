@@ -1,5 +1,6 @@
 export * from "./app-card";
 export * from "./app-button";
+export * from "./app-menu";
 export * from "./app-icon";
 export * from "./app-drawer";
 export * from "./event-summary-card";
