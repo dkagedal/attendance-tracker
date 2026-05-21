@@ -156,6 +156,55 @@ export class AppMain extends LitElement {
     console.log("[app-main] Constructed");
   }
 
+  get pathParts() {
+    return location.pathname.split("/");
+  }
+
+  get routeEventId(): string | null {
+    const parts = this.pathParts;
+    if (parts[2] === "event" && parts[3]) {
+      return parts[3];
+    }
+    return null;
+  }
+
+  private _onPopState = async () => {
+    const bandid = await extractBandId();
+    if (bandid !== this.bandid) {
+      this.bandid = bandid;
+    }
+    this.requestUpdate();
+  };
+
+  connectedCallback() {
+    super.connectedCallback();
+    window.addEventListener("popstate", this._onPopState);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener("popstate", this._onPopState);
+  }
+
+  handleHeaderBack() {
+    const url = `/${this.bandid}`;
+    if (location.pathname !== url) {
+      history.pushState({}, "", url);
+    }
+    this.requestUpdate();
+  }
+
+  handleEventSelected(e: CustomEvent) {
+    const eventId = e.detail.eventId;
+    const url = eventId
+      ? `/${this.bandid}/event/${eventId}`
+      : `/${this.bandid}`;
+    if (location.pathname !== url) {
+      history.pushState({}, "", url);
+    }
+    this.requestUpdate();
+  }
+
   async updated(changedProperties: Map<string, any>) {
     console.log("[app-main] Properties changed:", changedProperties);
     if (changedProperties.has("app") && this.app) {
@@ -407,13 +456,11 @@ export class AppMain extends LitElement {
       max-width: 800px;
       margin-left: auto;
       margin-right: auto;
+      transition: max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    .fab {
-      position: fixed;
-      bottom: var(--app-spacing-lg);
-      right: var(--app-spacing-lg);
-      z-index: 90;
+    .main-content.has-selection {
+      max-width: 1200px;
     }
 
     .menu-divider {
@@ -449,6 +496,35 @@ export class AppMain extends LitElement {
     .errordetail {
       color: #444;
       font-family: monospace;
+    }
+
+    .app-title .sub-title {
+      display: none;
+    }
+
+    .header-back-btn {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .main-content {
+        padding-left: 0;
+        padding-right: 0;
+        overflow-x: clip;
+      }
+      .app-header.has-selection .menu-btn {
+        display: none;
+      }
+      .app-header.has-selection .header-back-btn {
+        display: inline-flex;
+        align-items: center;
+      }
+      .app-header.has-selection .main-title {
+        display: none;
+      }
+      .app-header.has-selection .sub-title {
+        display: inline;
+      }
     }
   `;
 
@@ -570,19 +646,14 @@ export class AppMain extends LitElement {
           id="band"
           bandid=${this.bandid}
           uid=${this.firebaseUser.uid}
+          .selected_event_id=${this.routeEventId}
+          @event-selected=${this.handleEventSelected}
+          @add-event=${this.addNewEvent}
           @loaded=${() => {
             this.loadingSchedule = false;
           }}
         >
         </band-schedule>
-      </div>
-      <div class="fab">
-        <app-button
-          variant="primary"
-          icon="add"
-          style="border-radius: 9999px; padding: 16px; box-shadow: var(--app-shadow-lg);"
-          @click=${() => this.addNewEvent()}
-        ></app-button>
       </div>
       <app-dialog id="add-dialog" heading="Ny händelse" hideCloseButton>
         <event-editor id="add-dialog-editor"></event-editor>
@@ -867,8 +938,14 @@ export class AppMain extends LitElement {
       ${this.firebaseUser == null && !this.isLoading()
         ? ""
         : html`
-            <div class="app-header">
+            <div
+              class="app-header ${this.currentView === "schedule" &&
+              this.routeEventId
+                ? "has-selection"
+                : ""}"
+            >
               <app-button
+                class="menu-btn"
                 variant="icon"
                 icon="menu"
                 style="color: white;"
@@ -876,14 +953,27 @@ export class AppMain extends LitElement {
                   this.drawer.open = true;
                 }}
               ></app-button>
-              <div class="app-title">Kommer</div>
+              <app-button
+                class="header-back-btn"
+                variant="icon"
+                icon="arrow_back"
+                style="color: white;"
+                @click=${() => this.handleHeaderBack()}
+              ></app-button>
+              <div class="app-title">
+                <span class="main-title">Kommer</span>
+                <span class="sub-title">Kalender</span>
+              </div>
               ${this.renderProfileMenu()}
             </div>
           `}
       ${this.renderProgress()}
 
       <div
-        class="main-content"
+        class="main-content ${this.currentView === "schedule" &&
+        this.routeEventId
+          ? "has-selection"
+          : ""}"
         style="${this.firebaseUser == null && !this.isLoading()
           ? "margin-top: 0;"
           : ""}"
