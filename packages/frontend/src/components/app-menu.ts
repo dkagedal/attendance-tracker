@@ -51,7 +51,8 @@ export class AppMenu extends LitElement {
       opacity: 0;
       transform: scale(0.95);
       transition: opacity 0.15s ease-out, transform 0.15s ease-out,
-        display 0.15s ease-out allow-discrete, overlay 0.15s ease-out allow-discrete;
+        display 0.15s ease-out allow-discrete,
+        overlay 0.15s ease-out allow-discrete;
     }
 
     .menu-popover:popover-open {
@@ -136,7 +137,7 @@ export class AppMenu extends LitElement {
         this.popoverElement.style.margin = "0";
         this.popoverElement.style.inset = "auto";
         this.popoverElement.style.top = `${rect.bottom}px`;
-        
+
         // Use requestAnimationFrame/setTimeout to ensure the popover is displayed
         // so offsetWidth is accurate.
         requestAnimationFrame(() => {

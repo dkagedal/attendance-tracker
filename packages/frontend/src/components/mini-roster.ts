@@ -34,16 +34,16 @@ export class MiniRoster extends LitElement {
   render() {
     return html`
       ${repeat(
-      this.members,
-      member => member.id,
-      member => html`
+        this.members,
+        member => member.id,
+        member => html`
           <response-chip
             response=${this.responses[member.id]}
             @click=${() => this.clickOne(member.id)}
             >${member.display_name}</response-chip
           >
         `
-    )}
+      )}
     `;
   }
 

@@ -35,7 +35,6 @@ export class EventCard extends LitElement {
   @property({ type: Array, attribute: false })
   sections: Section[] = [];
 
-
   @state()
   participants: { [uid: UID]: Participant } = {};
 
@@ -44,7 +43,7 @@ export class EventCard extends LitElement {
     return this.event?.cancelled || false;
   }
 
-  cancelParticipantsListener: () => void = () => { };
+  cancelParticipantsListener: () => void = () => {};
 
   needsResponse: boolean = false;
 
@@ -69,7 +68,6 @@ export class EventCard extends LitElement {
           const participant: Participant = doc.data();
           if (participant.uid == auth.currentUser.uid) {
             this.needsResponse = !participant.hasResponded();
-
           }
           this.participants[participant.uid] = participant;
         });
@@ -179,7 +177,7 @@ export class EventCard extends LitElement {
 
     .comment-author {
       font-weight: bold;
-      grid-column: 1
+      grid-column: 1;
     }
 
     .comment-text {
@@ -248,7 +246,9 @@ export class EventCard extends LitElement {
       members: this.members.filter(m => m.section_id === section.id)
     }));
 
-    const unassignedMembers = this.members.filter(m => !m.section_id || !sectionIds.has(m.section_id));
+    const unassignedMembers = this.members.filter(
+      m => !m.section_id || !sectionIds.has(m.section_id)
+    );
     if (unassignedMembers.length > 0) {
       sectionsWithMembers.push({
         id: "unassigned",
@@ -258,21 +258,27 @@ export class EventCard extends LitElement {
       });
     }
 
-    const activeSections = sectionsWithMembers.filter(s => s.members.length > 0);
-    const responses = Object.fromEntries(Object.entries(this.participants).map(([k, v]) => [k, v.attending]));
+    const activeSections = sectionsWithMembers.filter(
+      s => s.members.length > 0
+    );
+    const responses = Object.fromEntries(
+      Object.entries(this.participants).map(([k, v]) => [k, v.attending])
+    );
 
     return html`
       <div class="section-grid">
-        ${activeSections.map(s => html`
-          <div class="section-header">${s.emoji} ${s.name}</div>
-          <div class="section-roster">
-            <mini-roster
-              .members=${s.members}
-              .event=${this.event}
-              .responses=${responses}
-            ></mini-roster>
-          </div>
-        `)}
+        ${activeSections.map(
+          s => html`
+            <div class="section-header">${s.emoji} ${s.name}</div>
+            <div class="section-roster">
+              <mini-roster
+                .members=${s.members}
+                .event=${this.event}
+                .responses=${responses}
+              ></mini-roster>
+            </div>
+          `
+        )}
       </div>
     `;
   }
@@ -295,11 +301,13 @@ export class EventCard extends LitElement {
     return html`
       <div class="comments-section">
         <div class="comment-list">
-          ${comments.map(c => html`
-            <span class="comment-author">${c.name}</span>
-            <response-icon .response=${c.response}></response-icon>
-            <span class="comment-text">${c.comment}</span>
-          `)}
+          ${comments.map(
+            c => html`
+              <span class="comment-author">${c.name}</span>
+              <response-icon .response=${c.response}></response-icon>
+              <span class="comment-text">${c.comment}</span>
+            `
+          )}
         </div>
       </div>
     `;
@@ -311,9 +319,13 @@ export class EventCard extends LitElement {
     return html`
       <div class="header">
         <div class="meta">
-          ${this.cancelled ? html`<div class="meta-row">
-            <span class="chip cancelled">Inställt</span>
-          </div>` : ""}
+          ${this.cancelled
+            ? html`
+                <div class="meta-row">
+                  <span class="chip cancelled">Inställt</span>
+                </div>
+              `
+            : ""}
           <div class="meta-row">
             <app-icon icon="schedule"></app-icon>
             <time-range
@@ -321,25 +333,41 @@ export class EventCard extends LitElement {
               stop=${ifDefined(this.event.stop)}
             ></time-range>
           </div>
-          ${this.event.location ? html`
-            <div class="meta-row">
-              <app-icon icon="place"></app-icon>
-              <a href="http://maps.google.se/maps?q=${this.event.location}">${this.event.location}</a>
-            </div>
-          ` : ""}
+          ${this.event.location
+            ? html`
+                <div class="meta-row">
+                  <app-icon icon="place"></app-icon>
+                  <a href="http://maps.google.se/maps?q=${this.event.location}"
+                    >${this.event.location}</a
+                  >
+                </div>
+              `
+            : ""}
         </div>
-        ${this.event.description ? html`
-          <div class="description">${unsafeHTML(DOMPurify.sanitize(marked.parse(this.event.description) as string))}</div>
-        ` : ""}
+        ${this.event.description
+          ? html`
+              <div class="description">
+                ${unsafeHTML(
+                  DOMPurify.sanitize(
+                    marked.parse(this.event.description) as string
+                  )
+                )}
+              </div>
+            `
+          : ""}
       </div>
 
       ${!this.cancelled ? this.renderResponseButtons() : ""}
 
-      <div class="roster-section" style="display: ${this.cancelled ? "none" : "block"}">
-        ${!this.cancelled ? html`
-          ${this.renderSectionRosters()}
-          ${this.renderComments()}
-        ` : ""}
+      <div
+        class="roster-section"
+        style="display: ${this.cancelled ? "none" : "block"}"
+      >
+        ${!this.cancelled
+          ? html`
+              ${this.renderSectionRosters()} ${this.renderComments()}
+            `
+          : ""}
       </div>
     `;
   }

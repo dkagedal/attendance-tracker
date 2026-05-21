@@ -3,13 +3,13 @@ import { customElement, property } from "lit/decorators.js";
 
 @customElement("app-switch")
 export class AppSwitch extends LitElement {
-    @property({ type: Boolean })
-    selected = false;
+  @property({ type: Boolean })
+  selected = false;
 
-    @property({ type: Boolean })
-    disabled = false;
+  @property({ type: Boolean })
+  disabled = false;
 
-    static styles = css`
+  static styles = css`
     :host {
       display: inline-block;
       vertical-align: middle;
@@ -36,7 +36,7 @@ export class AppSwitch extends LitElement {
       right: 0;
       bottom: 0;
       background-color: var(--app-color-border);
-      transition: .2s;
+      transition: 0.2s;
       border-radius: 24px;
     }
 
@@ -48,7 +48,7 @@ export class AppSwitch extends LitElement {
       left: 3px;
       bottom: 3px;
       background-color: white;
-      transition: .4s;
+      transition: 0.4s;
       border-radius: 50%;
     }
 
@@ -70,25 +70,27 @@ export class AppSwitch extends LitElement {
     }
   `;
 
-    render() {
-        return html`
+  render() {
+    return html`
       <label class="switch">
-        <input 
-          type="checkbox" 
-          ?checked=${this.selected} 
+        <input
+          type="checkbox"
+          ?checked=${this.selected}
           ?disabled=${this.disabled}
           @change=${this.handleChange}
-        >
+        />
         <span class="slider"></span>
       </label>
     `;
-    }
+  }
 
-    private handleChange(e: Event) {
-        const checkbox = e.target as HTMLInputElement;
-        this.selected = checkbox.checked;
-        this.dispatchEvent(new CustomEvent("change", { bubbles: true, composed: true }));
-        // Dispatch 'click' as well to mimic MWC behavior if needed, but 'change' is better.
-        // MWC switch dispatches 'change' and 'click'.
-    }
+  private handleChange(e: Event) {
+    const checkbox = e.target as HTMLInputElement;
+    this.selected = checkbox.checked;
+    this.dispatchEvent(
+      new CustomEvent("change", { bubbles: true, composed: true })
+    );
+    // Dispatch 'click' as well to mimic MWC behavior if needed, but 'change' is better.
+    // MWC switch dispatches 'change' and 'click'.
+  }
 }

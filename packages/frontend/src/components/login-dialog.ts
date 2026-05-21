@@ -9,7 +9,7 @@ import {
   GoogleAuthProvider,
   signInWithEmailAndPassword,
   signInWithRedirect,
-  signInWithPopup,
+  signInWithPopup
 } from "firebase/auth";
 import { FirebaseApp } from "firebase/app";
 
@@ -83,10 +83,10 @@ export class LoginDialog extends LitElement {
           >
         </p>
         ${this.errormsg
-        ? html`
+          ? html`
               <p class="error">${this.errormsg}</p>
             `
-        : ""}
+          : ""}
       </div>
     `;
   }

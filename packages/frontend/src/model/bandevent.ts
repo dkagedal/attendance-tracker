@@ -111,7 +111,7 @@ export class BandEventFromDb implements BandEvent {
     public location?: string,
     public description?: string,
     public cancelled?: boolean
-  ) { }
+  ) {}
 
   get id() {
     return this.ref.id;

@@ -24,7 +24,6 @@ export class ProfileEditor extends LitElement {
   @property({ type: Object, attribute: false })
   membership: Member = null;
 
-
   show() {
     band(db, this.bandid)
       .member(this.uid)

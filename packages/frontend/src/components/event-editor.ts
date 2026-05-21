@@ -45,11 +45,17 @@ export class EventEditor extends LitElement {
   }
 
   deleteEvent() {
-    if (confirm("Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.")) {
+    if (
+      confirm(
+        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra."
+      )
+    ) {
       deleteDoc(this.data.ref.dbref).then(
         () => {
           console.log("Delete successful");
-          this.dispatchEvent(new CustomEvent("closed", { bubbles: true, composed: true }));
+          this.dispatchEvent(
+            new CustomEvent("closed", { bubbles: true, composed: true })
+          );
         },
         reason => {
           console.log("Delete failed:", reason);
@@ -83,7 +89,9 @@ export class EventEditor extends LitElement {
         required
         ?disabled=${isCancelled}
         .value="${this.data.type}"
-        @input=${(e: CustomEvent) => { this.data.type = (e.target as AppInput).value; }}
+        @input=${(e: CustomEvent) => {
+          this.data.type = (e.target as AppInput).value;
+        }}
       ></app-input>
       <app-input
         label="Plats"
@@ -91,7 +99,9 @@ export class EventEditor extends LitElement {
         type="text"
         ?disabled=${isCancelled}
         .value="${this.data.location || ""}"
-        @input=${(e: CustomEvent) => { this.data.location = (e.target as AppInput).value; }}
+        @input=${(e: CustomEvent) => {
+          this.data.location = (e.target as AppInput).value;
+        }}
       ></app-input>
       <app-input
         label="Beskrivning"
@@ -99,7 +109,9 @@ export class EventEditor extends LitElement {
         multiline
         ?disabled=${isCancelled}
         .value="${this.data.description || ""}"
-        @input=${(e: CustomEvent) => { this.data.description = (e.target as AppInput).value; }}
+        @input=${(e: CustomEvent) => {
+          this.data.description = (e.target as AppInput).value;
+        }}
       ></app-input>
       <datetime-input
         id="start"
@@ -120,10 +132,15 @@ export class EventEditor extends LitElement {
         class="ranged"
         ?disabled=${isCancelled}
         @click=${() => {
-        this.range = false;
-      }}
+          this.range = false;
+        }}
       ></app-button>
-      <app-button variant="secondary" icon="add" class="notranged" ?disabled=${isCancelled} @click=${this.addStop}
+      <app-button
+        variant="secondary"
+        icon="add"
+        class="notranged"
+        ?disabled=${isCancelled}
+        @click=${this.addStop}
         >Lägg till sluttid</app-button
       >
     `;

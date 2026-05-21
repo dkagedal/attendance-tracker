@@ -66,7 +66,8 @@ class BandConverter {
     return {
       display_name: band.display_name,
       ...(band.logo && { logo: band.logo }),
-      ...(band.sections && band.sections.length > 0 && { sections: band.sections })
+      ...(band.sections &&
+        band.sections.length > 0 && { sections: band.sections })
     };
   }
 

@@ -10,6 +10,7 @@
   ],
   "scripts": {
     "build": "npm run build -w frontend && npm run build -w backend",
+    "fmt": "npm run fmt -w frontend",
     "serve": "npm run serve -w backend",
     "watch:backend": "npm run build:watch -w backend",
     "watch:frontend": "npm run build:watch -w frontend",

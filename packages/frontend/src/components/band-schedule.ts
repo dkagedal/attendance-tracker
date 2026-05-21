@@ -1,4 +1,3 @@
-
 import {
   onSnapshot,
   orderBy,
@@ -60,9 +59,9 @@ export class BandSchedule extends LitElement {
   @state()
   bandData: Band | null = null;
 
-  private _unsubscribeGigs: () => void = () => { };
-  private _unsubscribeMembers: () => void = () => { };
-  private _unsubscribeBand: () => void = () => { };
+  private _unsubscribeGigs: () => void = () => {};
+  private _unsubscribeMembers: () => void = () => {};
+  private _unsubscribeBand: () => void = () => {};
 
   updated(changedProperties: any) {
     if (changedProperties.has("bandid")) {
@@ -98,7 +97,7 @@ export class BandSchedule extends LitElement {
       orderBy("start")
     );
 
-    this._unsubscribeGigs = onSnapshot(q, (snapshot) => {
+    this._unsubscribeGigs = onSnapshot(q, snapshot => {
       this.events = snapshot.docs.map(doc => doc.data());
       this.loaded = true;
 
@@ -121,7 +120,7 @@ export class BandSchedule extends LitElement {
     const bandRef = band(db, this.bandid);
     const q = firestoreQuery(bandRef.members().dbref);
 
-    this._unsubscribeMembers = onSnapshot(q, (snapshot) => {
+    this._unsubscribeMembers = onSnapshot(q, snapshot => {
       this.members = snapshot.docs.map(doc => doc.data());
       this.members.sort((m1, m2) => m1.id.localeCompare(m2.id));
     });
@@ -135,7 +134,7 @@ export class BandSchedule extends LitElement {
     }
 
     const bandRef = band(db, this.bandid);
-    this._unsubscribeBand = onSnapshot(bandRef.dbref, (snapshot) => {
+    this._unsubscribeBand = onSnapshot(bandRef.dbref, snapshot => {
       if (snapshot.exists()) {
         this.bandData = snapshot.data();
       }
@@ -155,9 +154,9 @@ export class BandSchedule extends LitElement {
     return html`
       <div class="list">
         ${repeat(
-      this.events,
-      e => e.ref.id,
-      (e: BandEvent) => html`
+          this.events,
+          e => e.ref.id,
+          (e: BandEvent) => html`
             <event-summary-card
               uid=${this.uid}
               .members=${this.members}
@@ -165,57 +164,106 @@ export class BandSchedule extends LitElement {
               @click=${(ev: Event) => this.selected(ev, e)}
             ></event-summary-card>
           `
-    )}
+        )}
         ${this.loaded && this.events.length === 0
-        ? html`
-              <div style="text-align: center; padding: 40px; color: var(--app-color-text-secondary);">
+          ? html`
+              <div
+                style="text-align: center; padding: 40px; color: var(--app-color-text-secondary);"
+              >
                 Inget planerat
               </div>
             `
-        : ""}
+          : ""}
       </div>
-      
-      <app-dialog 
-        heading="${this.edit_snapshot ? 'Redigera händelse' : this.selected_event?.type || 'Händelse'}" 
+
+      <app-dialog
+        heading="${this.edit_snapshot
+          ? "Redigera händelse"
+          : this.selected_event?.type || "Händelse"}"
         ?open=${this.selected_event != null}
         @closed=${this.closeDialog}
         hideCloseButton
       >
-        ${this.selected_event ? html`
-          ${this.edit_snapshot ? html`
-            <event-editor .data=${this.edit_snapshot}></event-editor>
-            <app-button slot="primaryAction" variant="primary" @click=${this.saveAndClose}>Spara</app-button>
-            <app-button slot="secondaryAction" variant="secondary" @click=${() => this.edit_snapshot = null}>Avbryt</app-button>
-          ` : html`
-            <app-menu slot="headerActions" id="action-menu">
-              ${this.selected_event.cancelled ? html`
-                <div class="menu-item" @click=${() => { this.setCancelled(false); this.actionMenu.close(); }}>
-                  <app-icon icon="history"></app-icon>
-                  <span>Återställ</span>
-                </div>
-                <div class="menu-item delete" @click=${() => { this.deleteEvent(); this.actionMenu.close(); }}>
-                  <app-icon icon="delete"></app-icon>
-                  <span>Radera</span>
-                </div>
-              ` : html`
-                <div class="menu-item" @click=${() => { this.edit_snapshot = this.selected_event.clone(); this.actionMenu.close(); }}>
-                  <app-icon icon="edit"></app-icon>
-                  <span>Redigera händelse</span>
-                </div>
-                <div class="menu-item" @click=${() => { this.setCancelled(true); this.actionMenu.close(); }}>
-                  <app-icon icon="cancel"></app-icon>
-                  <span>Ställ in</span>
-                </div>
-              `}
-            </app-menu>
-            <event-card
-              .event=${this.selected_event}
-              .members=${this.members}
-              .sections=${this.bandData?.sections || []}
-             ></event-card>
-            <app-button slot="primaryAction" variant="primary" @click=${this.closeDialog}>Stäng</app-button>
-          `}
-        ` : ""}
+        ${this.selected_event
+          ? html`
+              ${this.edit_snapshot
+                ? html`
+                    <event-editor .data=${this.edit_snapshot}></event-editor>
+                    <app-button
+                      slot="primaryAction"
+                      variant="primary"
+                      @click=${this.saveAndClose}
+                      >Spara</app-button
+                    >
+                    <app-button
+                      slot="secondaryAction"
+                      variant="secondary"
+                      @click=${() => (this.edit_snapshot = null)}
+                      >Avbryt</app-button
+                    >
+                  `
+                : html`
+                    <app-menu slot="headerActions" id="action-menu">
+                      ${this.selected_event.cancelled
+                        ? html`
+                            <div
+                              class="menu-item"
+                              @click=${() => {
+                                this.setCancelled(false);
+                                this.actionMenu.close();
+                              }}
+                            >
+                              <app-icon icon="history"></app-icon>
+                              <span>Återställ</span>
+                            </div>
+                            <div
+                              class="menu-item delete"
+                              @click=${() => {
+                                this.deleteEvent();
+                                this.actionMenu.close();
+                              }}
+                            >
+                              <app-icon icon="delete"></app-icon>
+                              <span>Radera</span>
+                            </div>
+                          `
+                        : html`
+                            <div
+                              class="menu-item"
+                              @click=${() => {
+                                this.edit_snapshot = this.selected_event.clone();
+                                this.actionMenu.close();
+                              }}
+                            >
+                              <app-icon icon="edit"></app-icon>
+                              <span>Redigera händelse</span>
+                            </div>
+                            <div
+                              class="menu-item"
+                              @click=${() => {
+                                this.setCancelled(true);
+                                this.actionMenu.close();
+                              }}
+                            >
+                              <app-icon icon="cancel"></app-icon>
+                              <span>Ställ in</span>
+                            </div>
+                          `}
+                    </app-menu>
+                    <event-card
+                      .event=${this.selected_event}
+                      .members=${this.members}
+                      .sections=${this.bandData?.sections || []}
+                    ></event-card>
+                    <app-button
+                      slot="primaryAction"
+                      variant="primary"
+                      @click=${this.closeDialog}
+                      >Stäng</app-button
+                    >
+                  `}
+            `
+          : ""}
       </app-dialog>
     `;
   }
@@ -227,7 +275,11 @@ export class BandSchedule extends LitElement {
   }
 
   deleteEvent() {
-    if (confirm("Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.")) {
+    if (
+      confirm(
+        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra."
+      )
+    ) {
       deleteDoc(this.selected_event.ref.dbref).then(
         () => {
           this.closeDialog();

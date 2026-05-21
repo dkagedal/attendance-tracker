@@ -166,7 +166,10 @@ export class AppMain extends LitElement {
         console.log("[app-main] User:", loginResult.user);
       }
 
-      this.subscribe("auth", onAuthStateChanged(this.auth, this.authStateChanged.bind(this)));
+      this.subscribe(
+        "auth",
+        onAuthStateChanged(this.auth, this.authStateChanged.bind(this))
+      );
       const bandid = await extractBandId();
       console.log("[app-main] Band id:", bandid);
       this.bandid = bandid;
@@ -366,7 +369,9 @@ export class AppMain extends LitElement {
       box-sizing: border-box;
     }
 
-    *, *:before, *:after {
+    *,
+    *:before,
+    *:after {
       box-sizing: border-box;
     }
 
@@ -464,27 +469,43 @@ export class AppMain extends LitElement {
     return html`
       <div class="drawer-list">
         ${repeat(
-      bands,
-      ([bandid, band]) =>
-        html`
+          bands,
+          ([bandid, band]) =>
+            html`
               <div
                 class="drawer-item ${bandid === this.bandid ? "selected" : ""}"
                 @click=${() => {
-            this.selectBand(bandid);
-            this.drawer.close();
-          }}
+                  this.selectBand(bandid);
+                  this.drawer.close();
+                }}
               >
                 ${band.display_name}
               </div>
             `
-    )}
+        )}
       </div>
       <div class="menu-divider"></div>
       <div class="drawer-list">
-        <div class="drawer-item ${this.currentView === 'schedule' ? 'selected' : ''}" @click=${() => { this.currentView = 'schedule'; this.drawer.close(); }}>
+        <div
+          class="drawer-item ${this.currentView === "schedule"
+            ? "selected"
+            : ""}"
+          @click=${() => {
+            this.currentView = "schedule";
+            this.drawer.close();
+          }}
+        >
           Schema
         </div>
-        <div class="drawer-item ${this.currentView === 'overview' ? 'selected' : ''}" @click=${() => { this.currentView = 'overview'; this.drawer.close(); }}>
+        <div
+          class="drawer-item ${this.currentView === "overview"
+            ? "selected"
+            : ""}"
+          @click=${() => {
+            this.currentView = "overview";
+            this.drawer.close();
+          }}
+        >
           Översikt
         </div>
       </div>
@@ -509,19 +530,44 @@ export class AppMain extends LitElement {
         <div class="menu-item" style="cursor: default;">
           <div style="display: flex; flex-direction: column;">
             <span style="font-weight: bold;">${displayName}</span>
-            ${secondary ? html`<span style="font-size: 0.8em; color: var(--app-color-text-secondary);">${secondary}</span>` : ""}
+            ${secondary
+              ? html`
+                  <span
+                    style="font-size: 0.8em; color: var(--app-color-text-secondary);"
+                    >${secondary}</span
+                  >
+                `
+              : ""}
           </div>
         </div>
         <div class="menu-divider"></div>
-        <div class="menu-item" @click=${() => { this.editProfile(); this.profileMenu.close(); }}>
+        <div
+          class="menu-item"
+          @click=${() => {
+            this.editProfile();
+            this.profileMenu.close();
+          }}
+        >
           <app-icon icon="edit" style="font-size: 20px;"></app-icon>
           <span>Redigera profil...</span>
         </div>
-        <div class="menu-item" @click=${() => { this.currentView = 'apikeys'; this.profileMenu.close(); }}>
+        <div
+          class="menu-item"
+          @click=${() => {
+            this.currentView = "apikeys";
+            this.profileMenu.close();
+          }}
+        >
           <app-icon icon="key" style="font-size: 20px;"></app-icon>
           <span>API-nycklar</span>
         </div>
-        <div class="menu-item" @click=${() => { signOut(this.auth); this.profileMenu.close(); }}>
+        <div
+          class="menu-item"
+          @click=${() => {
+            signOut(this.auth);
+            this.profileMenu.close();
+          }}
+        >
           <app-icon icon="exit_to_app" style="font-size: 20px;"></app-icon>
           <span>Logga ut</span>
         </div>
@@ -537,8 +583,8 @@ export class AppMain extends LitElement {
           bandid=${this.bandid}
           uid=${this.firebaseUser.uid}
           @loaded=${() => {
-        this.loadingSchedule = false;
-      }}
+            this.loadingSchedule = false;
+          }}
         >
         </band-schedule>
       </div>
@@ -559,7 +605,10 @@ export class AppMain extends LitElement {
         >
           Spara
         </app-button>
-        <app-button slot="secondaryAction" variant="secondary" @click=${() => this.addDialog.close()}
+        <app-button
+          slot="secondaryAction"
+          variant="secondary"
+          @click=${() => this.addDialog.close()}
           >Avbryt</app-button
         >
       </app-dialog>
@@ -571,8 +620,8 @@ export class AppMain extends LitElement {
       <app-dialog open heading="Välkommen">
         <p>
           ${this.registered
-        ? "Ansökan skickad"
-        : "Du verkar inte vara medlem än."}
+            ? "Ansökan skickad"
+            : "Du verkar inte vara medlem än."}
         </p>
         <app-button
           ?disabled=${this.registered}
@@ -592,11 +641,17 @@ export class AppMain extends LitElement {
   renderProgress() {
     if (this.isLoading() || this.loadingSchedule) {
       return html`
-        <div style="position: fixed; top: var(--header-height); left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, var(--app-color-primary) 0%, var(--app-color-secondary) 100%); animation: loading 1s infinite;"></div>
+        <div
+          style="position: fixed; top: var(--header-height); left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, var(--app-color-primary) 0%, var(--app-color-secondary) 100%); animation: loading 1s infinite;"
+        ></div>
         <style>
           @keyframes loading {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+            0% {
+              transform: translateX(-100%);
+            }
+            100% {
+              transform: translateX(100%);
+            }
           }
         </style>
       `;
@@ -611,8 +666,8 @@ export class AppMain extends LitElement {
         <app-button
           variant="text"
           @click=${() => {
-        this.viewingJoinRequest = snapshot.id;
-      }}
+            this.viewingJoinRequest = snapshot.id;
+          }}
         >
           Visa
         </app-button>
@@ -621,10 +676,10 @@ export class AppMain extends LitElement {
         heading="Begäran att gå med"
         ?open=${snapshot.id == this.viewingJoinRequest}
         @closed=${async () => {
-        this.viewingJoinRequest = null;
-        // app-dialog doesn't use dialogAction like mwc-dialog, we need to handle it differently or assume close means cancel unless explicitly handled.
-        // But wait, app-button click handler is where we should do the action.
-      }}
+          this.viewingJoinRequest = null;
+          // app-dialog doesn't use dialogAction like mwc-dialog, we need to handle it differently or assume close means cancel unless explicitly handled.
+          // But wait, app-button click handler is where we should do the action.
+        }}
       >
         <p><b>Namn:</b> ${snapshot.data().display_name}</p>
         <p>Vill du acceptera?</p>
@@ -632,23 +687,25 @@ export class AppMain extends LitElement {
           slot="primaryAction"
           variant="primary"
           @click=${async () => {
-        await new JoinRequestReference(snapshot.ref).update(
-          { approved: true },
-          { merge: true }
-        );
-        this.viewingJoinRequest = null;
-      }}
+            await new JoinRequestReference(snapshot.ref).update(
+              { approved: true },
+              { merge: true }
+            );
+            this.viewingJoinRequest = null;
+          }}
           label="Ja"
-        >Ja</app-button>
+          >Ja</app-button
+        >
         <app-button
           slot="secondaryAction"
           variant="secondary"
           @click=${async () => {
-        await deleteDoc(snapshot.ref);
-        this.viewingJoinRequest = null;
-      }}
+            await deleteDoc(snapshot.ref);
+            this.viewingJoinRequest = null;
+          }}
           label="Nej"
-        >Nej</app-button>
+          >Nej</app-button
+        >
       </app-dialog>
     `;
   }
@@ -659,38 +716,85 @@ export class AppMain extends LitElement {
     }
     if (this.firebaseUser == null) {
       return html`
-        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; padding: 2rem 1rem;">
-          <div style="text-align: center; margin-bottom: 2rem; max-width: 500px;">
-            <img src="/images/logo-512x512.png" alt="Kommer Logo" style="width: 100px; height: 100px; margin-bottom: 1rem; border-radius: 20px; box-shadow: var(--app-shadow-md);">
-            <h1 style="margin: 0 0 0.5rem 0; color: var(--app-color-primary-700); font-size: 2.5rem;">Kommer</h1>
-            <p style="font-size: 1.1rem; color: var(--app-color-text-secondary); margin: 0 0 1.5rem 0; line-height: 1.5;">Ett närvarosystem för storband, körer och andra grupper.</p>
-            
-            <div style="background: var(--app-color-surface); padding: 1.5rem; border-radius: var(--app-radius-md); border: 1px solid var(--app-color-border); text-align: left; box-shadow: var(--app-shadow-sm);">
-              <h2 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--app-color-text);">Välkommen till Kommer!</h2>
-              <p style="font-size: 0.95rem; color: var(--app-color-text-secondary); margin: 0 0 1rem 0; line-height: 1.5;">
-                Med Kommer kan du och din grupp enklare planera repetitioner och spelningar. Som inloggad medlem kan du:
+        <div
+          style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; padding: 2rem 1rem;"
+        >
+          <div
+            style="text-align: center; margin-bottom: 2rem; max-width: 500px;"
+          >
+            <img
+              src="/images/logo-512x512.png"
+              alt="Kommer Logo"
+              style="width: 100px; height: 100px; margin-bottom: 1rem; border-radius: 20px; box-shadow: var(--app-shadow-md);"
+            />
+            <h1
+              style="margin: 0 0 0.5rem 0; color: var(--app-color-primary-700); font-size: 2.5rem;"
+            >
+              Kommer
+            </h1>
+            <p
+              style="font-size: 1.1rem; color: var(--app-color-text-secondary); margin: 0 0 1.5rem 0; line-height: 1.5;"
+            >
+              Ett närvarosystem för storband, körer och andra grupper.
+            </p>
+
+            <div
+              style="background: var(--app-color-surface); padding: 1.5rem; border-radius: var(--app-radius-md); border: 1px solid var(--app-color-border); text-align: left; box-shadow: var(--app-shadow-sm);"
+            >
+              <h2
+                style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--app-color-text);"
+              >
+                Välkommen till Kommer!
+              </h2>
+              <p
+                style="font-size: 0.95rem; color: var(--app-color-text-secondary); margin: 0 0 1rem 0; line-height: 1.5;"
+              >
+                Med Kommer kan du och din grupp enklare planera repetitioner och
+                spelningar. Som inloggad medlem kan du:
               </p>
-              <ul style="font-size: 0.95rem; color: var(--app-color-text-secondary); margin: 0 0 1rem 0; padding-left: 1.5rem; line-height: 1.5;">
+              <ul
+                style="font-size: 0.95rem; color: var(--app-color-text-secondary); margin: 0 0 1rem 0; padding-left: 1.5rem; line-height: 1.5;"
+              >
                 <li>Se kalendern med alla kommande evenemang.</li>
                 <li>Rapportera om du kommer eller har förhinder.</li>
                 <li>Se närvaron för resten av gruppen och din sektion.</li>
               </ul>
             </div>
           </div>
-          
-          <div style="margin-top: 1.5rem; display: flex; justify-content: center;">
-            <app-button variant="primary" style="font-size: 1.1rem; padding: 12px 32px;" @click=${() => this.loginDialogOpen = true}>Logga in</app-button>
+
+          <div
+            style="margin-top: 1.5rem; display: flex; justify-content: center;"
+          >
+            <app-button
+              variant="primary"
+              style="font-size: 1.1rem; padding: 12px 32px;"
+              @click=${() => (this.loginDialogOpen = true)}
+              >Logga in</app-button
+            >
           </div>
-          
-          <app-dialog ?open=${this.loginDialogOpen} heading="Logga in" @closed=${() => this.loginDialogOpen = false}>
-            <div style="display: flex; justify-content: center; padding: 1rem 0;">
+
+          <app-dialog
+            ?open=${this.loginDialogOpen}
+            heading="Logga in"
+            @closed=${() => (this.loginDialogOpen = false)}
+          >
+            <div
+              style="display: flex; justify-content: center; padding: 1rem 0;"
+            >
               <login-dialog .app=${this.app}></login-dialog>
             </div>
           </app-dialog>
-          
-          <div style="margin-top: 2rem; text-align: center; font-size: 0.85em; color: var(--app-color-text-secondary);">
-            Genom att logga in godkänner du vår 
-            <a href="/privacy.html" target="_blank" style="color: var(--app-color-primary); text-decoration: none; font-weight: 500;">Integritetspolicy</a>.
+
+          <div
+            style="margin-top: 2rem; text-align: center; font-size: 0.85em; color: var(--app-color-text-secondary);"
+          >
+            Genom att logga in godkänner du vår
+            <a
+              href="/privacy.html"
+              target="_blank"
+              style="color: var(--app-color-primary); text-decoration: none; font-weight: 500;"
+              >Integritetspolicy</a
+            >.
           </div>
         </div>
       `;
@@ -708,9 +812,11 @@ export class AppMain extends LitElement {
         console.log("Showing band selector");
         return html`
           <app-dialog open hideCloseButton heading="Välj band">
-            <div style="display: flex; flex-direction: column; gap: 8px; padding: 16px 0;">
+            <div
+              style="display: flex; flex-direction: column; gap: 8px; padding: 16px 0;"
+            >
               ${Object.keys(this.bands).map(
-          (id) => html`
+                id => html`
                   <app-button
                     variant="secondary"
                     style="width: 100%;"
@@ -719,7 +825,7 @@ export class AppMain extends LitElement {
                     ${this.bands[id].display_name}
                   </app-button>
                 `
-        )}
+              )}
             </div>
           </app-dialog>
         `;
@@ -729,21 +835,29 @@ export class AppMain extends LitElement {
       return this.renderRegister();
     }
     return html`
-      ${this.currentView === 'overview' ? html`
-        <band-overview
-          bandid=${this.bandid}
-          uid=${this.firebaseUser.uid}
-          .membership=${this.membership}
-          @back=${() => this.currentView = 'schedule'}
-        ></band-overview>
-      ` : this.currentView === 'apikeys' ? html`
-        <div style="margin-bottom: 16px;">
-          <app-button variant="text" icon="arrow_back" @click=${() => this.currentView = 'schedule'}>
-            Tillbaka
-          </app-button>
-        </div>
-        <api-keys uid=${this.firebaseUser.uid}></api-keys>
-      ` : this.renderSchedule()}
+      ${this.currentView === "overview"
+        ? html`
+            <band-overview
+              bandid=${this.bandid}
+              uid=${this.firebaseUser.uid}
+              .membership=${this.membership}
+              @back=${() => (this.currentView = "schedule")}
+            ></band-overview>
+          `
+        : this.currentView === "apikeys"
+        ? html`
+            <div style="margin-bottom: 16px;">
+              <app-button
+                variant="text"
+                icon="arrow_back"
+                @click=${() => (this.currentView = "schedule")}
+              >
+                Tillbaka
+              </app-button>
+            </div>
+            <api-keys uid=${this.firebaseUser.uid}></api-keys>
+          `
+        : this.renderSchedule()}
       <app-dialog id="settings" heading="Inställningar för ${this.bandid}">
         <profile-editor
           bandid=${this.bandid}
@@ -754,13 +868,16 @@ export class AppMain extends LitElement {
           slot="primaryAction"
           variant="primary"
           @click=${async () => {
-        if (await this.profileEditor.save()) {
-          this.profileEditorDialog.close();
-        }
-      }}
+            if (await this.profileEditor.save()) {
+              this.profileEditorDialog.close();
+            }
+          }}
           >OK</app-button
         >
-        <app-button slot="secondaryAction" variant="secondary" @click=${() => this.profileEditorDialog.close()}
+        <app-button
+          slot="secondaryAction"
+          variant="secondary"
+          @click=${() => this.profileEditorDialog.close()}
           >Avbryt</app-button
         >
       </app-dialog>
@@ -769,46 +886,58 @@ export class AppMain extends LitElement {
 
   render() {
     return html`
-      <app-drawer id="mainMenuDrawer" @close=${() => (this.drawer.open = false)}>
+      <app-drawer
+        id="mainMenuDrawer"
+        @close=${() => (this.drawer.open = false)}
+      >
         <div slot="header">
-          <span style="font-weight: bold; font-size: 1.2rem;">Organisationer</span>
+          <span style="font-weight: bold; font-size: 1.2rem;"
+            >Organisationer</span
+          >
         </div>
         ${this.renderDrawer()}
       </app-drawer>
 
-      ${this.firebaseUser == null && !this.isLoading() ? '' : html`
-        <div class="app-header">
-          <app-button
-            variant="icon"
-            icon="menu"
-            style="color: white;"
-            @click=${() => {
-          this.drawer.open = true;
-        }}
-          ></app-button>
-          <div class="app-title">Kommer</div>
-          ${this.renderProfileMenu()}
-        </div>
-      `}
+      ${this.firebaseUser == null && !this.isLoading()
+        ? ""
+        : html`
+            <div class="app-header">
+              <app-button
+                variant="icon"
+                icon="menu"
+                style="color: white;"
+                @click=${() => {
+                  this.drawer.open = true;
+                }}
+              ></app-button>
+              <div class="app-title">Kommer</div>
+              ${this.renderProfileMenu()}
+            </div>
+          `}
       ${this.renderProgress()}
 
-      <div class="main-content" style="${this.firebaseUser == null && !this.isLoading() ? 'margin-top: 0;' : ''}">
+      <div
+        class="main-content"
+        style="${this.firebaseUser == null && !this.isLoading()
+          ? "margin-top: 0;"
+          : ""}"
+      >
         <div id="body">
           ${repeat(
-        this.errorMessages,
-        (em: ErrorMessage) => em.id,
-        ({ id, message, details }: ErrorMessage) => html`
+            this.errorMessages,
+            (em: ErrorMessage) => em.id,
+            ({ id, message, details }: ErrorMessage) => html`
               <div class="error toast" id="error-${id}">
                 <span class="errormsg">${message}</span>
                 <span class="errordetail">${details || ""}</span>
               </div>
             `
-      )}
+          )}
           ${repeat(
-        this.joinRequests,
-        snapshot => snapshot.id,
-        snapshot => this.renderJoinRequest(snapshot)
-      )}
+            this.joinRequests,
+            snapshot => snapshot.id,
+            snapshot => this.renderJoinRequest(snapshot)
+          )}
           ${this.renderMain()}
         </div>
       </div>

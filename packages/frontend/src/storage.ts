@@ -37,7 +37,9 @@ export function initDB(app: FirebaseApp, useEmulator: boolean) {
   auth = getAuth();
   auth.languageCode = "sv";
   if (useEmulator) {
-    console.log(`Connecting to Auth emulator at http://${location.hostname}:9099`);
+    console.log(
+      `Connecting to Auth emulator at http://${location.hostname}:9099`
+    );
     connectAuthEmulator(auth, `http://${location.hostname}:9099`);
   }
   if (loginStateCallback) {

@@ -8,19 +8,19 @@ import "./response-icon";
 
 @customElement("response-card")
 export class ResponseCard extends LitElement {
-    @property({ type: String })
-    response: ParticipantResponse | null = null;
+  @property({ type: String })
+  response: ParticipantResponse | null = null;
 
-    @property({ type: String })
-    comment: string = "";
+  @property({ type: String })
+  comment: string = "";
 
-    @property({ type: String })
-    mode: "view" | "edit" = "edit";
+  @property({ type: String })
+  mode: "view" | "edit" = "edit";
 
-    @query("#comment-input")
-    commentInput: HTMLInputElement;
+  @query("#comment-input")
+  commentInput: HTMLInputElement;
 
-    static styles = css`
+  static styles = css`
     :host {
       display: block;
     }
@@ -71,99 +71,102 @@ export class ResponseCard extends LitElement {
     }
   `;
 
-    connectedCallback() {
-        super.connectedCallback();
-        if (this.response) {
-            this.mode = "view";
-        }
+  connectedCallback() {
+    super.connectedCallback();
+    if (this.response) {
+      this.mode = "view";
     }
+  }
 
-    updated(changedProperties: Map<string, any>) {
-        if (changedProperties.has("response")) {
-            if (this.response && changedProperties.get("response") === undefined) {
-                // Initial load with response, set view mode
-                this.mode = "view";
-            }
-        }
-    }
-
-    private getIconAndText() {
-        let text = "Inget svar";
-
-        switch (this.response) {
-            case "yes":
-                text = "Kommer";
-                break;
-            case "no":
-                text = "Kan inte";
-                break;
-            case "sub":
-                text = "Vikarie";
-                break;
-        }
-
-        if (this.comment) {
-            text = this.comment;
-        }
-
-        return { text };
-    }
-
-    private handleResponseClick(newResponse: ParticipantResponse) {
-        this.response = newResponse;
-        const detail = {
-            response: this.response,
-            comment: this.comment
-        };
-        this.dispatchEvent(new CustomEvent("update-response", { detail }));
+  updated(changedProperties: Map<string, any>) {
+    if (changedProperties.has("response")) {
+      if (this.response && changedProperties.get("response") === undefined) {
+        // Initial load with response, set view mode
         this.mode = "view";
+      }
+    }
+  }
+
+  private getIconAndText() {
+    let text = "Inget svar";
+
+    switch (this.response) {
+      case "yes":
+        text = "Kommer";
+        break;
+      case "no":
+        text = "Kan inte";
+        break;
+      case "sub":
+        text = "Vikarie";
+        break;
     }
 
-    private handleCommentBlur() {
-        // If we have a response, we can auto-save/update
-        if (this.response) {
-            const detail = {
-                response: this.response,
-                comment: this.comment
-            };
-            this.dispatchEvent(new CustomEvent("update-response", { detail }));
-        }
+    if (this.comment) {
+      text = this.comment;
     }
 
-    render() {
-        if (this.mode === "view" && this.response) {
-            const { text } = this.getIconAndText();
-            return html`
-        <div class="response-section" @click=${() => this.mode = "edit"}>
+    return { text };
+  }
+
+  private handleResponseClick(newResponse: ParticipantResponse) {
+    this.response = newResponse;
+    const detail = {
+      response: this.response,
+      comment: this.comment
+    };
+    this.dispatchEvent(new CustomEvent("update-response", { detail }));
+    this.mode = "view";
+  }
+
+  private handleCommentBlur() {
+    // If we have a response, we can auto-save/update
+    if (this.response) {
+      const detail = {
+        response: this.response,
+        comment: this.comment
+      };
+      this.dispatchEvent(new CustomEvent("update-response", { detail }));
+    }
+  }
+
+  render() {
+    if (this.mode === "view" && this.response) {
+      const { text } = this.getIconAndText();
+      return html`
+        <div class="response-section" @click=${() => (this.mode = "edit")}>
           <div class="view-container">
             <response-icon .response=${this.response}></response-icon>
             <span class="response-text">${text}</span>
-            <app-icon icon="edit" style="color: var(--app-color-text-secondary);"></app-icon>
+            <app-icon
+              icon="edit"
+              style="color: var(--app-color-text-secondary);"
+            ></app-icon>
           </div>
         </div>
       `;
-        }
+    }
 
-        return html`
+    return html`
       <div class="response-section">
         <div class="response-buttons">
-          <app-button 
-            variant="${this.response === 'yes' ? 'primary' : 'secondary'}"
-            @click=${() => this.handleResponseClick('yes')}
+          <app-button
+            variant="${this.response === "yes" ? "primary" : "secondary"}"
+            @click=${() => this.handleResponseClick("yes")}
           >
             <response-icon slot="icon" response="yes"></response-icon>
             Kommer
           </app-button>
-          <app-button 
-            variant="${this.response === 'sub' ? 'primary' : 'secondary'}"
-            @click=${() => this.handleResponseClick('sub')}
+          <app-button
+            variant="${this.response === "sub" ? "primary" : "secondary"}"
+            @click=${() => this.handleResponseClick("sub")}
           >
             <response-icon slot="icon" response="sub"></response-icon>
             Vikarie
           </app-button>
-          <app-button 
-            variant="${this.response === 'no' ? 'primary' : 'secondary'}"
-            @click=${() => this.handleResponseClick('no')}
+          <app-button
+            variant="${this.response === "no" ? "primary" : "secondary"}"
+            @click=${() => this.handleResponseClick("no")}
           >
             <response-icon slot="icon" response="no"></response-icon>
             Kan inte
@@ -172,18 +175,18 @@ export class ResponseCard extends LitElement {
         <app-input
           id="comment-input"
           .value=${this.comment}
-          @input=${(e: any) => this.comment = e.target.value}
+          @input=${(e: any) => (this.comment = e.target.value)}
           @focusout=${() => this.handleCommentBlur()}
           placeholder="T.ex. kommer sent, tar med noter..."
           style="margin-top: var(--app-spacing-md);"
         ></app-input>
       </div>
     `;
-    }
+  }
 }
 
 declare global {
-    interface HTMLElementTagNameMap {
-        "response-card": ResponseCard;
-    }
+  interface HTMLElementTagNameMap {
+    "response-card": ResponseCard;
+  }
 }

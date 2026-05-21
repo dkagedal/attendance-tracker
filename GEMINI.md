@@ -41,13 +41,14 @@ The `specs/` directory contains all written specifications for new features and 
 -   **Data Model**: The current Firestore schema is defined in `specs/0002-firestore-data-model.md`. Check this file before making database changes.
 -   **Naming**: Specifications must follow the zero-padded 4-digit formatting (e.g., `0000-name.md`).
 
-## Testing
+## Testing & Formatting
 
 The project has a dedicated test suite in the `test` directory for testing Firestore security rules.
 
--   **Framework**: `mocha`
+-   **Testing Framework**: `mocha`
 -   **Library**: `@firebase/rules-unit-testing`
 -   **Execution**: The tests are run using the `npm test` command in the `test` directory.
+-   **Formatting**: The project uses Prettier for formatting. You **MUST** always run `npm run fmt` from the top-level directory before committing any changes.
 
 ## Deployment
 

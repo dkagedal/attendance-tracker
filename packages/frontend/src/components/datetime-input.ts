@@ -66,7 +66,9 @@ export class DatetimeInput extends LitElement {
         type="date"
         ?disabled=${this.disabled}
         .value=${this._date}
-        @input=${(e: CustomEvent) => { this._date = (e.target as AppInput).value; }}
+        @input=${(e: CustomEvent) => {
+          this._date = (e.target as AppInput).value;
+        }}
       ></app-input>
       <app-input
         label="Tid"
@@ -74,7 +76,9 @@ export class DatetimeInput extends LitElement {
         type="time"
         ?disabled=${this.disabled}
         .value=${this._time}
-        @input=${(e: CustomEvent) => { this._time = (e.target as AppInput).value; }}
+        @input=${(e: CustomEvent) => {
+          this._time = (e.target as AppInput).value;
+        }}
       ></app-input>
     `;
   }

@@ -1,4 +1,3 @@
-
 import { customElement, property } from "lit/decorators";
 import { css, html, LitElement } from "lit";
 
@@ -67,8 +66,8 @@ export class TimeRange extends LitElement {
       ${this.start && this.stop
         ? range(this.start, this.stop)
         : this.start
-          ? single(this.start)
-          : ""}
+        ? single(this.start)
+        : ""}
     `;
   }
 }

@@ -48,11 +48,11 @@ export class ApiKeys extends LitElement {
       if (this.unsubscribe) {
         this.unsubscribe();
       }
-      
+
       const keysRef = collection(db, "users", this.uid, "apikeys");
       const q = firestoreQuery(keysRef, orderBy("createdAt", "desc"));
-      
-      this.unsubscribe = onSnapshot(q, (snapshot) => {
+
+      this.unsubscribe = onSnapshot(q, snapshot => {
         this.keys = snapshot.docs.map(d => ({
           id: d.id,
           name: d.data().name,
@@ -73,7 +73,9 @@ export class ApiKeys extends LitElement {
   private generateRandomToken(): string {
     const array = new Uint8Array(24);
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, byte => byte.toString(16).padStart(2, "0")).join(
+      ""
+    );
   }
 
   async createKey() {
@@ -95,7 +97,11 @@ export class ApiKeys extends LitElement {
   }
 
   async deleteKey(tokenId: string) {
-    if (confirm("Är du säker på att du vill ta bort denna API-nyckel? Eventuella script som använder den kommer sluta fungera.")) {
+    if (
+      confirm(
+        "Är du säker på att du vill ta bort denna API-nyckel? Eventuella script som använder den kommer sluta fungera."
+      )
+    ) {
       await deleteDoc(doc(db, "users", this.uid, "apikeys", tokenId));
     }
   }
@@ -197,47 +203,92 @@ export class ApiKeys extends LitElement {
     return html`
       <div class="header">
         <h2>Mina API-nycklar</h2>
-        <p>Här kan du skapa anpassade API-nycklar för att använda med externa script och integrationer.</p>
-        <app-button variant="primary" icon="add" @click=${() => this.showCreateDialog = true}>Skapa ny nyckel</app-button>
+        <p>
+          Här kan du skapa anpassade API-nycklar för att använda med externa
+          script och integrationer.
+        </p>
+        <app-button
+          variant="primary"
+          icon="add"
+          @click=${() => (this.showCreateDialog = true)}
+          >Skapa ny nyckel</app-button
+        >
       </div>
 
-      ${this.newKeyToken ? html`
-        <div class="new-key-alert">
-          <strong>Nyckel skapad!</strong>
-          <p>Kopiera din nya API-nyckel nu.</p>
-          <div class="key-token-container">
-            <span>${this.newKeyToken}</span>
-            <app-button variant="icon" icon="content_copy" @click=${() => this.copyToken(this.newKeyToken)}></app-button>
-          </div>
-          <div style="margin-top: 8px;">
-            <app-button variant="secondary" @click=${() => this.newKeyToken = ""}>Stäng</app-button>
-          </div>
-        </div>
-      ` : ""}
+      ${this.newKeyToken
+        ? html`
+            <div class="new-key-alert">
+              <strong>Nyckel skapad!</strong>
+              <p>Kopiera din nya API-nyckel nu.</p>
+              <div class="key-token-container">
+                <span>${this.newKeyToken}</span>
+                <app-button
+                  variant="icon"
+                  icon="content_copy"
+                  @click=${() => this.copyToken(this.newKeyToken)}
+                ></app-button>
+              </div>
+              <div style="margin-top: 8px;">
+                <app-button
+                  variant="secondary"
+                  @click=${() => (this.newKeyToken = "")}
+                  >Stäng</app-button
+                >
+              </div>
+            </div>
+          `
+        : ""}
 
       <div class="key-list">
-        ${this.keys.length === 0 ? html`<p>Du har inga API-nycklar än.</p>` : ""}
-        ${this.keys.map(key => html`
-          <div class="key-card">
-            <div class="key-header">
-              <span class="key-name">${key.name}</span>
-              <span class="key-badge ${key.isReadonly ? 'readonly' : 'readwrite'}">
-                ${key.isReadonly ? 'Skrivskyddad (Endast Läs)' : 'Full åtkomst (Läs/Skriv)'}
-              </span>
+        ${this.keys.length === 0
+          ? html`
+              <p>Du har inga API-nycklar än.</p>
+            `
+          : ""}
+        ${this.keys.map(
+          key => html`
+            <div class="key-card">
+              <div class="key-header">
+                <span class="key-name">${key.name}</span>
+                <span
+                  class="key-badge ${key.isReadonly ? "readonly" : "readwrite"}"
+                >
+                  ${key.isReadonly
+                    ? "Skrivskyddad (Endast Läs)"
+                    : "Full åtkomst (Läs/Skriv)"}
+                </span>
+              </div>
+              <div
+                style="font-size: 0.8em; color: var(--app-color-text-secondary);"
+              >
+                Skapad: ${key.createdAt.toDate().toLocaleString("sv-SE")}
+              </div>
+              <div class="key-token-container">
+                <span>${key.id}</span>
+                <app-button
+                  variant="icon"
+                  icon="content_copy"
+                  title="Kopiera"
+                  @click=${() => this.copyToken(key.id)}
+                ></app-button>
+                <app-button
+                  variant="icon"
+                  icon="delete"
+                  title="Ta bort"
+                  style="color: #c62828; margin-left: auto;"
+                  @click=${() => this.deleteKey(key.id)}
+                ></app-button>
+              </div>
             </div>
-            <div style="font-size: 0.8em; color: var(--app-color-text-secondary);">
-              Skapad: ${key.createdAt.toDate().toLocaleString("sv-SE")}
-            </div>
-            <div class="key-token-container">
-              <span>${key.id}</span>
-              <app-button variant="icon" icon="content_copy" title="Kopiera" @click=${() => this.copyToken(key.id)}></app-button>
-              <app-button variant="icon" icon="delete" title="Ta bort" style="color: #c62828; margin-left: auto;" @click=${() => this.deleteKey(key.id)}></app-button>
-            </div>
-          </div>
-        `)}
+          `
+        )}
       </div>
 
-      <app-dialog ?open=${this.showCreateDialog} heading="Skapa ny API-nyckel" @closed=${() => this.showCreateDialog = false}>
+      <app-dialog
+        ?open=${this.showCreateDialog}
+        heading="Skapa ny API-nyckel"
+        @closed=${() => (this.showCreateDialog = false)}
+      >
         <div class="form-group">
           <label for="key-name">Namn</label>
           <input type="text" id="key-name" placeholder="T.ex. Mitt script" />
@@ -247,11 +298,22 @@ export class ApiKeys extends LitElement {
           <label for="key-readonly">Skrivskyddad (Endast läsrättigheter)</label>
         </div>
         <p style="font-size: 0.9em; color: var(--app-color-text-secondary);">
-          Skrivskyddade nycklar kan bara hämta data (GET-förfrågningar) och kan inte ändra eller ta bort händelser.
+          Skrivskyddade nycklar kan bara hämta data (GET-förfrågningar) och kan
+          inte ändra eller ta bort händelser.
         </p>
 
-        <app-button slot="primaryAction" variant="primary" @click=${this.createKey}>Skapa</app-button>
-        <app-button slot="secondaryAction" variant="secondary" @click=${() => this.showCreateDialog = false}>Avbryt</app-button>
+        <app-button
+          slot="primaryAction"
+          variant="primary"
+          @click=${this.createKey}
+          >Skapa</app-button
+        >
+        <app-button
+          slot="secondaryAction"
+          variant="secondary"
+          @click=${() => (this.showCreateDialog = false)}
+          >Avbryt</app-button
+        >
       </app-dialog>
     `;
   }

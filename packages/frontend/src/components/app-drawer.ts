@@ -3,10 +3,10 @@ import { customElement, property } from "lit/decorators.js";
 
 @customElement("app-drawer")
 export class AppDrawer extends LitElement {
-    @property({ type: Boolean })
-    open = false;
+  @property({ type: Boolean })
+  open = false;
 
-    static styles = css`
+  static styles = css`
     :host {
       display: block;
     }
@@ -73,8 +73,8 @@ export class AppDrawer extends LitElement {
     }
   `;
 
-    render() {
-        return html`
+  render() {
+    return html`
       <div class="drawer-container ${this.open ? "open" : ""}">
         <div class="overlay" @click=${this.close}></div>
         <div class="drawer">
@@ -87,10 +87,10 @@ export class AppDrawer extends LitElement {
         </div>
       </div>
     `;
-    }
+  }
 
-    close() {
-        this.open = false;
-        this.dispatchEvent(new CustomEvent("close"));
-    }
+  close() {
+    this.open = false;
+    this.dispatchEvent(new CustomEvent("close"));
+  }
 }

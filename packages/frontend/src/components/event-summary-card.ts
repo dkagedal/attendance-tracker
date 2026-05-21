@@ -32,7 +32,7 @@ export class EventSummaryCard extends LitElement {
   @state()
   loading = true;
 
-  unsubscribe: () => void = () => { };
+  unsubscribe: () => void = () => {};
 
   connectedCallback() {
     super.connectedCallback();
@@ -49,7 +49,9 @@ export class EventSummaryCard extends LitElement {
   willUpdate(changedProperties: any) {
     if (changedProperties.has("event") && this.event) {
       this.cancelled = !!this.event.cancelled;
-      console.log(`[event-summary-card] Event ${this.event.ref.id} updated. Cancelled: ${this.cancelled}`);
+      console.log(
+        `[event-summary-card] Event ${this.event.ref.id} updated. Cancelled: ${this.cancelled}`
+      );
     }
   }
 
@@ -114,9 +116,18 @@ export class EventSummaryCard extends LitElement {
     }
 
     /* Desktop Layout */
-    .date-box { grid-column: 1; align-self: start; }
-    .info { grid-column: 2; align-self: start; }
-    .status { grid-column: 3; align-self: start; }
+    .date-box {
+      grid-column: 1;
+      align-self: start;
+    }
+    .info {
+      grid-column: 2;
+      align-self: start;
+    }
+    .status {
+      grid-column: 3;
+      align-self: start;
+    }
 
     @media (max-width: 768px) {
       .content {
@@ -157,7 +168,7 @@ export class EventSummaryCard extends LitElement {
       .date-day {
         font-size: 1.1rem;
       }
-      
+
       .date-month {
         font-size: 0.65rem;
       }
@@ -267,15 +278,15 @@ export class EventSummaryCard extends LitElement {
       color: white;
     }
 
-
-
     :host([cancelled]) {
       opacity: 0.6;
     }
   `;
 
   renderResponseStatus() {
-    return html`<response-icon .response=${this.userResponse}></response-icon>`;
+    return html`
+      <response-icon .response=${this.userResponse}></response-icon>
+    `;
   }
 
   render() {
@@ -288,14 +299,19 @@ export class EventSummaryCard extends LitElement {
     if (this.event.start) {
       const [datePart, timePart] = this.event.start.split("T");
       const [y, m, d] = datePart.split("-").map(Number);
-      
+
       // Use UTC to prevent local timezone offsets from changing the day
       const dateObj = new Date(Date.UTC(y, m - 1, d));
-      month = dateObj.toLocaleDateString("sv-SE", { month: "short", timeZone: "UTC" }).replace(".", "");
+      month = dateObj
+        .toLocaleDateString("sv-SE", { month: "short", timeZone: "UTC" })
+        .replace(".", "");
       day = dateObj.getUTCDate();
-      
+
       if (timePart) {
-        let isZeroTime = timePart === "00:00" || timePart === "00:00:00" || timePart.startsWith("00:00:00.");
+        let isZeroTime =
+          timePart === "00:00" ||
+          timePart === "00:00:00" ||
+          timePart.startsWith("00:00:00.");
         if (!isZeroTime) {
           const timeTokens = timePart.split(":");
           time = `${timeTokens[0]}:${timeTokens[1]}`;
@@ -303,7 +319,9 @@ export class EventSummaryCard extends LitElement {
       }
     } else {
       const dateObj = new Date();
-      month = dateObj.toLocaleDateString("sv-SE", { month: "short" }).replace(".", "");
+      month = dateObj
+        .toLocaleDateString("sv-SE", { month: "short" })
+        .replace(".", "");
       day = dateObj.getDate();
     }
 
@@ -312,7 +330,6 @@ export class EventSummaryCard extends LitElement {
     return html`
       <app-card clickable ?disabled=${this.cancelled}>
         <div class="content">
-          
           <div class="date-box">
             <span class="date-month">${month}</span>
             <span class="date-day">${day}</span>
@@ -321,24 +338,52 @@ export class EventSummaryCard extends LitElement {
           <div class="info">
             <h3 class="title">
               ${this.event.type}
-              ${this.event.cancelled ? html`<span class="badge cancelled" style="margin-left: 8px; vertical-align: middle;">Inställt</span>` : ""}
+              ${this.event.cancelled
+                ? html`
+                    <span
+                      class="badge cancelled"
+                      style="margin-left: 8px; vertical-align: middle;"
+                      >Inställt</span
+                    >
+                  `
+                : ""}
             </h3>
             <div class="meta">
-              ${time ? html`
-                <div class="meta-item">
-                  <app-icon icon="schedule" style="font-size: 16px;"></app-icon>
-                  ${time}
-                </div>
-              ` : ""}
-              ${this.event.location ? html`
-                <div class="meta-item location">
-                  <app-icon icon="place" style="font-size: 16px;"></app-icon>
-                  <span>${this.event.location}</span>
-                </div>
-              ` : ""}
+              ${time
+                ? html`
+                    <div class="meta-item">
+                      <app-icon
+                        icon="schedule"
+                        style="font-size: 16px;"
+                      ></app-icon>
+                      ${time}
+                    </div>
+                  `
+                : ""}
+              ${this.event.location
+                ? html`
+                    <div class="meta-item location">
+                      <app-icon
+                        icon="place"
+                        style="font-size: 16px;"
+                      ></app-icon>
+                      <span>${this.event.location}</span>
+                    </div>
+                  `
+                : ""}
             </div>
             <div class="description">
-              ${this.event.description ? html`${unsafeHTML(DOMPurify.sanitize(marked.parse(this.event.description.split("\n\n")[0]) as string))}` : ""}
+              ${this.event.description
+                ? html`
+                    ${unsafeHTML(
+                      DOMPurify.sanitize(
+                        marked.parse(
+                          this.event.description.split("\n\n")[0]
+                        ) as string
+                      )
+                    )}
+                  `
+                : ""}
             </div>
           </div>
           ${this.renderResponseStatus()}
@@ -351,7 +396,6 @@ export class EventSummaryCard extends LitElement {
               .total=${total}
             ></attendance-progress-bar>
           </div>
-
         </div>
       </app-card>
     `;
