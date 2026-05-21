@@ -66,7 +66,9 @@ The entire project is deployed to Firebase. The project uses configuration swapp
 
 To run the application locally with Firebase emulators:
 
-1.  Ensure you are running **Node 20** (e.g. `nvm use`, configured via `.nvmrc`).
+1.  Ensure you are running **Node 20**.
+    *   Verify your current Node version with: `node -v`
+    *   If using **nvm** (Node Version Manager), switch to the correct version by running `nvm use` in the root directory (which reads `.nvmrc`). If Node 20 is not yet installed on your system, run `nvm install` first.
 2.  If you are starting in a new clone or a separate worktree, run `npm ci` first to install dependencies and automatically initialize configuration files.
 3.  Run `npm run dev` in the root directory. This will:
     -   Run an initial build of both packages.
