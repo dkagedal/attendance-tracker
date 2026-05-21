@@ -30,7 +30,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && rollup -c",
+    "build": "node ../../scripts/select-config.js && tsc && rollup -c",
     "build-emacs": "tsc --pretty false && rollup -c",
     "tsc:watch": "tsc -w",
     "rollup:watch": "rollup -c -w",

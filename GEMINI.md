@@ -67,12 +67,13 @@ The entire project is deployed to Firebase. The project uses configuration swapp
 To run the application locally with Firebase emulators:
 
 1.  Ensure you are running **Node 20** (e.g. `nvm use`, configured via `.nvmrc`).
-2.  Run `npm run dev` in the root directory. This will:
+2.  If you are starting in a new clone or a separate worktree, run `npm ci` first to install dependencies and automatically initialize configuration files.
+3.  Run `npm run dev` in the root directory. This will:
     -   Run an initial build of both packages.
     -   Start `tsc:watch` and `rollup:watch` for both frontend and backend to auto-rebuild on file changes.
     -   Start the Firebase emulators with imported test data and the `emulator` configuration injected via rollup.
-2.  Access the application at `http://localhost:5002/test`.
-3.  Access the Emulator UI at `http://localhost:4000`.
+4.  Access the application at `http://localhost:5002/test`.
+5.  Access the Emulator UI at `http://localhost:4000`.
 
 ### Login Flow
 

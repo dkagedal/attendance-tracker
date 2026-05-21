@@ -9,7 +9,7 @@
     "packages/backend"
   ],
   "scripts": {
-    "build": "APP_ENV=live npm run build -w frontend && npm run build -w backend",
+    "build": "npm run build -w frontend && npm run build -w backend",
     "serve": "npm run serve -w backend",
     "watch:backend": "npm run build:watch -w backend",
     "watch:frontend": "npm run build:watch -w frontend",
@@ -22,7 +22,8 @@
     "deploy-staging-api": "APP_ENV=staging npm run build -w frontend && firebase --project staging deploy --only functions:main:api",
     "deploy-staging-all": "APP_ENV=staging npm run build -w frontend && firebase --project staging deploy",
     "deploy-prod-test": "APP_ENV=test      npm run build -w frontend && firebase --project prod    hosting:channel:deploy test",
-    "seed": "npm run seed -w backend"
+    "seed": "npm run seed -w backend",
+    "prepare": "node scripts/select-config.js"
   },
   "devDependencies": {
     "firebase-tools": "^14.18.0",
