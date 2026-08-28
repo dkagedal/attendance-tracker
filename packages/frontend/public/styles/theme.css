@@ -43,7 +43,7 @@
   --app-color-border: #e2e8f0;
 
   /* Typography */
-  --app-font-family: 'Roboto', system-ui, -apple-system, sans-serif;
+  --app-font-family: "Roboto", system-ui, -apple-system, sans-serif;
   --app-font-size-base: 16px;
   --app-font-size-sm: 0.875rem;
   --app-font-size-lg: 1.125rem;
@@ -67,8 +67,10 @@
 
   /* Shadows */
   --app-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --app-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-  --app-shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --app-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+    0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --app-shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
 }
 
 body {

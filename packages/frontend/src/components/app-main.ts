@@ -100,7 +100,6 @@ export class AppMain extends LitElement {
 
   @state()
   joinRequests: QueryDocumentSnapshot<JoinRequest>[] = [];
-
   @state()
   viewingJoinRequest: string = null;
 

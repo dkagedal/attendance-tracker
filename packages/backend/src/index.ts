@@ -12,7 +12,7 @@ import {
   onDocumentUpdated,
   onDocumentDeleted,
   onDocumentWritten,
-  QueryDocumentSnapshot,
+  QueryDocumentSnapshot
 } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import { initializeApp } from "firebase-admin/app";
@@ -20,7 +20,7 @@ import { initializeApp } from "firebase-admin/app";
 import {
   getFirestore,
   DocumentReference,
-  DocumentData,
+  DocumentData
 } from "firebase-admin/firestore";
 
 // v1 stuff below.
@@ -30,7 +30,7 @@ import {
   changedEventHtml,
   changedEventText,
   newEventHtml,
-  newEventText,
+  newEventText
 } from "./email";
 import { Band, BandEvent } from "./types";
 import { onRequest } from "firebase-functions/v2/https";
@@ -50,7 +50,7 @@ function createLogger(context: object) {
     },
     warn: (...args: any[]) => {
       logger.warn(...args, context);
-    },
+    }
   };
 }
 
@@ -77,7 +77,7 @@ async function getBandSettings(bandid: string): Promise<BandSettings> {
     return doc.data()! as BandSettings;
   }
   return {
-    from_address: null,
+    from_address: null
   };
 }
 
@@ -148,11 +148,14 @@ export async function calculateNotifications(bandid: string) {
     new_member: NewEnvelope(bandSettings.from_address)
   };
 
-  const memberSettingsPromises = members.docs.map(async (doc) => {
-    const settingsDoc = await doc.ref.collection("private").doc("settings").get();
+  const memberSettingsPromises = members.docs.map(async doc => {
+    const settingsDoc = await doc.ref
+      .collection("private")
+      .doc("settings")
+      .get();
     return { doc, settingsDoc };
   });
-  
+
   const memberSettings = await Promise.all(memberSettingsPromises);
 
   for (const { doc, settingsDoc } of memberSettings) {
@@ -166,13 +169,13 @@ export async function calculateNotifications(bandid: string) {
     if (!settingsDoc.exists) continue;
     const settings = settingsDoc.data()!;
     if (!settings.email) continue;
-    
+
     logger.info("Email:", settings.email);
-    
-    const targetEnvelopes = member.admin 
-      ? { ...notifications, ...admin_notifications } 
+
+    const targetEnvelopes = member.admin
+      ? { ...notifications, ...admin_notifications }
       : notifications;
-      
+
     for (const [k, envelope] of Object.entries(targetEnvelopes)) {
       if (settings.notify[k]) {
         envelope.to.push(settings.email);
@@ -182,9 +185,9 @@ export async function calculateNotifications(bandid: string) {
 
   logger.info("Notifications:", notifications);
   logger.info("Admin notifications:", admin_notifications);
-  
+
   Object.assign(notifications, admin_notifications);
-  
+
   await bandRef
     .collection("admin")
     .doc("notify")
@@ -226,13 +229,7 @@ async function notify(
     };
   }
   envelope.message = message;
-  logger.info(
-    "Notify",
-    bandid,
-    notificationType,
-    envelope.from,
-    envelope.to
-  );
+  logger.info("Notify", bandid, notificationType, envelope.from, envelope.to);
   if (!message.messageId) {
     const baseMessageId = `<${notificationType}-${extraKey}@${bandid}>`;
     if (followUp) {
@@ -250,7 +247,8 @@ async function notify(
 
 ///
 
-export const joinRequestCreated = onDocumentCreated("bands/{bandId}/join_requests/{uid}",
+export const joinRequestCreated = onDocumentCreated(
+  "bands/{bandId}/join_requests/{uid}",
   async (event): Promise<void> => {
     const bandId = event.params.bandId;
     const uid = event.params.uid;
@@ -280,8 +278,9 @@ export const joinRequestCreated = onDocumentCreated("bands/{bandId}/join_request
       "new_join_request",
       {
         subject: `Någon vill gå med i ${band.display_name}`,
-        text: `Begäran om om att få bli medlem i ${band.display_name
-          } via ${snapshot.get("url") || "??"}:
+        text: `Begäran om om att få bli medlem i ${
+          band.display_name
+        } via ${snapshot.get("url") || "??"}:
 
   ${user.displayName ? user.displayName : " "} <${user.email}>
 `
@@ -291,7 +290,8 @@ export const joinRequestCreated = onDocumentCreated("bands/{bandId}/join_request
   }
 );
 
-export const memberCreated = onDocumentCreated("bands/{bandId}/members/{uid}",
+export const memberCreated = onDocumentCreated(
+  "bands/{bandId}/members/{uid}",
   async (event): Promise<void> => {
     const bandId = event.params.bandId;
     const uid = event.params.uid;
@@ -343,7 +343,8 @@ ${authUser.displayName ? authUser.displayName : " "} <${authUser.email}>
   }
 );
 
-export const joinRequestUpdated = onDocumentUpdated("bands/{bandId}/join_requests/{uid}",
+export const joinRequestUpdated = onDocumentUpdated(
+  "bands/{bandId}/join_requests/{uid}",
   async (event): Promise<void> => {
     const bandId = event.params.bandId;
     const uid = event.params.uid;
@@ -367,9 +368,8 @@ export const joinRequestUpdated = onDocumentUpdated("bands/{bandId}/join_request
     };
     await approve(change.after);
     await notify(bandId, "new_join_request", message, uid, true);
-  });
-
-
+  }
+);
 
 export const authUserCreated = functions.auth.user().onCreate(async user => {
   const logger = createLogger({ uid: user.uid });
@@ -390,7 +390,7 @@ export const authUserDeleted = functions.auth.user().onDelete(async user => {
     .delete();
 });
 
-export const userDeleted = onDocumentDeleted("users/{uid}", async (event) => {
+export const userDeleted = onDocumentDeleted("users/{uid}", async event => {
   const uid = event.params.uid;
   const logger = createLogger({ uid });
   const snapshot = event.data;
@@ -414,18 +414,21 @@ export const userDeleted = onDocumentDeleted("users/{uid}", async (event) => {
   }
 });
 
-export const settingsChanged = onDocumentWritten("bands/{bandid}/members/{uid}/private/settings",
-  async (event) => {
+export const settingsChanged = onDocumentWritten(
+  "bands/{bandid}/members/{uid}/private/settings",
+  async event => {
     const bandid = event.params.bandid;
     const uid = event.params.uid;
     const logger = createLogger({ bandid, uid });
     logger.info("Settings changed");
     // TODO: Only update for this user once we're in a steady state.
     await calculateNotifications(bandid);
-  });
+  }
+);
 
-export const eventCreated = onDocumentCreated("bands/{bandid}/events/{eventid}",
-  async (eventSnapshot) => {
+export const eventCreated = onDocumentCreated(
+  "bands/{bandid}/events/{eventid}",
+  async eventSnapshot => {
     const bandid = eventSnapshot.params.bandid;
     const eventid = eventSnapshot.params.eventid;
     const snapshot = eventSnapshot.data;
@@ -442,10 +445,12 @@ export const eventCreated = onDocumentCreated("bands/{bandid}/events/{eventid}",
       },
       eventid
     );
-  });
+  }
+);
 
-export const eventUpdated = onDocumentUpdated("bands/{bandid}/events/{eventid}",
-  async (eventSnapshot) => {
+export const eventUpdated = onDocumentUpdated(
+  "bands/{bandid}/events/{eventid}",
+  async eventSnapshot => {
     try {
       const bandid = eventSnapshot.params.bandid;
       const eventid = eventSnapshot.params.eventid;
@@ -465,9 +470,10 @@ export const eventUpdated = onDocumentUpdated("bands/{bandid}/events/{eventid}",
         true
       );
     } catch (e: any) {
-      logger.error("Error in eventUpdated:", e, e.stack);
+      logger.error("Error in eventUpdated:", e, e?.stack);
     }
-  });
+  }
+);
 
 // export const scheduled = functions.pubsub
 //   .schedule("0,10,20,30,40 * * * *")

@@ -2,6 +2,7 @@
   "name": "backend",
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
+    "fmt": "prettier --write \"src/**/*.{ts,js}\" \"test/**/*.{ts,js}\" \"*.js\"",
     "build": "tsc",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --project demo-project --import testdata ",

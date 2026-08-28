@@ -5,11 +5,13 @@ The backend provides a REST API to manage events for a specific band. This is us
 ## Base URL
 
 When running locally:
+
 ```text
 http://localhost:5001/<project-id>/<region>/api
 ```
 
 When deployed to Firebase:
+
 ```text
 https://<region>-<project-id>.cloudfunctions.net/api
 ```
@@ -19,6 +21,7 @@ https://<region>-<project-id>.cloudfunctions.net/api
 All API endpoints require authentication using either a standard **Firebase Auth ID Token** or a **Custom API Token**. The token must belong to a user who is a registered member of the band they are trying to manage events for.
 
 You must include this token in the `Authorization` header of your requests:
+
 ```text
 Authorization: Bearer <TOKEN>
 ```
@@ -33,12 +36,14 @@ You can generate Custom API Tokens in the web application by navigating to the *
 ## Endpoints
 
 ### 1. List User's Bands
+
 **`GET /users/me/bands`**
 
 Retrieves a list of bands the authenticated user is a member of.
 
 **Response:**
 Returns a JSON object mapping band IDs to basic band information.
+
 ```json
 {
   "bandId1": {
@@ -51,12 +56,14 @@ Returns a JSON object mapping band IDs to basic band information.
 ---
 
 ### 2. List All Events
+
 **`GET /bands/:bandId/events`**
 
 Retrieves a list of all events for the specified band.
 
 **Response:**
 Returns a JSON object mapping event IDs to event objects.
+
 ```json
 {
   "eventId1": {
@@ -71,12 +78,14 @@ Returns a JSON object mapping event IDs to event objects.
 ---
 
 ### 3. Get a Single Event
+
 **`GET /bands/:bandId/events/:eventId`**
 
 Retrieves the details of a specific event.
 
 **Response:**
 Returns the event object including its `id`.
+
 ```json
 {
   "id": "eventId1",
@@ -89,12 +98,14 @@ Returns the event object including its `id`.
 ---
 
 ### 4. Create a New Event
+
 **`POST /bands/:bandId/events`**
 
 Creates a new event for the specified band.
 
 **Request Body:**
 Expects a JSON payload representing the event. `type` and `start` are required fields.
+
 ```json
 {
   "type": "gig",
@@ -111,12 +122,14 @@ Returns the created event object including its generated `id`.
 ---
 
 ### 5. Update an Event
+
 **`PUT /bands/:bandId/events/:eventId`**
 
 Updates an existing event. This performs a partial update (merge) on the existing document.
 
 **Request Body:**
 Expects a JSON payload with the fields you wish to update.
+
 ```json
 {
   "location": "New Venue",
@@ -130,6 +143,7 @@ Returns the updated event object.
 ---
 
 ### 6. Delete an Event
+
 **`DELETE /bands/:bandId/events/:eventId`**
 
 Deletes the specified event from the band.
@@ -140,11 +154,11 @@ Deletes the specified event from the band.
 
 The `BandEvent` object has the following structure:
 
-| Field | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `type` | string | **Yes** | The type of event (e.g., "rehearsal", "gig"). |
-| `start` | string | **Yes** | ISO 8601 timestamp for when the event starts. |
-| `stop` | string | No | ISO 8601 timestamp for when the event ends. |
-| `location`| string | No | Venue name or address. |
-| `description`| string| No | Description of the event. |
-| `cancelled`| boolean | No | Set to true if the event is cancelled. |
+| Field         | Type    | Required | Description                                   |
+| :------------ | :------ | :------- | :-------------------------------------------- |
+| `type`        | string  | **Yes**  | The type of event (e.g., "rehearsal", "gig"). |
+| `start`       | string  | **Yes**  | ISO 8601 timestamp for when the event starts. |
+| `stop`        | string  | No       | ISO 8601 timestamp for when the event ends.   |
+| `location`    | string  | No       | Venue name or address.                        |
+| `description` | string  | No       | Description of the event.                     |
+| `cancelled`   | boolean | No       | Set to true if the event is cancelled.        |

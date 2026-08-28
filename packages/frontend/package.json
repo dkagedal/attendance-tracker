@@ -36,7 +36,7 @@
     "rollup:watch": "rollup -c -w",
     "build:watch": "npm-run-all --parallel tsc:watch rollup:watch",
     "serve": "firebase emulators:start",
-    "fmt": "prettier --write src/* src/*/* styles/*",
+    "fmt": "prettier --write \"src/**/*.{ts,js}\" \"public/styles/**/*.css\"",
     "rollup": "rollup -c"
   }
 }
