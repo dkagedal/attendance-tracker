@@ -17,10 +17,19 @@
         {
             "type": "npm",
             "script": "build",
-            "path": "functions/",
+            "path": "packages/frontend/",
             "group": "build",
             "problemMatcher": [],
-            "label": "npm: build - functions",
+            "label": "npm: build - frontend",
+            "detail": "tsc"
+        },
+        {
+            "type": "npm",
+            "script": "build",
+            "path": "packages/backend/",
+            "group": "build",
+            "problemMatcher": [],
+            "label": "npm: build - backend",
             "detail": "tsc"
         }
     ]
