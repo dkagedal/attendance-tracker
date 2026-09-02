@@ -8,6 +8,6 @@ export function FirebaseConfig(): FirebaseOptions {
     projectId: "demo-project",
     storageBucket: "your-project-id.appspot.com",
     messagingSenderId: "your-sender-id",
-    appId: "your-app-id"
+    appId: "your-app-id",
   };
 }

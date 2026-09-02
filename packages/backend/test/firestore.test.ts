@@ -2,7 +2,7 @@ import {
   assertFails,
   assertSucceeds,
   initializeTestEnvironment,
-  RulesTestEnvironment
+  RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 
 const PROJECT_ID = "demo-kommer";
@@ -15,7 +15,7 @@ before(async () => {
       // Rules are loaded by the emulator from firebase.json/firestore.rules
       // If running without emulator wrapper, we would need:
       // rules: fs.readFileSync("../../firestore.rules", "utf8"),
-    }
+    },
   });
 });
 
@@ -51,7 +51,7 @@ describe("Access rules", () => {
     });
 
     it("can be update by the user if they don't change anything", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db.doc("users/user1").set({ display_name: "User One" });
       });
@@ -63,7 +63,7 @@ describe("Access rules", () => {
     });
 
     it("can't be update by the user if they change anything", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db.doc("users/user1").set({ display_name: "User One" });
       });
@@ -107,7 +107,7 @@ describe("Access rules", () => {
     });
 
     it("can be read by ACL'd users", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("bands")
@@ -147,7 +147,7 @@ describe("Access rules", () => {
 
   describe("Memberships", () => {
     it("can be listed by members", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db.doc("users/ringo").set({ bands: { beatles: {} } });
         await db.doc("bands/beatles").set({ display_name: "The Beatles" });
@@ -162,7 +162,7 @@ describe("Access rules", () => {
     });
 
     it("can't be listed by non-members", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -184,7 +184,7 @@ describe("Access rules", () => {
     });
 
     it("members can get other members", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -219,7 +219,7 @@ describe("Access rules", () => {
     });
 
     it("non-members can't get other members", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -248,7 +248,7 @@ describe("Access rules", () => {
     });
 
     it("can't be self-added", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -273,7 +273,7 @@ describe("Access rules", () => {
 
   describe("Join Requests", () => {
     it("request members can get their own request", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -302,7 +302,7 @@ describe("Access rules", () => {
     });
 
     it("can be self-added", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -325,7 +325,7 @@ describe("Access rules", () => {
     });
 
     it("can't be pre-approved", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -348,7 +348,7 @@ describe("Access rules", () => {
     });
 
     it("requires the user to exist", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("bands")
@@ -373,11 +373,11 @@ describe("Access rules", () => {
       location: "Cavern Club",
       description: "Yeah Yeah Yeah",
       start: "2020-09-19T22:00",
-      stop: "2020-09-20T04:00"
+      stop: "2020-09-20T04:00",
     };
 
     it("can be listed by active members", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -405,7 +405,7 @@ describe("Access rules", () => {
     });
 
     it("can't be listed by non-members", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -427,7 +427,7 @@ describe("Access rules", () => {
     });
 
     it("can be added by members", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -455,7 +455,7 @@ describe("Access rules", () => {
     });
 
     it("can be updated by members", async () => {
-      await testEnv.withSecurityRulesDisabled(async context => {
+      await testEnv.withSecurityRulesDisabled(async (context) => {
         const db = context.firestore();
         await db
           .collection("users")
@@ -493,7 +493,7 @@ describe("Access rules", () => {
 
     describe("Participants", () => {
       it("can be listed by members", async () => {
-        await testEnv.withSecurityRulesDisabled(async context => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
           const db = context.firestore();
           await db
             .collection("users")

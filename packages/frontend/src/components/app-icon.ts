@@ -33,8 +33,6 @@ export class AppIcon extends LitElement {
   `;
 
   render() {
-    return html`
-      <span class="material-icons">${this.icon}</span>
-    `;
+    return html` <span class="material-icons">${this.icon}</span> `;
   }
 }

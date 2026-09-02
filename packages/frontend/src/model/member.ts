@@ -3,7 +3,7 @@ import {
   doc,
   DocumentReference,
   setDoc,
-  SetOptions
+  SetOptions,
 } from "firebase/firestore";
 import { UID } from "../datamodel";
 import { MemberSettingsReference } from "./membersettings";
@@ -46,7 +46,7 @@ class MemberConverter {
     return {
       display_name: member.display_name,
       admin: member.admin,
-      ...(member.section_id && { section_id: member.section_id })
+      ...(member.section_id && { section_id: member.section_id }),
     };
   }
 

@@ -119,10 +119,7 @@ bandRouter.use(requireBandMember);
 app.get("/users/me/bands", requireAuth, async (req, res) => {
   try {
     const uid = (req as any).uid;
-    const userDoc = await getDb()
-      .collection("users")
-      .doc(uid)
-      .get();
+    const userDoc = await getDb().collection("users").doc(uid).get();
     if (!userDoc.exists) {
       res.status(404).json({ error: "User not found" });
       return;
@@ -144,7 +141,7 @@ bandRouter.get("/events", async (req, res) => {
       .collection("events")
       .get();
     const events: Record<string, BandEvent> = {};
-    eventsSnapshot.forEach(doc => {
+    eventsSnapshot.forEach((doc) => {
       events[doc.id] = doc.data() as BandEvent;
     });
     res.json(events);

@@ -4,14 +4,14 @@ import {
   connectFirestoreEmulator,
   doc,
   getDoc,
-  Firestore
+  Firestore,
 } from "firebase/firestore";
 import {
   Auth,
   connectAuthEmulator,
   getAuth,
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
 } from "firebase/auth";
 import { JoinRequest } from "./model/joinrequest";
 import { band } from "./model/band";
@@ -88,7 +88,7 @@ export async function CreateJoinRequest(
   const joinRequest: JoinRequest = {
     display_name: user.displayName || "Utan Namn",
     url: location.href,
-    approved: false
+    approved: false,
   };
   console.log("Making a join request to", docRef);
   try {

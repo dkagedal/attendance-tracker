@@ -35,8 +35,8 @@ export class MiniRoster extends LitElement {
     return html`
       ${repeat(
         this.members,
-        member => member.id,
-        member => html`
+        (member) => member.id,
+        (member) => html`
           <response-chip
             response=${this.responses[member.id]}
             @click=${() => this.clickOne(member.id)}
@@ -50,8 +50,8 @@ export class MiniRoster extends LitElement {
   clickOne(uid: string) {
     let event = new CustomEvent("click-participant", {
       detail: {
-        uid: uid
-      }
+        uid: uid,
+      },
     });
     this.dispatchEvent(event);
   }

@@ -13,7 +13,7 @@ import {
   DocumentSnapshot,
   onSnapshot,
   QueryDocumentSnapshot,
-  QuerySnapshot
+  QuerySnapshot,
 } from "firebase/firestore";
 import {
   Auth,
@@ -21,7 +21,7 @@ import {
   getRedirectResult,
   onAuthStateChanged,
   signOut,
-  User as FirebaseUser
+  User as FirebaseUser,
 } from "firebase/auth";
 import { CreateJoinRequest, db, getHostBand } from "../storage";
 import "./login-dialog";
@@ -188,9 +188,9 @@ export class AppMain extends LitElement {
           "user",
           onSnapshot(
             User.ref(db, this.firebaseUser.uid),
-            snapshot =>
+            (snapshot) =>
               this.currentUserDocChanged(this.firebaseUser.uid, snapshot),
-            error => {
+            (error) => {
               if (error.code != "permission-denied") {
                 this.addErrorMessage("Internt fel [user]", error);
               }
@@ -220,10 +220,10 @@ export class AppMain extends LitElement {
           "member",
           onSnapshot(
             band(db, this.bandid).member(this.firebaseUser.uid).dbref,
-            snapshot => {
+            (snapshot) => {
               this.membership = snapshot.data();
             },
-            error => {
+            (error) => {
               if (error.code != "permission-denied") {
                 this.addErrorMessage("Internt fel [member]", error);
               }
@@ -246,7 +246,7 @@ export class AppMain extends LitElement {
               (snapshot: QuerySnapshot<JoinRequest>) => {
                 this.joinRequests = snapshot.docs;
               },
-              error => {
+              (error) => {
                 if (error.code != "permission-denied") {
                   this.addErrorMessage("Internt fel [join-request]", error);
                 }
@@ -333,7 +333,7 @@ export class AppMain extends LitElement {
             console.log("Add successful");
             this.addDialog.close();
           },
-          reason => {
+          (reason) => {
             console.log("Add failed:", reason);
             this.addErrorMessage("Kunde inte lägga till händelse", reason);
             this.addDialog.close();
@@ -348,7 +348,7 @@ export class AppMain extends LitElement {
         console.log("Finished registering");
         this.registered = true;
       },
-      error => {
+      (error) => {
         console.info("Failed to create join request:", error);
         this.addErrorMessage("Kunde inte ansöka", error);
       }
@@ -815,7 +815,7 @@ export class AppMain extends LitElement {
               style="display: flex; flex-direction: column; gap: 8px; padding: 16px 0;"
             >
               ${Object.keys(this.bands).map(
-                id => html`
+                (id) => html`
                   <app-button
                     variant="secondary"
                     style="width: 100%;"
@@ -934,8 +934,8 @@ export class AppMain extends LitElement {
           )}
           ${repeat(
             this.joinRequests,
-            snapshot => snapshot.id,
-            snapshot => this.renderJoinRequest(snapshot)
+            (snapshot) => snapshot.id,
+            (snapshot) => this.renderJoinRequest(snapshot)
           )}
           ${this.renderMain()}
         </div>

@@ -86,7 +86,7 @@ export class BandOverview extends LitElement {
 
     // Subscribe to band details
     this.subscriptions.push(
-      onSnapshot(bRef.dbref, snapshot => {
+      onSnapshot(bRef.dbref, (snapshot) => {
         if (snapshot.exists()) {
           this.bandData = snapshot.data();
         }
@@ -95,14 +95,14 @@ export class BandOverview extends LitElement {
 
     // Subscribe to members
     this.subscriptions.push(
-      onSnapshot(bRef.members().dbref, snapshot => {
-        this.members = snapshot.docs.map(doc => doc.data() as Member);
+      onSnapshot(bRef.members().dbref, (snapshot) => {
+        this.members = snapshot.docs.map((doc) => doc.data() as Member);
       })
     );
   }
 
   private unsubscribeFromData() {
-    this.subscriptions.forEach(unsub => unsub());
+    this.subscriptions.forEach((unsub) => unsub());
     this.subscriptions = [];
   }
 
@@ -114,7 +114,7 @@ export class BandOverview extends LitElement {
     if (!this.editBandNameValue.trim()) return;
     try {
       await updateDoc(bandModel(db, this.bandid).dbref.withConverter(null), {
-        display_name: this.editBandNameValue.trim()
+        display_name: this.editBandNameValue.trim(),
       });
       this.editingBandName = false;
     } catch (e) {
@@ -125,7 +125,7 @@ export class BandOverview extends LitElement {
   private async saveBandLogo() {
     try {
       await updateDoc(bandModel(db, this.bandid).dbref.withConverter(null), {
-        logo: this.editBandLogoValue.trim()
+        logo: this.editBandLogoValue.trim(),
       });
       this.editingBandLogo = false;
     } catch (e) {
@@ -137,11 +137,9 @@ export class BandOverview extends LitElement {
     if (!this.editMemberNameValue.trim()) return;
     try {
       await updateDoc(
-        bandModel(db, this.bandid)
-          .member(memberId)
-          .dbref.withConverter(null),
+        bandModel(db, this.bandid).member(memberId).dbref.withConverter(null),
         {
-          display_name: this.editMemberNameValue.trim()
+          display_name: this.editMemberNameValue.trim(),
         }
       );
       this.editingMemberId = null;
@@ -154,19 +152,14 @@ export class BandOverview extends LitElement {
     if (!this.newSectionNameValue.trim()) return;
     const newSection: Section = {
       id:
-        "sec_" +
-        Date.now() +
-        "_" +
-        Math.random()
-          .toString(36)
-          .substring(2, 9),
+        "sec_" + Date.now() + "_" + Math.random().toString(36).substring(2, 9),
       name: this.newSectionNameValue.trim(),
-      emoji: this.newSectionEmojiValue.trim()
+      emoji: this.newSectionEmojiValue.trim(),
     };
     const newSections = [...(this.bandData.sections || []), newSection];
     try {
       await updateDoc(bandModel(db, this.bandid).dbref.withConverter(null), {
-        sections: newSections
+        sections: newSections,
       });
       this.addingSection = false;
       this.newSectionNameValue = "";
@@ -178,19 +171,19 @@ export class BandOverview extends LitElement {
 
   private async saveEditedSection(sectionId: string) {
     if (!this.editSectionNameValue.trim()) return;
-    const newSections = (this.bandData.sections || []).map(s => {
+    const newSections = (this.bandData.sections || []).map((s) => {
       if (s.id === sectionId) {
         return {
           ...s,
           name: this.editSectionNameValue.trim(),
-          emoji: this.editSectionEmojiValue.trim()
+          emoji: this.editSectionEmojiValue.trim(),
         };
       }
       return s;
     });
     try {
       await updateDoc(bandModel(db, this.bandid).dbref.withConverter(null), {
-        sections: newSections
+        sections: newSections,
       });
       this.editingSectionId = null;
     } catch (e) {
@@ -202,25 +195,23 @@ export class BandOverview extends LitElement {
     if (!confirm("Är du säker på att du vill ta bort sektionen?")) return;
 
     const newSections = (this.bandData.sections || []).filter(
-      s => s.id !== sectionId
+      (s) => s.id !== sectionId
     );
     try {
       const batch = writeBatch(db);
 
       // Update band document
       batch.update(bandModel(db, this.bandid).dbref.withConverter(null), {
-        sections: newSections
+        sections: newSections,
       });
 
       // Update affected members to remove section_id
-      this.members.forEach(m => {
+      this.members.forEach((m) => {
         if (m.section_id === sectionId) {
           batch.update(
-            bandModel(db, this.bandid)
-              .member(m.id)
-              .dbref.withConverter(null),
+            bandModel(db, this.bandid).member(m.id).dbref.withConverter(null),
             {
-              section_id: null
+              section_id: null,
             }
           );
         }
@@ -256,7 +247,7 @@ export class BandOverview extends LitElement {
     this.draggedMemberId = null;
 
     if (memberId) {
-      const member = this.members.find(m => m.id === memberId);
+      const member = this.members.find((m) => m.id === memberId);
       if (member && member.section_id !== targetSectionId) {
         try {
           await updateDoc(
@@ -264,7 +255,7 @@ export class BandOverview extends LitElement {
               .member(memberId)
               .dbref.withConverter(null),
             {
-              section_id: targetSectionId
+              section_id: targetSectionId,
             }
           );
         } catch (error) {
@@ -388,9 +379,7 @@ export class BandOverview extends LitElement {
 
   render() {
     if (!this.bandData) {
-      return html`
-        <div>Laddar översikt...</div>
-      `;
+      return html` <div>Laddar översikt...</div> `;
     }
 
     const sections = this.bandData.sections || [];
@@ -398,9 +387,9 @@ export class BandOverview extends LitElement {
     // Group members by section
     const membersBySection = new Map<string | null, Member[]>();
     membersBySection.set(null, []); // Unassigned members
-    sections.forEach(s => membersBySection.set(s.id, []));
+    sections.forEach((s) => membersBySection.set(s.id, []));
 
-    this.members.forEach(m => {
+    this.members.forEach((m) => {
       const secId = m.section_id || null;
       if (membersBySection.has(secId)) {
         membersBySection.get(secId)!.push(m);
@@ -472,9 +461,7 @@ export class BandOverview extends LitElement {
                     alt="Logo"
                   />
                 `
-              : html`
-                  <app-icon icon="groups"></app-icon>
-                `}
+              : html` <app-icon icon="groups"></app-icon> `}
             ${this.isAdmin() && !this.editingBandLogo
               ? html`
                   <div
@@ -534,7 +521,7 @@ export class BandOverview extends LitElement {
 
         <div class="section-list">
           ${sections.map(
-            section => html`
+            (section) => html`
               <div
                 class="section-group"
                 @dragover=${this.onDragOver}
@@ -603,7 +590,7 @@ export class BandOverview extends LitElement {
                 <div class="member-list">
                   ${membersBySection
                     .get(section.id)!
-                    .map(member => this.renderMemberItem(member))}
+                    .map((member) => this.renderMemberItem(member))}
                 </div>
               </div>
             `
@@ -626,7 +613,7 @@ export class BandOverview extends LitElement {
                   <div class="member-list">
                     ${membersBySection
                       .get(null)!
-                      .map(member => this.renderMemberItem(member))}
+                      .map((member) => this.renderMemberItem(member))}
                   </div>
                 </div>
               `

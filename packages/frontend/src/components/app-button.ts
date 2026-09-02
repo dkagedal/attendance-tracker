@@ -106,12 +106,8 @@ export class AppButton extends LitElement {
         @click=${this.handleClick}
       >
         ${this.icon
-          ? html`
-              <span class="material-icons">${this.icon}</span>
-            `
-          : html`
-              <slot name="icon"></slot>
-            `}
+          ? html` <span class="material-icons">${this.icon}</span> `
+          : html` <slot name="icon"></slot> `}
         <slot></slot>
       </button>
     `;

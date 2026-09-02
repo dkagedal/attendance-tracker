@@ -66,9 +66,9 @@ export class EventSummaryCard extends LitElement {
     this.loading = true;
     this.unsubscribe = onSnapshot(
       this.event!.ref.participants().dbref,
-      snapshot => {
+      (snapshot) => {
         const participants: { [uid: string]: Participant } = {};
-        snapshot.docs.forEach(doc => {
+        snapshot.docs.forEach((doc) => {
           const p = doc.data();
           participants[p.uid] = p;
         });
@@ -79,17 +79,17 @@ export class EventSummaryCard extends LitElement {
   }
 
   get yesCount() {
-    return Object.values(this.participants).filter(p => p.attending === "yes")
+    return Object.values(this.participants).filter((p) => p.attending === "yes")
       .length;
   }
 
   get noCount() {
-    return Object.values(this.participants).filter(p => p.attending === "no")
+    return Object.values(this.participants).filter((p) => p.attending === "no")
       .length;
   }
 
   get subCount() {
-    return Object.values(this.participants).filter(p => p.attending === "sub")
+    return Object.values(this.participants).filter((p) => p.attending === "sub")
       .length;
   }
 

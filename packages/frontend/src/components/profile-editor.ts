@@ -30,7 +30,7 @@ export class ProfileEditor extends LitElement {
       .settings()
       .read()
       .then(
-        settings => {
+        (settings) => {
           if (settings != null) {
             this.settings = settings;
           } else {
@@ -41,7 +41,7 @@ export class ProfileEditor extends LitElement {
           }
           this.requestUpdate();
         },
-        error => {
+        (error) => {
           console.log("[profile-editor] Failed to read settings:", error);
         }
       );
@@ -136,13 +136,10 @@ export class ProfileEditor extends LitElement {
     const settings = new MemberSettings(emailField.value, {
       new_event: getSwitch("new_event").selected,
       new_join_request: getSwitch("new_join_request").selected,
-      new_member: getSwitch("new_member").selected
+      new_member: getSwitch("new_member").selected,
     });
     console.log("[profile-editor] New member settings:", settings);
-    await band(db, this.bandid)
-      .member(this.uid)
-      .settings()
-      .update(settings);
+    await band(db, this.bandid).member(this.uid).settings().update(settings);
     return true;
   }
 }

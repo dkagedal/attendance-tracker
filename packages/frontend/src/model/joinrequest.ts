@@ -8,7 +8,7 @@ import {
   query,
   QuerySnapshot,
   setDoc,
-  SetOptions
+  SetOptions,
 } from "firebase/firestore";
 
 export class JoinRequestReference {
@@ -64,7 +64,7 @@ class JoinRequestConverter {
     return {
       display_name: joinRequest.display_name,
       url: joinRequest.url,
-      approved: joinRequest.approved
+      approved: joinRequest.approved,
     };
   }
 
@@ -74,7 +74,7 @@ class JoinRequestConverter {
       ref: new JoinRequestReference(snapshot.ref),
       display_name: data.display_name,
       url: data.url,
-      approved: data.approved
+      approved: data.approved,
     };
   }
 }

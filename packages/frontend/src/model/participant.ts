@@ -34,7 +34,7 @@ export function emptyParticipant(uid: UID): Participant {
     uid,
     attending: "na",
     comment: "",
-    hasResponded: () => false
+    hasResponded: () => false,
   };
 }
 

@@ -2,13 +2,13 @@ import {
   collection,
   doc,
   DocumentReference,
-  Firestore
+  Firestore,
 } from "firebase/firestore";
 import { UID } from "../datamodel";
 import { BandEventCollectionReference, BandEventReference } from "./bandevent";
 import {
   JoinRequestCollectionReference,
-  JoinRequestReference
+  JoinRequestReference,
 } from "./joinrequest";
 import { MemberCollectionReference, MemberReference } from "./member";
 
@@ -67,7 +67,7 @@ class BandConverter {
       display_name: band.display_name,
       ...(band.logo && { logo: band.logo }),
       ...(band.sections &&
-        band.sections.length > 0 && { sections: band.sections })
+        band.sections.length > 0 && { sections: band.sections }),
     };
   }
 

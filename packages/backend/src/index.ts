@@ -12,7 +12,7 @@ import {
   onDocumentUpdated,
   onDocumentDeleted,
   onDocumentWritten,
-  QueryDocumentSnapshot
+  QueryDocumentSnapshot,
 } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import { initializeApp } from "firebase-admin/app";
@@ -20,7 +20,7 @@ import { initializeApp } from "firebase-admin/app";
 import {
   getFirestore,
   DocumentReference,
-  DocumentData
+  DocumentData,
 } from "firebase-admin/firestore";
 
 // v1 stuff below.
@@ -30,7 +30,7 @@ import {
   changedEventHtml,
   changedEventText,
   newEventHtml,
-  newEventText
+  newEventText,
 } from "./email";
 import { Band, BandEvent } from "./types";
 import { onRequest } from "firebase-functions/v2/https";
@@ -50,15 +50,12 @@ function createLogger(context: object) {
     },
     warn: (...args: any[]) => {
       logger.warn(...args, context);
-    }
+    },
   };
 }
 
 async function getBand(bandid: string): Promise<Band> {
-  const snapshot = await db
-    .collection("bands")
-    .doc(bandid)
-    .get();
+  const snapshot = await db.collection("bands").doc(bandid).get();
   return snapshot.data()! as Band;
 }
 
@@ -77,7 +74,7 @@ async function getBandSettings(bandid: string): Promise<BandSettings> {
     return doc.data()! as BandSettings;
   }
   return {
-    from_address: null
+    from_address: null,
   };
 }
 
@@ -98,12 +95,12 @@ async function approve(
   // Update  band information.
   const memberData = {
     display_name: joinRequestSnapshot.data().display_name,
-    admin: !!options.makeAdmin
+    admin: !!options.makeAdmin,
   };
   logger.info("Updating", memberDocRef.path, "to", memberData);
   await Promise.all([
     memberDocRef.set(memberData),
-    joinRequestSnapshot.ref.delete()
+    joinRequestSnapshot.ref.delete(),
   ]);
   logger.info("Done");
   return "OK";
@@ -119,7 +116,7 @@ type Envelope = {
 function NewEnvelope(from: string | null): Envelope {
   const env: Envelope = {
     from: from,
-    to: []
+    to: [],
   };
   return env;
 }
@@ -137,18 +134,18 @@ export async function calculateNotifications(bandid: string) {
 
   const [bandSettings, members] = await Promise.all([
     getBandSettings(bandid),
-    bandRef.collection("members").get()
+    bandRef.collection("members").get(),
   ]);
 
   const notifications = {
-    new_event: NewEnvelope(bandSettings.from_address)
+    new_event: NewEnvelope(bandSettings.from_address),
   };
   const admin_notifications = {
     new_join_request: NewEnvelope(bandSettings.from_address),
-    new_member: NewEnvelope(bandSettings.from_address)
+    new_member: NewEnvelope(bandSettings.from_address),
   };
 
-  const memberSettingsPromises = members.docs.map(async doc => {
+  const memberSettingsPromises = members.docs.map(async (doc) => {
     const settingsDoc = await doc.ref
       .collection("private")
       .doc("settings")
@@ -188,10 +185,7 @@ export async function calculateNotifications(bandid: string) {
 
   Object.assign(notifications, admin_notifications);
 
-  await bandRef
-    .collection("admin")
-    .doc("notify")
-    .set(notifications);
+  await bandRef.collection("admin").doc("notify").set(notifications);
 }
 
 type MailMessage = {
@@ -225,7 +219,7 @@ async function notify(
   if (Array.isArray(envelope)) {
     envelope = {
       from: null,
-      to: envelope
+      to: envelope,
     };
   }
   envelope.message = message;
@@ -236,7 +230,7 @@ async function notify(
       message.messageId = `<${notificationType}-${extraKey}-${Date.now()}@${bandid}>`;
       envelope.headers = {
         "In-Reply-To": baseMessageId,
-        References: baseMessageId
+        References: baseMessageId,
       };
     } else {
       message.messageId = baseMessageId;
@@ -278,12 +272,12 @@ export const joinRequestCreated = onDocumentCreated(
       "new_join_request",
       {
         subject: `Någon vill gå med i ${band.display_name}`,
-        text: `Begäran om om att få bli medlem i ${
-          band.display_name
-        } via ${snapshot.get("url") || "??"}:
+        text: `Begäran om om att få bli medlem i ${band.display_name} via ${
+          snapshot.get("url") || "??"
+        }:
 
   ${user.displayName ? user.displayName : " "} <${user.email}>
-`
+`,
       },
       uid
     );
@@ -323,8 +317,8 @@ export const memberCreated = onDocumentCreated(
       notify: {
         new_event: true,
         new_join_request: true,
-        new_member: true
-      }
+        new_member: true,
+      },
     });
 
     // Notify admins.
@@ -337,7 +331,7 @@ ${snapshot.get("display_name")}
 Inloggad som:
 
 ${authUser.displayName ? authUser.displayName : " "} <${authUser.email}>
-`
+`,
     };
     await notify(bandId, "new_member", message, uid);
   }
@@ -364,33 +358,27 @@ export const joinRequestUpdated = onDocumentUpdated(
     const band = await getBand(bandId);
     const message: MailMessage = {
       subject: `Någon vill gå med i ${band.display_name}`,
-      text: `Insläppt.`
+      text: `Insläppt.`,
     };
     await approve(change.after);
     await notify(bandId, "new_join_request", message, uid, true);
   }
 );
 
-export const authUserCreated = functions.auth.user().onCreate(async user => {
+export const authUserCreated = functions.auth.user().onCreate(async (user) => {
   const logger = createLogger({ uid: user.uid });
   logger.info("New auth user");
-  await db
-    .collection("users")
-    .doc(user.uid)
-    .set({ bands: {} });
+  await db.collection("users").doc(user.uid).set({ bands: {} });
 });
 
-export const authUserDeleted = functions.auth.user().onDelete(async user => {
+export const authUserDeleted = functions.auth.user().onDelete(async (user) => {
   const logger = createLogger({ uid: user.uid });
   logger.info("Deleted auth user");
   // This should trigger userDeleted below as well.
-  await db
-    .collection("users")
-    .doc(user.uid)
-    .delete();
+  await db.collection("users").doc(user.uid).delete();
 });
 
-export const userDeleted = onDocumentDeleted("users/{uid}", async event => {
+export const userDeleted = onDocumentDeleted("users/{uid}", async (event) => {
   const uid = event.params.uid;
   const logger = createLogger({ uid });
   const snapshot = event.data;
@@ -416,7 +404,7 @@ export const userDeleted = onDocumentDeleted("users/{uid}", async event => {
 
 export const settingsChanged = onDocumentWritten(
   "bands/{bandid}/members/{uid}/private/settings",
-  async event => {
+  async (event) => {
     const bandid = event.params.bandid;
     const uid = event.params.uid;
     const logger = createLogger({ bandid, uid });
@@ -428,7 +416,7 @@ export const settingsChanged = onDocumentWritten(
 
 export const eventCreated = onDocumentCreated(
   "bands/{bandid}/events/{eventid}",
-  async eventSnapshot => {
+  async (eventSnapshot) => {
     const bandid = eventSnapshot.params.bandid;
     const eventid = eventSnapshot.params.eventid;
     const snapshot = eventSnapshot.data;
@@ -441,7 +429,7 @@ export const eventCreated = onDocumentCreated(
       {
         subject: `${band.display_name}: ${event.type}`,
         text: newEventText(band, event),
-        html: newEventHtml(band, event)
+        html: newEventHtml(band, event),
       },
       eventid
     );
@@ -450,7 +438,7 @@ export const eventCreated = onDocumentCreated(
 
 export const eventUpdated = onDocumentUpdated(
   "bands/{bandid}/events/{eventid}",
-  async eventSnapshot => {
+  async (eventSnapshot) => {
     try {
       const bandid = eventSnapshot.params.bandid;
       const eventid = eventSnapshot.params.eventid;
@@ -464,7 +452,7 @@ export const eventUpdated = onDocumentUpdated(
         {
           subject: `${band.display_name}: ${event.type}`,
           text: changedEventText(band, event),
-          html: changedEventHtml(band, event)
+          html: changedEventHtml(band, event),
         },
         eventid,
         true

@@ -17,7 +17,7 @@ export class EventEditor extends LitElement {
     start: "",
     year: () => "",
     hasStopTime: () => false,
-    clone: () => ({} as any)
+    clone: () => ({} as any),
   };
 
   @property({ type: Boolean, reflect: true })
@@ -57,7 +57,7 @@ export class EventEditor extends LitElement {
             new CustomEvent("closed", { bubbles: true, composed: true })
           );
         },
-        reason => {
+        (reason) => {
           console.log("Delete failed:", reason);
         }
       );

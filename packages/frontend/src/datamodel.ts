@@ -2,7 +2,7 @@ import {
   doc,
   DocumentReference,
   Firestore,
-  FirestoreDataConverter
+  FirestoreDataConverter,
 } from "firebase/firestore";
 import { ParticipantResponse } from "./model/participant";
 
@@ -10,7 +10,7 @@ export const responseLabels: Map<ParticipantResponse, string> = new Map([
   ["yes", "Kommer"],
   ["no", "Kommer inte"],
   ["sub", "Skickar ersättare"],
-  ["na", "Inget svar"]
+  ["na", "Inget svar"],
 ]);
 
 export function responseString(response: ParticipantResponse) {
@@ -41,13 +41,13 @@ export class User {
   static converter: FirestoreDataConverter<User> = {
     toFirestore: (user: User) => {
       return {
-        bands: user.bands
+        bands: user.bands,
       };
     },
     fromFirestore: (snapshot, options) => {
       const data = snapshot.data(options);
       return new User(snapshot.id, data.bands);
-    }
+    },
   };
 
   static ref(db: Firestore, uid: string): DocumentReference<User> {

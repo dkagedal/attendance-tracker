@@ -4,7 +4,7 @@ import {
   query as firestoreQuery,
   Timestamp,
   where,
-  deleteDoc
+  deleteDoc,
 } from "firebase/firestore";
 import { css, html, LitElement } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
@@ -97,8 +97,8 @@ export class BandSchedule extends LitElement {
       orderBy("start")
     );
 
-    this._unsubscribeGigs = onSnapshot(q, snapshot => {
-      this.events = snapshot.docs.map(doc => doc.data());
+    this._unsubscribeGigs = onSnapshot(q, (snapshot) => {
+      this.events = snapshot.docs.map((doc) => doc.data());
       this.loaded = true;
 
       for (const event of this.events) {
@@ -120,8 +120,8 @@ export class BandSchedule extends LitElement {
     const bandRef = band(db, this.bandid);
     const q = firestoreQuery(bandRef.members().dbref);
 
-    this._unsubscribeMembers = onSnapshot(q, snapshot => {
-      this.members = snapshot.docs.map(doc => doc.data());
+    this._unsubscribeMembers = onSnapshot(q, (snapshot) => {
+      this.members = snapshot.docs.map((doc) => doc.data());
       this.members.sort((m1, m2) => m1.id.localeCompare(m2.id));
     });
   }
@@ -134,7 +134,7 @@ export class BandSchedule extends LitElement {
     }
 
     const bandRef = band(db, this.bandid);
-    this._unsubscribeBand = onSnapshot(bandRef.dbref, snapshot => {
+    this._unsubscribeBand = onSnapshot(bandRef.dbref, (snapshot) => {
       if (snapshot.exists()) {
         this.bandData = snapshot.data();
       }
@@ -155,7 +155,7 @@ export class BandSchedule extends LitElement {
       <div class="list">
         ${repeat(
           this.events,
-          e => e.ref.id,
+          (e) => e.ref.id,
           (e: BandEvent) => html`
             <event-summary-card
               uid=${this.uid}
@@ -231,7 +231,8 @@ export class BandSchedule extends LitElement {
                             <div
                               class="menu-item"
                               @click=${() => {
-                                this.edit_snapshot = this.selected_event.clone();
+                                this.edit_snapshot =
+                                  this.selected_event.clone();
                                 this.actionMenu.close();
                               }}
                             >
@@ -285,7 +286,7 @@ export class BandSchedule extends LitElement {
           this.closeDialog();
           console.log("Delete successful");
         },
-        reason => {
+        (reason) => {
           console.log("Delete failed:", reason);
         }
       );

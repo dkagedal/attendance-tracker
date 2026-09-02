@@ -89,11 +89,7 @@ export class AppInput extends LitElement {
 
   render() {
     return html`
-      ${this.label
-        ? html`
-            <label class="label">${this.label}</label>
-          `
-        : ""}
+      ${this.label ? html` <label class="label">${this.label}</label> ` : ""}
       ${this.multiline
         ? html`
             <textarea
@@ -116,9 +112,7 @@ export class AppInput extends LitElement {
             />
           `}
       ${this.errorMessage
-        ? html`
-            <div class="error-message">${this.errorMessage}</div>
-          `
+        ? html` <div class="error-message">${this.errorMessage}</div> `
         : ""}
     `;
   }

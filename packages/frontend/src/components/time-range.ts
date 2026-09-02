@@ -4,7 +4,7 @@ import { css, html, LitElement } from "lit";
 const dateFmt = new Intl.DateTimeFormat("sv-SE", {
   timeZone: "UTC",
   month: "long",
-  day: "numeric"
+  day: "numeric",
 });
 
 const dateTimeFmt = new Intl.DateTimeFormat("sv-SE", {
@@ -12,15 +12,20 @@ const dateTimeFmt = new Intl.DateTimeFormat("sv-SE", {
   month: "long",
   day: "numeric",
   hour: "numeric",
-  minute: "numeric"
+  minute: "numeric",
 });
 
 function utcDate(timestring: string): number {
   let [date, time] = timestring.split("T");
-  let [year, month, day] = date.split("-").map(s => parseInt(s));
+  let [year, month, day] = date.split("-").map((s) => parseInt(s));
   month -= 1; // adjust month number to be zero-based
   if (time) {
-    return Date.UTC(year, month, day, ...time.split(":").map(s => parseInt(s)));
+    return Date.UTC(
+      year,
+      month,
+      day,
+      ...time.split(":").map((s) => parseInt(s))
+    );
   } else {
     return Date.UTC(year, month, day);
   }

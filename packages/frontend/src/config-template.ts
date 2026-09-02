@@ -1,11 +1,11 @@
 const prodConfig = {
   // Paste config here.
-  projectId: "replaceme"
+  projectId: "replaceme",
 };
 
 const stagingConfig = {
   // Paste config here.
-  projectId: "replacemetoo"
+  projectId: "replacemetoo",
 };
 
 // Maps hostname prefix to config
@@ -13,7 +13,7 @@ const rules = [
   { prefix: "localhost", config: stagingConfig },
   { prefix: prodConfig.projectId, config: prodConfig },
   { prefix: stagingConfig.projectId, config: stagingConfig },
-  { prefix: "kommer.", config: prodConfig }
+  { prefix: "kommer.", config: prodConfig },
 ];
 
 export function FirebaseConfig() {

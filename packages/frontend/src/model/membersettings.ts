@@ -2,7 +2,7 @@ import {
   DocumentReference,
   getDoc,
   setDoc,
-  SetOptions
+  SetOptions,
 } from "firebase/firestore";
 
 export class MemberSettingsReference {
@@ -35,7 +35,7 @@ export class MemberSettings {
   static DEFAULT = new MemberSettings("", {
     new_event: true,
     new_join_request: true,
-    new_member: true
+    new_member: true,
   });
 }
 
@@ -43,7 +43,7 @@ class MemberSettingsConverter {
   static toFirestore(settings: MemberSettings): object {
     return {
       email: settings.email,
-      notify: settings.notify
+      notify: settings.notify,
     };
   }
 

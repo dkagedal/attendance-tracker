@@ -113,7 +113,7 @@ export class ResponseCard extends LitElement {
     this.response = newResponse;
     const detail = {
       response: this.response,
-      comment: this.comment
+      comment: this.comment,
     };
     this.dispatchEvent(new CustomEvent("update-response", { detail }));
     this.mode = "view";
@@ -124,7 +124,7 @@ export class ResponseCard extends LitElement {
     if (this.response) {
       const detail = {
         response: this.response,
-        comment: this.comment
+        comment: this.comment,
       };
       this.dispatchEvent(new CustomEvent("update-response", { detail }));
     }

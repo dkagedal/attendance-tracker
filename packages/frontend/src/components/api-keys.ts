@@ -8,7 +8,7 @@ import {
   doc,
   setDoc,
   Timestamp,
-  orderBy
+  orderBy,
 } from "firebase/firestore";
 import { db } from "../storage";
 import "./app-button";
@@ -52,12 +52,12 @@ export class ApiKeys extends LitElement {
       const keysRef = collection(db, "users", this.uid, "apikeys");
       const q = firestoreQuery(keysRef, orderBy("createdAt", "desc"));
 
-      this.unsubscribe = onSnapshot(q, snapshot => {
-        this.keys = snapshot.docs.map(d => ({
+      this.unsubscribe = onSnapshot(q, (snapshot) => {
+        this.keys = snapshot.docs.map((d) => ({
           id: d.id,
           name: d.data().name,
           createdAt: d.data().createdAt,
-          isReadonly: d.data().readonly || false
+          isReadonly: d.data().readonly || false,
         }));
       });
     }
@@ -73,7 +73,7 @@ export class ApiKeys extends LitElement {
   private generateRandomToken(): string {
     const array = new Uint8Array(24);
     crypto.getRandomValues(array);
-    return Array.from(array, byte => byte.toString(16).padStart(2, "0")).join(
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
       ""
     );
   }
@@ -89,7 +89,7 @@ export class ApiKeys extends LitElement {
     await setDoc(doc(db, "users", this.uid, "apikeys", token), {
       name: name,
       createdAt: Timestamp.now(),
-      readonly: isReadonly
+      readonly: isReadonly,
     });
 
     this.newKeyToken = token;
@@ -241,12 +241,10 @@ export class ApiKeys extends LitElement {
 
       <div class="key-list">
         ${this.keys.length === 0
-          ? html`
-              <p>Du har inga API-nycklar än.</p>
-            `
+          ? html` <p>Du har inga API-nycklar än.</p> `
           : ""}
         ${this.keys.map(
-          key => html`
+          (key) => html`
             <div class="key-card">
               <div class="key-header">
                 <span class="key-name">${key.name}</span>

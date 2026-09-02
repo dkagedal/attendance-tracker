@@ -6,12 +6,12 @@ import {
   DocumentReference,
   FirestoreDataConverter,
   setDoc,
-  SetOptions
+  SetOptions,
 } from "firebase/firestore";
 import { UID } from "../datamodel";
 import {
   ParticipantCollectionReference,
-  ParticipantReference
+  ParticipantReference,
 } from "./participant";
 
 export class BandEventReference {
@@ -68,7 +68,7 @@ const BandEventConverter: FirestoreDataConverter<BandEvent> = {
   toFirestore(event: BandEvent): object {
     const data: any = {
       type: event.type,
-      start: event.start
+      start: event.start,
     };
     if (event.stop) {
       data.stop = event.stop;
@@ -98,7 +98,7 @@ const BandEventConverter: FirestoreDataConverter<BandEvent> = {
       data.description,
       !!data.cancelled
     );
-  }
+  },
 };
 
 // A band event.

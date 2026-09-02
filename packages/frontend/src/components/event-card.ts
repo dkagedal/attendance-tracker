@@ -19,7 +19,7 @@ import { BandEvent } from "../model/bandevent";
 import {
   emptyParticipant,
   Participant,
-  ParticipantResponse
+  ParticipantResponse,
 } from "../model/participant";
 import { Member } from "../model/member";
 import { Section } from "../model/band";
@@ -61,10 +61,10 @@ export class EventCard extends LitElement {
     this.cancelParticipantsListener();
     this.cancelParticipantsListener = onSnapshot(
       event.ref.participants().dbref,
-      snapshot => {
+      (snapshot) => {
         this.participants = {};
         this.needsResponse = true;
-        snapshot.docs.forEach(doc => {
+        snapshot.docs.forEach((doc) => {
           const participant: Participant = doc.data();
           if (participant.uid == auth.currentUser.uid) {
             this.needsResponse = !participant.hasResponded();
@@ -211,7 +211,7 @@ export class EventCard extends LitElement {
 
     setDoc(ref.dbref, participant, { merge: false }).then(
       () => console.log("Update successful"),
-      reason => console.log("Update failed:", reason)
+      (reason) => console.log("Update failed:", reason)
     );
   }
 
@@ -238,28 +238,28 @@ export class EventCard extends LitElement {
   renderSectionRosters() {
     if (!this.event || this.cancelled) return html``;
 
-    const sectionIds = new Set(this.sections.map(s => s.id));
-    const sectionsWithMembers = this.sections.map(section => ({
+    const sectionIds = new Set(this.sections.map((s) => s.id));
+    const sectionsWithMembers = this.sections.map((section) => ({
       id: section.id,
       name: section.name,
       emoji: section.emoji,
-      members: this.members.filter(m => m.section_id === section.id)
+      members: this.members.filter((m) => m.section_id === section.id),
     }));
 
     const unassignedMembers = this.members.filter(
-      m => !m.section_id || !sectionIds.has(m.section_id)
+      (m) => !m.section_id || !sectionIds.has(m.section_id)
     );
     if (unassignedMembers.length > 0) {
       sectionsWithMembers.push({
         id: "unassigned",
         name: "Övriga",
         emoji: "🎵",
-        members: unassignedMembers
+        members: unassignedMembers,
       });
     }
 
     const activeSections = sectionsWithMembers.filter(
-      s => s.members.length > 0
+      (s) => s.members.length > 0
     );
     const responses = Object.fromEntries(
       Object.entries(this.participants).map(([k, v]) => [k, v.attending])
@@ -268,7 +268,7 @@ export class EventCard extends LitElement {
     return html`
       <div class="section-grid">
         ${activeSections.map(
-          s => html`
+          (s) => html`
             <div class="section-header">${s.emoji} ${s.name}</div>
             <div class="section-roster">
               <mini-roster
@@ -285,14 +285,14 @@ export class EventCard extends LitElement {
 
   renderComments() {
     const comments = Object.values(this.participants)
-      .filter(p => p.comment && p.comment.trim().length > 0)
-      .map(p => {
+      .filter((p) => p.comment && p.comment.trim().length > 0)
+      .map((p) => {
         const member = this.getMemberData(p.uid);
         return {
           name: member ? member.display_name : "Okänd",
           comment: p.comment,
           uid: p.uid,
-          response: p.attending
+          response: p.attending,
         };
       });
 
@@ -302,7 +302,7 @@ export class EventCard extends LitElement {
       <div class="comments-section">
         <div class="comment-list">
           ${comments.map(
-            c => html`
+            (c) => html`
               <span class="comment-author">${c.name}</span>
               <response-icon .response=${c.response}></response-icon>
               <span class="comment-text">${c.comment}</span>
@@ -364,9 +364,7 @@ export class EventCard extends LitElement {
         style="display: ${this.cancelled ? "none" : "block"}"
       >
         ${!this.cancelled
-          ? html`
-              ${this.renderSectionRosters()} ${this.renderComments()}
-            `
+          ? html` ${this.renderSectionRosters()} ${this.renderComments()} `
           : ""}
       </div>
     `;

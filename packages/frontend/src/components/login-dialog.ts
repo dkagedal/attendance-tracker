@@ -9,7 +9,7 @@ import {
   GoogleAuthProvider,
   signInWithEmailAndPassword,
   signInWithRedirect,
-  signInWithPopup
+  signInWithPopup,
 } from "firebase/auth";
 import { FirebaseApp } from "firebase/app";
 
@@ -82,11 +82,7 @@ export class LoginDialog extends LitElement {
             >Ny inloggning</app-button
           >
         </p>
-        ${this.errormsg
-          ? html`
-              <p class="error">${this.errormsg}</p>
-            `
-          : ""}
+        ${this.errormsg ? html` <p class="error">${this.errormsg}</p> ` : ""}
       </div>
     `;
   }
@@ -100,15 +96,15 @@ export class LoginDialog extends LitElement {
         .then(() => {
           console.log("[google login] Redirecting...");
         })
-        .catch(error => {
+        .catch((error) => {
           console.log("[google login] Failure:", error);
         });
     } else {
       signInWithPopup(auth, provider)
-        .then(result => {
+        .then((result) => {
           console.log("[google login] Success:", result);
         })
-        .catch(error => {
+        .catch((error) => {
           console.log("[google login] Failure:", error);
         });
     }
@@ -125,10 +121,10 @@ export class LoginDialog extends LitElement {
       this.emailField.value,
       this.pwdField.value
     )
-      .then(userCredential => {
+      .then((userCredential) => {
         console.log("[pw login] Success:", userCredential);
       })
-      .catch(error => {
+      .catch((error) => {
         console.log("[pw login] Failure:", error);
         this.errormsg = error.message;
       });
@@ -145,10 +141,10 @@ export class LoginDialog extends LitElement {
       this.emailField.value,
       this.pwdField.value
     )
-      .then(userCredential => {
+      .then((userCredential) => {
         console.log("[pw create] Success:", userCredential);
       })
-      .catch(error => {
+      .catch((error) => {
         console.log("[pw create] Failure:", error);
         this.errormsg = error.message;
       });

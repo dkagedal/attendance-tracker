@@ -28,21 +28,15 @@ describe("calculateNotifications", () => {
     const bandRef = db.collection("bands").doc(bandId);
 
     // Setup band admin settings
-    await bandRef
-      .collection("admin")
-      .doc("settings")
-      .set({
-        from_address: "band@example.com"
-      });
+    await bandRef.collection("admin").doc("settings").set({
+      from_address: "band@example.com",
+    });
 
     // Setup member 1 (Admin)
-    await bandRef
-      .collection("members")
-      .doc("user1")
-      .set({
-        display_name: "Admin User",
-        admin: true
-      });
+    await bandRef.collection("members").doc("user1").set({
+      display_name: "Admin User",
+      admin: true,
+    });
     await bandRef
       .collection("members")
       .doc("user1")
@@ -53,18 +47,15 @@ describe("calculateNotifications", () => {
         notify: {
           new_event: true,
           new_join_request: true,
-          new_member: false
-        }
+          new_member: false,
+        },
       });
 
     // Setup member 2 (Non-Admin)
-    await bandRef
-      .collection("members")
-      .doc("user2")
-      .set({
-        display_name: "Normal User",
-        admin: false
-      });
+    await bandRef.collection("members").doc("user2").set({
+      display_name: "Normal User",
+      admin: false,
+    });
     await bandRef
       .collection("members")
       .doc("user2")
@@ -75,18 +66,15 @@ describe("calculateNotifications", () => {
         notify: {
           new_event: true,
           new_join_request: true, // should be ignored as they are non-admin
-          new_member: true // should be ignored as they are non-admin
-        }
+          new_member: true, // should be ignored as they are non-admin
+        },
       });
 
     // Setup member 3 (Admin, but all false)
-    await bandRef
-      .collection("members")
-      .doc("user3")
-      .set({
-        display_name: "Quiet Admin",
-        admin: true
-      });
+    await bandRef.collection("members").doc("user3").set({
+      display_name: "Quiet Admin",
+      admin: true,
+    });
     await bandRef
       .collection("members")
       .doc("user3")
@@ -97,18 +85,15 @@ describe("calculateNotifications", () => {
         notify: {
           new_event: false,
           new_join_request: false,
-          new_member: false
-        }
+          new_member: false,
+        },
       });
 
     // Execute function
     await calculateNotifications(bandId);
 
     // Assert
-    const notifyDoc = await bandRef
-      .collection("admin")
-      .doc("notify")
-      .get();
+    const notifyDoc = await bandRef.collection("admin").doc("notify").get();
     const notifyData = notifyDoc.data();
     assert.ok(notifyData, "notify doc not found");
 
