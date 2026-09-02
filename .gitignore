@@ -64,20 +64,18 @@ node_modules/
 # dotenv environment variables file
 .env
 
-/public
-/build
-
 *~
 *.d.ts
 *.d.ts.map
 *.js.map
 .vscode/settings.json
-packages/backend/lib/*.js
-packages/backend/lib/src/*.js
+packages/backend/lib/
 packages/backend/testdata
 packages/frontend/public/bundle.js
 packages/frontend/build
 packages/frontend/src/config.ts
 packages/frontend/src/config-*.ts
+!packages/frontend/src/config-template.ts
+!packages/frontend/src/config-emulator.ts
 packages/frontend/src/*.js
 packages/frontend/src/model/*.js
