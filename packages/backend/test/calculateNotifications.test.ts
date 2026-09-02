@@ -1,3 +1,6 @@
+process.env.FIRESTORE_EMULATOR_HOST =
+  process.env.FIRESTORE_EMULATOR_HOST || "127.0.0.1:8080";
+
 import * as assert from "assert";
 /// <reference path="../src/types.ts" />
 import * as admin from "firebase-admin";

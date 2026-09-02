@@ -6,12 +6,20 @@ import {
 } from "@firebase/rules-unit-testing";
 
 const PROJECT_ID = "demo-kommer";
+const [host, portStr] = (
+  process.env.FIRESTORE_EMULATOR_HOST || "127.0.0.1:8080"
+).split(":");
+const port = parseInt(portStr, 10);
+process.env.FIRESTORE_EMULATOR_HOST = `${host}:${port}`;
+
 let testEnv: RulesTestEnvironment;
 
 before(async () => {
   testEnv = await initializeTestEnvironment({
     projectId: PROJECT_ID,
     firestore: {
+      host,
+      port,
       // Rules are loaded by the emulator from firebase.json/firestore.rules
       // If running without emulator wrapper, we would need:
       // rules: fs.readFileSync("../../firestore.rules", "utf8"),
