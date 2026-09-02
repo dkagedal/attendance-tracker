@@ -12,6 +12,7 @@
     "build": "npm run build -w frontend && npm run build -w backend",
     "fmt": "prettier --write \"packages/*/src/**/*.{ts,js}\" \"packages/backend/test/**/*.{ts,js}\" \"packages/frontend/public/styles/**/*.css\" \"scripts/**/*.js\" \"*.md\" \"specs/**/*.md\"",
     "lint": "npm run lint -w backend",
+    "test": "npm run test -w backend",
     "serve": "npm run serve -w backend",
     "watch:backend": "npm run build:watch -w backend",
     "watch:frontend": "npm run build:watch -w frontend",
