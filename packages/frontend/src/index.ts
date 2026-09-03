@@ -8,10 +8,7 @@ import "./components/app-main";
 
 const app = initializeApp(FirebaseConfig());
 console.log("Initialized app");
-initDB(
-  app,
-  location.hostname === "localhost" || location.hostname === "127.0.0.1"
-);
+initDB(app, Boolean(app.options.projectId?.startsWith("demo-")));
 
 for (const element of document.getElementsByTagName("app-main")) {
   const appMain = element as AppMain;
