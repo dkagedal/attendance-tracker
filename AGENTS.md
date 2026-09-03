@@ -15,7 +15,7 @@ This is a monorepo using npm workspaces. The main directories are:
 The backend is a set of Firebase Functions written in TypeScript.
 
 - **Framework**: Firebase Functions
-- **Runtime**: Node.js 20
+- **Runtime**: Node.js 22
 - **Language**: TypeScript
 - **Dependencies**: `firebase-admin`, `firebase-functions`
 - **Building**: The backend is built using `tsc`. The build command is `npm run build -w backend`.
@@ -74,9 +74,9 @@ The entire project is deployed to Firebase. The project uses configuration swapp
 
 To run the application locally with Firebase emulators:
 
-1. Ensure you are running **Node 20**.
+1. Ensure you are running **Node 22**.
    - Verify your current Node version with: `node -v`
-   - If using **nvm** (Node Version Manager), switch to the correct version by running `nvm use` in the root directory (which reads `.nvmrc`). If Node 20 is not yet installed on your system, run `nvm install` first.
+   - If using **nvm** (Node Version Manager), switch to the correct version by running `nvm use` in the root directory (which reads `.nvmrc`). If Node 22 is not yet installed on your system, run `nvm install` first.
 2. If you are starting in a new clone or a separate worktree, run `npm ci` first to install dependencies and automatically initialize configuration files.
 3. Run `npm run dev` in the root directory. This will:
    - Run an initial build of both packages.
