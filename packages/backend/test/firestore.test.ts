@@ -2,7 +2,7 @@ import {
   assertFails,
   assertSucceeds,
   initializeTestEnvironment,
-  RulesTestEnvironment,
+  type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 
 const PROJECT_ID = "demo-kommer";
