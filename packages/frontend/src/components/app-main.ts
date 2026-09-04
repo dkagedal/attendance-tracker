@@ -151,7 +151,7 @@ export class AppMain extends LitElement {
       "[app-main] Ensuring components:",
       AppDrawer,
       AppDialog,
-      AppToast
+      AppToast,
     );
     console.log("[app-main] Constructed");
   }
@@ -172,7 +172,7 @@ export class AppMain extends LitElement {
 
       this.subscribe(
         "auth",
-        onAuthStateChanged(this.auth, this.authStateChanged.bind(this))
+        onAuthStateChanged(this.auth, this.authStateChanged.bind(this)),
       );
       const bandid = await extractBandId();
       console.log("[app-main] Band id:", bandid);
@@ -199,8 +199,8 @@ export class AppMain extends LitElement {
               if (error.code != "permission-denied") {
                 this.addErrorMessage("Internt fel [user]", error);
               }
-            }
-          )
+            },
+          ),
         );
       }
     }
@@ -232,8 +232,8 @@ export class AppMain extends LitElement {
               if (error.code != "permission-denied") {
                 this.addErrorMessage("Internt fel [member]", error);
               }
-            }
-          )
+            },
+          ),
         );
       }
     }
@@ -255,8 +255,8 @@ export class AppMain extends LitElement {
                 if (error.code != "permission-denied") {
                   this.addErrorMessage("Internt fel [join-request]", error);
                 }
-              }
-            )
+              },
+            ),
         );
       }
     }
@@ -277,7 +277,7 @@ export class AppMain extends LitElement {
       console.log(
         "[app-main] User",
         uid,
-        "doesn't exist yet. Waiting for cloud function."
+        "doesn't exist yet. Waiting for cloud function.",
       );
       return;
     }
@@ -342,7 +342,7 @@ export class AppMain extends LitElement {
             console.log("Add failed:", reason);
             this.addErrorMessage("Kunde inte lägga till händelse", reason);
             this.addDialog.close();
-          }
+          },
         );
     }
   }
@@ -356,7 +356,7 @@ export class AppMain extends LitElement {
       (error) => {
         console.info("Failed to create join request:", error);
         this.addErrorMessage("Kunde inte ansöka", error);
-      }
+      },
     );
   }
 
@@ -404,7 +404,7 @@ export class AppMain extends LitElement {
     .main-content {
       margin-top: var(--header-height);
       padding: var(--app-spacing-md);
-      max-width: 800px;
+      width: 100%;
       margin-left: auto;
       margin-right: auto;
     }
@@ -469,7 +469,7 @@ export class AppMain extends LitElement {
               >
                 ${band.display_name}
               </div>
-            `
+            `,
         )}
       </div>
       <div class="menu-divider"></div>
@@ -565,17 +565,15 @@ export class AppMain extends LitElement {
 
   renderSchedule() {
     return html`
-      <div id="schedule">
-        <band-schedule
-          id="band"
-          bandid=${this.bandid}
-          uid=${this.firebaseUser.uid}
-          @loaded=${() => {
-            this.loadingSchedule = false;
-          }}
-        >
-        </band-schedule>
-      </div>
+      <band-schedule
+        id="band"
+        bandid=${this.bandid}
+        uid=${this.firebaseUser.uid}
+        @loaded=${() => {
+          this.loadingSchedule = false;
+        }}
+      >
+      </band-schedule>
       <div class="fab">
         <app-button
           variant="primary"
@@ -665,7 +663,7 @@ export class AppMain extends LitElement {
             @click=${async () => {
               await new JoinRequestReference(snapshot.ref).update(
                 { approved: true },
-                { merge: true }
+                { merge: true },
               );
             }}
           >
@@ -790,7 +788,7 @@ export class AppMain extends LitElement {
                   >
                     ${this.bands[id].display_name}
                   </app-button>
-                `
+                `,
               )}
             </div>
           </app-dialog>
@@ -897,12 +895,12 @@ export class AppMain extends LitElement {
                 <span class="errormsg">${message}</span>
                 <span class="errordetail">${details || ""}</span>
               </app-toast>
-            `
+            `,
           )}
           ${repeat(
             this.joinRequests,
             (snapshot) => snapshot.id,
-            (snapshot) => this.renderJoinRequest(snapshot)
+            (snapshot) => this.renderJoinRequest(snapshot),
           )}
           ${this.renderMain()}
         </div>

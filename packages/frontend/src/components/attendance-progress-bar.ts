@@ -18,8 +18,6 @@ export class AttendanceProgressBar extends LitElement {
   static styles = css`
     :host {
       display: flex;
-      width: 100%;
-      height: 6px;
       background-color: #eeeeee; /* Light grey for empty space */
       border-radius: var(--app-radius-full);
       overflow: hidden;

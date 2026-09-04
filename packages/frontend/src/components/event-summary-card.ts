@@ -50,7 +50,7 @@ export class EventSummaryCard extends LitElement {
     if (changedProperties.has("event") && this.event) {
       this.cancelled = !!this.event.cancelled;
       console.log(
-        `[event-summary-card] Event ${this.event.ref.id} updated. Cancelled: ${this.cancelled}`
+        `[event-summary-card] Event ${this.event.ref.id} updated. Cancelled: ${this.cancelled}`,
       );
     }
   }
@@ -74,7 +74,7 @@ export class EventSummaryCard extends LitElement {
         });
         this.participants = participants;
         this.loading = false;
-      }
+      },
     );
   }
 
@@ -104,7 +104,6 @@ export class EventSummaryCard extends LitElement {
   static styles = css`
     :host {
       display: block;
-      margin-bottom: var(--app-spacing-md);
     }
 
     .content {
@@ -113,173 +112,139 @@ export class EventSummaryCard extends LitElement {
       gap: var(--app-spacing-md);
       align-items: center;
       position: relative;
-    }
 
-    /* Desktop Layout */
-    .date-box {
-      grid-column: 1;
-      align-self: start;
-    }
-    .info {
-      grid-column: 2;
-      align-self: start;
-    }
-    .status {
-      grid-column: 3;
-      align-self: start;
-    }
+      response-icon {
+        grid-column: 3;
+        font-size: 1.5rem;
+      }
 
-    @media (max-width: 768px) {
-      .content {
-        grid-template-columns: auto 1fr auto;
-        grid-template-rows: auto auto;
-        gap: var(--app-spacing-sm);
+      .date-box {
+        grid-column: 1;
+        align-self: start;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--app-color-background);
+        border-radius: var(--app-radius-md);
+        padding: var(--app-spacing-sm);
+        width: clamp(40px, 10vw, 60px);
+        min-height: 50px;
+        text-align: center;
+        border: 1px solid var(--app-color-border);
+
+        .date-month {
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          color: var(--app-color-primary-700);
+          font-weight: var(--app-font-weight-bold);
+          line-height: 1;
+          margin-bottom: 4px;
+        }
+
+        .date-day {
+          font-size: 1.5rem;
+          font-weight: var(--app-font-weight-bold);
+          color: var(--app-color-text);
+          line-height: 1;
+        }
       }
 
       .info {
-        padding-right: 8px;
+        grid-column: 2;
+        align-self: start;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+
+        .title {
+          font-size: var(--app-font-size-lg);
+          font-weight: var(--app-font-weight-bold);
+          color: var(--app-color-text);
+          margin: 0;
+        }
+
+        .meta {
+          display: flex;
+          align-items: center;
+          gap: var(--app-spacing-md);
+          font-size: var(--app-font-size-sm);
+          color: var(--app-color-text-secondary);
+          min-width: 0;
+          width: 100%;
+        }
+
+        .meta-item {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .meta-item.location {
+          min-width: 0;
+          flex: 1;
+          align-items: center;
+        }
+
+        .meta-item.location span {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          flex: 1;
+        }
+
+        .description p {
+          margin: 0;
+        }
       }
 
       .status {
         grid-column: 1 / -1;
         grid-row: 2;
-        display: block; /* Ensure it's a block to contain the bar */
         width: 100%;
-        margin-top: var(--app-spacing-xs);
-      }
-      .status[hidden] {
-        display: none;
-      }
+        align-self: start;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: var(--app-spacing-sm);
+        min-width: 100px;
 
-      .response-icon {
-        grid-column: 3;
-      }
-
-      .attendance-container {
-        width: 100%;
-        align-items: flex-start;
+        attendance-progress-bar {
+          width: 100%;
+          height: 1ex;
+        }
       }
 
-      .date-box {
-        min-width: 40px;
-        padding: 4px;
+      .badge {
+        font-size: 0.75rem;
+        font-weight: var(--app-font-weight-bold);
+        padding: 4px 10px;
+        border-radius: var(--app-radius-full);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
 
-      .date-day {
-        font-size: 1.1rem;
+      .badge.action {
+        background-color: transparent;
+        color: var(--app-color-red-600);
+        border: 1px solid var(--app-color-red-600);
+        box-shadow: none;
       }
 
-      .date-month {
-        font-size: 0.65rem;
+      .badge.cancelled {
+        background-color: var(--app-color-text-secondary);
+        color: white;
       }
-    }
-
-    /* Date Box */
-    .date-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background-color: var(--app-color-background);
-      border-radius: var(--app-radius-md);
-      padding: var(--app-spacing-sm);
-      min-width: 60px;
-      text-align: center;
-      border: 1px solid var(--app-color-border);
-    }
-
-    .date-month {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      color: var(--app-color-primary-700);
-      font-weight: var(--app-font-weight-bold);
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-
-    .date-day {
-      font-size: 1.5rem;
-      font-weight: var(--app-font-weight-bold);
-      color: var(--app-color-text);
-      line-height: 1;
-    }
-
-    /* Info Section */
-    .info {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      min-width: 0;
-    }
-
-    .title {
-      font-size: var(--app-font-size-lg);
-      font-weight: var(--app-font-weight-bold);
-      color: var(--app-color-text);
-      margin: 0;
-    }
-
-    .meta {
-      display: flex;
-      align-items: center;
-      gap: var(--app-spacing-md);
-      font-size: var(--app-font-size-sm);
-      color: var(--app-color-text-secondary);
-      min-width: 0;
-      width: 100%;
-    }
-
-    .meta-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .meta-item.location {
-      min-width: 0;
-      flex: 1;
-      align-items: center;
-    }
-
-    .meta-item.location span {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      flex: 1;
-    }
-
-    /* Status Section */
-    .status {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: var(--app-spacing-sm);
-      min-width: 100px;
-    }
-
-    .badge {
-      font-size: 0.75rem;
-      font-weight: var(--app-font-weight-bold);
-      padding: 4px 10px;
-      border-radius: var(--app-radius-full);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .badge.action {
-      background-color: transparent;
-      color: var(--app-color-red-600);
-      border: 1px solid var(--app-color-red-600);
-      box-shadow: none;
-    }
-
-    .badge.cancelled {
-      background-color: var(--app-color-text-secondary);
-      color: white;
     }
 
     :host([cancelled]) {
       opacity: 0.6;
+
+      .status,
+      .description {
+        display: none;
+      }
     }
   `;
 
@@ -378,9 +343,9 @@ export class EventSummaryCard extends LitElement {
                     ${unsafeHTML(
                       DOMPurify.sanitize(
                         marked.parse(
-                          this.event.description.split("\n\n")[0]
-                        ) as string
-                      )
+                          this.event.description.split("\n\n")[0],
+                        ) as string,
+                      ),
                     )}
                   `
                 : ""}
@@ -388,7 +353,7 @@ export class EventSummaryCard extends LitElement {
           </div>
           ${this.renderResponseStatus()}
 
-          <div class="status" ?hidden=${this.cancelled}>
+          <div class="status">
             <attendance-progress-bar
               .yes=${this.yesCount}
               .no=${this.noCount}
