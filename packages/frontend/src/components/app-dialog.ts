@@ -31,8 +31,6 @@ export class AppDialog extends LitElement {
       width: 90%;
       max-width: 500px;
       max-height: 90vh;
-      display: flex;
-      flex-direction: column;
       color: inherit;
       margin: auto;
       overflow: visible;
@@ -70,6 +68,11 @@ export class AppDialog extends LitElement {
       dialog[open]::backdrop {
         background-color: rgba(0, 0, 0, 0);
       }
+    }
+
+    dialog > div {
+      display: flex;
+      flex-direction: column;
     }
 
     .header {
@@ -134,29 +137,31 @@ export class AppDialog extends LitElement {
         @close=${this.handleNativeClose}
         @click=${this.handleDialogClick}
       >
-        <div class="header">
-          <h2 id="dialog-title" class="title">${this.heading}</h2>
-          <div
-            style="display: flex; align-items: center; gap: var(--app-spacing-sm);"
-          >
-            <slot name="headerActions"></slot>
-            ${!this.hideCloseButton
-              ? html`
-                  <app-button
-                    variant="icon"
-                    icon="close"
-                    @click=${this.close}
-                  ></app-button>
-                `
-              : ""}
+        <div>
+          <div class="header">
+            <h2 id="dialog-title" class="title">${this.heading}</h2>
+            <div
+              style="display: flex; align-items: center; gap: var(--app-spacing-sm);"
+            >
+              <slot name="headerActions"></slot>
+              ${!this.hideCloseButton
+                ? html`
+                    <app-button
+                      variant="icon"
+                      icon="close"
+                      @click=${this.close}
+                    ></app-button>
+                  `
+                : ""}
+            </div>
           </div>
-        </div>
-        <div class="content">
-          <slot></slot>
-        </div>
-        <div class="actions">
-          <slot name="primaryAction"></slot>
-          <slot name="secondaryAction"></slot>
+          <div class="content">
+            <slot></slot>
+          </div>
+          <div class="actions">
+            <slot name="primaryAction"></slot>
+            <slot name="secondaryAction"></slot>
+          </div>
         </div>
       </dialog>
     `;

@@ -50,7 +50,7 @@ export class EventSummaryCard extends LitElement {
     if (changedProperties.has("event") && this.event) {
       this.cancelled = !!this.event.cancelled;
       console.log(
-        `[event-summary-card] Event ${this.event.ref.id} updated. Cancelled: ${this.cancelled}`,
+        `[event-summary-card] Event ${this.event.ref.id} updated. Cancelled: ${this.cancelled}`
       );
     }
   }
@@ -74,7 +74,7 @@ export class EventSummaryCard extends LitElement {
         });
         this.participants = participants;
         this.loading = false;
-      },
+      }
     );
   }
 
@@ -343,9 +343,9 @@ export class EventSummaryCard extends LitElement {
                     ${unsafeHTML(
                       DOMPurify.sanitize(
                         marked.parse(
-                          this.event.description.split("\n\n")[0],
-                        ) as string,
-                      ),
+                          this.event.description.split("\n\n")[0]
+                        ) as string
+                      )
                     )}
                   `
                 : ""}
