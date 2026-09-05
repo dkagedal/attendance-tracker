@@ -6,7 +6,6 @@ import { marked } from "marked";
 import DOMPurify from "dompurify";
 import "./time-range";
 import "./mini-roster";
-import "./app-button";
 import "./app-input";
 import "./app-icon";
 import "./response-card";
@@ -99,6 +98,16 @@ export class EventCard extends LitElement {
 
     .header {
       margin-bottom: var(--app-spacing-lg);
+    }
+
+    .title {
+      font-size: var(--app-font-size-lg);
+      font-weight: var(--app-font-weight-bold);
+      color: var(--app-color-text);
+      margin: 0;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
     }
 
     .type {

@@ -1,4 +1,6 @@
 :root {
+  interpolate-size: allow-keywords;
+
   /* Colors */
   --app-color-primary-100: oklch(0.97 0.02 200);
   --app-color-primary-200: oklch(0.91 0.05 200);

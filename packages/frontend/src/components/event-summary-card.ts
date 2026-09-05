@@ -7,7 +7,6 @@ import { BandEvent } from "../model/bandevent";
 import { Member } from "../model/member";
 import { Participant } from "../model/participant";
 import { onSnapshot } from "firebase/firestore";
-import "./app-card";
 import "./app-icon";
 import "./attendance-progress-bar";
 import "./response-icon";
@@ -107,19 +106,25 @@ export class EventSummaryCard extends LitElement {
     }
 
     .content {
-      display: grid;
-      grid-template-columns: auto 1fr auto;
+      display: flex;
+      flex-direction: column;
       gap: var(--app-spacing-md);
-      align-items: center;
-      position: relative;
+
+      .main {
+        width: 100%;
+        display: flex;
+        flex-grow: 1;
+        flex-direction: row;
+        gap: var(--app-spacing-md);
+        align-items: center;
+        position: relative;
+      }
 
       response-icon {
-        grid-column: 3;
         font-size: 1.5rem;
       }
 
       .date-box {
-        grid-column: 1;
         align-self: start;
         display: flex;
         flex-direction: column;
@@ -151,7 +156,7 @@ export class EventSummaryCard extends LitElement {
       }
 
       .info {
-        grid-column: 2;
+        flex: 1;
         align-self: start;
         display: flex;
         flex-direction: column;
@@ -163,6 +168,9 @@ export class EventSummaryCard extends LitElement {
           font-weight: var(--app-font-weight-bold);
           color: var(--app-color-text);
           margin: 0;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+          overflow: hidden;
         }
 
         .meta {
@@ -194,8 +202,12 @@ export class EventSummaryCard extends LitElement {
           flex: 1;
         }
 
-        .description p {
-          margin: 0;
+        .description {
+          height: 1.5lh;
+          overflow: hidden;
+          p {
+            margin: 0;
+          }
         }
       }
 
@@ -293,8 +305,8 @@ export class EventSummaryCard extends LitElement {
     const total = this.members.length || 1; // Avoid division by zero
 
     return html`
-      <app-card clickable ?disabled=${this.cancelled}>
-        <div class="content">
+      <div class="content">
+        <div class="main">
           <div class="date-box">
             <span class="date-month">${month}</span>
             <span class="date-day">${day}</span>
@@ -352,17 +364,16 @@ export class EventSummaryCard extends LitElement {
             </div>
           </div>
           ${this.renderResponseStatus()}
-
-          <div class="status">
-            <attendance-progress-bar
-              .yes=${this.yesCount}
-              .no=${this.noCount}
-              .sub=${this.subCount}
-              .total=${total}
-            ></attendance-progress-bar>
-          </div>
         </div>
-      </app-card>
+        <div class="status">
+          <attendance-progress-bar
+            .yes=${this.yesCount}
+            .no=${this.noCount}
+            .sub=${this.subCount}
+            .total=${total}
+          ></attendance-progress-bar>
+        </div>
+      </div>
     `;
   }
 }

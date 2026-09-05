@@ -15,14 +15,18 @@ import { BandEvent } from "../model/bandevent";
 import { band, Band } from "../model/band";
 import { Member } from "../model/member";
 import "./time-range";
-import "./event-summary-card";
+import "./event-view";
 import "./app-dialog";
+import "./app-card";
 import "./app-button";
 import "./app-icon";
 import "./event-card";
 import "./app-menu";
 import { AppMenu } from "./app-menu";
 import { EventEditor } from "./event-editor";
+import "./response-card";
+import { ResponseCard } from "./response-card";
+import { classMap } from "lit/directives/class-map";
 
 @customElement("band-schedule")
 export class BandSchedule extends LitElement {
@@ -94,7 +98,7 @@ export class BandSchedule extends LitElement {
     const q = firestoreQuery(
       bandRef.events().dbref,
       where("start", ">=", yesterday),
-      orderBy("start")
+      orderBy("start"),
     );
 
     this._unsubscribeGigs = onSnapshot(q, (snapshot) => {
@@ -103,7 +107,11 @@ export class BandSchedule extends LitElement {
 
       for (const event of this.events) {
         if (event.ref.id === this.selected_event_id) {
-          this.selected_event = event;
+          if (event.cancelled) {
+            this.setSelected(null);
+          } else {
+            this.selected_event = event;
+          }
           break;
         }
       }
@@ -143,6 +151,9 @@ export class BandSchedule extends LitElement {
 
   static get styles() {
     return css`
+      .top {
+        width: 100%;
+      }
       .list {
         display: flex;
         flex-direction: column;
@@ -152,40 +163,158 @@ export class BandSchedule extends LitElement {
         margin: auto;
         gap: var(--app-spacing-md);
       }
+
+      app-card * {
+        transition: display 0.3s allow-discrete, opacity 0.3s ease;
+      }
+
+      /* Things to show when folded are visible by default */
+      app-card .fold {
+        display: block;
+        opacity: 1;
+        transition: display 0.3s allow-discrete, opacity 0.3s ease;
+      }
+
+      /* Things to show when unfolded are hidden by default. */
+      app-card .unfold {
+        display: none;
+        opacity: 0;
+        transition: display 0.3s allow-discrete, opacity 0.3s ease;
+      }
+
+      /* Things to show when folded are hidden when selected. */
+      app-card.selected .fold {
+        display: none;
+        opacity: 0;
+        transition: display 0.3s, opacity 0.3s ease;
+      }
+
+      /* Things to show when unfolded are visible when selected. */
+      app-card.selected .unfold {
+        display: block;
+        opacity: 1;
+        transition: display 0.3s allow-discrete, opacity 0.3s ease;
+      }
+
+      .closer {
+        display: none;
+      }
+
+      event-view {
+        margin-bottom: var(--app-spacing-md);
+      }
+
+      response-card {
+        background: var(--app-color-amber-100);
+        padding: 0 var(--app-spacing-md);
+      }
+
+      app-card.selected .closer {
+        display: flex;
+        height: 1.5em;
+        cursor: pointer;
+        align-items: center;
+        justify-content: center;
+        color: var(--app-color-primary-700);
+        &:hover {
+          background-color: var(--app-color-primary-100);
+        }
+        app-icon {
+          margin-bottom: -0.5ex;
+        }
+      }
+
+      app-card {
+        height: 8.5em;
+        transition: height 0.3s ease;
+        overflow: hidden;
+      }
+      app-card.cancelled {
+        height: 6.5em;
+      }
+      app-card.selected {
+        height: fit-content;
+        transition: height 0.3s ease;
+      }
     `;
   }
 
   render() {
     return html`
-      <div class="list">
-        ${repeat(
-          this.events,
-          (e) => e.ref.id,
-          (e: BandEvent) => html`
-            <event-summary-card
-              uid=${this.uid}
-              .members=${this.members}
-              .event=${e}
-              @click=${(ev: Event) => this.selected(ev, e)}
-            ></event-summary-card>
-          `
-        )}
-        ${this.loaded && this.events.length === 0
-          ? html`
-              <div
-                style="text-align: center; padding: 40px; color: var(--app-color-text-secondary);"
-              >
-                Inget planerat
-              </div>
-            `
-          : ""}
+      <div class="top" @click=${(_: Event) => this.setSelected(null)}>
+        <div class="list">
+          ${repeat(
+            this.events,
+            (e) => e.ref.id,
+            (e: BandEvent) => {
+              const selected = this.selected_event_id === e.ref.id;
+              return html`
+                <app-card
+                  class=${classMap({ cancelled: e.cancelled })}
+                  ?clickable=${!selected}
+                  id="event-${e.ref.id}"
+                  @click=${(ev: Event) => {
+                    ev.stopPropagation();
+                    if (!selected && !e.cancelled) {
+                      this.setSelected(e);
+                    }
+                  }}
+                >
+                  <event-view
+                    uid=${this.uid}
+                    .members=${this.members}
+                    .sections=${this.bandData?.sections || []}
+                    .event=${e}
+                    ?summary=${!selected}
+                    @edit-event=${(ev: CustomEvent) => {
+                      this.edit_snapshot = ev.detail;
+                    }}
+                    @close-event=${(_: Event) => this.setSelected(null)}
+                  ></event-view>
+                  <response-card
+                    class="unfold"
+                    slot="footer"
+                    .event=${e}
+                    uid=${this.uid}
+                    @click=${(ev: Event) => {
+                      ev.stopPropagation();
+                      const rc = ev.target as ResponseCard;
+                      if (rc.mode === "view") {
+                        rc.mode = "edit";
+                      }
+                    }}
+                  ></response-card>
+                  <div
+                    class="closer"
+                    slot="footer"
+                    @click=${(ev: Event) => {
+                      ev.stopPropagation();
+                      this.setSelected(null);
+                    }}
+                  >
+                    <app-icon icon="arrow_drop_up"></app-icon>
+                  </div>
+                </app-card>
+              `;
+            },
+          )}
+          ${this.loaded && this.events.length === 0
+            ? html`
+                <div
+                  style="text-align: center; padding: 40px; color: var(--app-color-text-secondary);"
+                >
+                  Inget planerat
+                </div>
+              `
+            : ""}
+        </div>
       </div>
 
       <app-dialog
         heading="${this.edit_snapshot
           ? "Redigera händelse"
           : this.selected_event?.type || "Händelse"}"
-        ?open=${this.selected_event != null}
+        ?open=${this.edit_snapshot}
         @closed=${this.closeDialog}
         hideCloseButton
       >
@@ -214,7 +343,7 @@ export class BandSchedule extends LitElement {
                             <div
                               class="menu-item"
                               @click=${() => {
-                                this.setCancelled(false);
+                                this.setCancelled(this.selected_event, false);
                                 this.actionMenu.close();
                               }}
                             >
@@ -247,7 +376,7 @@ export class BandSchedule extends LitElement {
                             <div
                               class="menu-item"
                               @click=${() => {
-                                this.setCancelled(true);
+                                this.setCancelled(this.selected_event, true);
                                 this.actionMenu.close();
                               }}
                             >
@@ -274,16 +403,16 @@ export class BandSchedule extends LitElement {
     `;
   }
 
-  async setCancelled(cancelled: boolean) {
-    this.selected_event.cancelled = cancelled;
-    await this.selected_event.ref.update(this.selected_event);
+  async setCancelled(event: BandEvent, cancelled: boolean) {
+    event.cancelled = cancelled;
+    await event.ref.update(event);
     this.requestUpdate();
   }
 
   deleteEvent() {
     if (
       confirm(
-        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra."
+        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.",
       )
     ) {
       deleteDoc(this.selected_event.ref.dbref).then(
@@ -293,21 +422,41 @@ export class BandSchedule extends LitElement {
         },
         (reason) => {
           console.log("Delete failed:", reason);
-        }
+        },
       );
     }
   }
 
-  selected(_selectEvent: any, gig: BandEvent) {
-    this.selected_event_id = gig.ref.id;
+  setSelected(gig: BandEvent | null) {
+    const id = gig?.ref?.id;
+    if (id == this.selected_event_id) {
+      return;
+    }
+    console.log("changing selection:", this.selected_event_id, "->", id);
+
+    if (this.selected_event_id) {
+      const oldTarget = this.shadowRoot.getElementById(
+        `event-${this.selected_event_id}`,
+      );
+      oldTarget.classList.remove("selected");
+    }
+
     this.selected_event = gig;
+    this.selected_event_id = id;
     this.edit_snapshot = null;
+
+    if (gig) {
+      const newTarget = this.shadowRoot.getElementById(`event-${id}`);
+      newTarget.classList.add("selected");
+      newTarget.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }
   }
 
   closeDialog() {
-    this.selected_event_id = null;
-    this.selected_event = null;
-    this.edit_snapshot = null;
+    this.setSelected(null);
     this.actionMenu?.close();
   }
 

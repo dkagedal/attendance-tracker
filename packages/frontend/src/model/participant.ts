@@ -1,4 +1,9 @@
-import { CollectionReference, DocumentReference } from "firebase/firestore";
+import {
+  CollectionReference,
+  DocumentReference,
+  setDoc,
+  SetOptions,
+} from "firebase/firestore";
 import { UID } from "../datamodel";
 
 export class ParticipantReference {
@@ -8,6 +13,10 @@ export class ParticipantReference {
   }
   get id(): string {
     return this.dbref.id;
+  }
+
+  update(data: any, options?: SetOptions): Promise<void> {
+    return setDoc(this.dbref, data, options);
   }
 }
 
@@ -52,6 +61,9 @@ class ParticipantConverter {
 
   static fromFirestore(snapshot: any, options: any): Participant {
     const data = snapshot.data(options);
+    if (!data) {
+      return emptyParticipant(snapshot.id);
+    }
     if (["yes", "no", "sub", "na"].indexOf(data.attending) == -1) {
       data.attending = "na";
     }

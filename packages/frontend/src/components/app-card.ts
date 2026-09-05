@@ -19,6 +19,7 @@ export class AppCard extends LitElement {
       padding: var(--app-spacing-md);
       transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
       border: 1px solid var(--app-color-border);
+      // container-type: size;
     }
 
     :host([clickable]) {
@@ -41,9 +42,16 @@ export class AppCard extends LitElement {
       cursor: not-allowed;
       pointer-events: none;
     }
+
+    .footer {
+      margin-left: calc(var(--app-spacing-md) * -1);
+      margin-right: calc(var(--app-spacing-md) * -1);
+      margin-bottom: calc(var(--app-spacing-md) * -1);
+    }
   `;
 
   render() {
-    return html` <slot></slot> `;
+    return html`<slot></slot>
+      <div class="footer"><slot name="footer"></slot></div>`;
   }
 }
