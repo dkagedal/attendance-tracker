@@ -121,130 +121,130 @@ export class EventView extends LitElement {
       display: flex;
       flex-direction: column;
       gap: var(--app-spacing-md);
+    }
 
-      .main {
-        width: 100%;
-        display: flex;
-        flex-grow: 1;
-        flex-direction: row;
-        gap: var(--app-spacing-md);
-        align-items: center;
-        position: relative;
-      }
+    .content .main {
+      width: 100%;
+      display: flex;
+      flex-grow: 1;
+      flex-direction: row;
+      gap: var(--app-spacing-md);
+      align-items: center;
+      position: relative;
+    }
 
-      response-icon {
-        font-size: 1.5rem;
-        align-self: start;
-      }
+    .content response-icon {
+      font-size: 1.5rem;
+      align-self: start;
+    }
 
-      app-menu {
-        align-self: start;
-      }
+    .content app-menu {
+      align-self: start;
+    }
 
-      .date-box {
-        align-self: start;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background-color: var(--app-color-background);
-        border-radius: var(--app-radius-md);
-        padding: var(--app-spacing-sm);
-        width: clamp(40px, 10vw, 60px);
-        height: 3em;
-        text-align: center;
-        border: 1px solid var(--app-color-border);
+    .content .date-box {
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: var(--app-color-background);
+      border-radius: var(--app-radius-md);
+      padding: var(--app-spacing-sm);
+      width: clamp(40px, 10vw, 60px);
+      height: 3em;
+      text-align: center;
+      border: 1px solid var(--app-color-border);
+    }
 
-        .date-month {
-          font-size: 0.75rem;
-          text-transform: uppercase;
-          color: var(--app-color-primary-700);
-          font-weight: var(--app-font-weight-bold);
-          line-height: 1;
-          margin-bottom: 4px;
-        }
+    .date-month {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      color: var(--app-color-primary-700);
+      font-weight: var(--app-font-weight-bold);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
 
-        .date-day {
-          font-size: 1.5rem;
-          font-weight: var(--app-font-weight-bold);
-          color: var(--app-color-text);
-          line-height: 1;
-        }
-      }
+    .content .date-day {
+      font-size: 1.5rem;
+      font-weight: var(--app-font-weight-bold);
+      color: var(--app-color-text);
+      line-height: 1;
+    }
 
-      .info {
-        flex: 1;
-        align-self: start;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        min-width: 0;
+    .info {
+      flex: 1;
+      align-self: start;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+    }
 
-        .title {
-          font-size: var(--app-font-size-lg);
-          font-weight: var(--app-font-weight-bold);
-          color: var(--app-color-text);
-          margin: 0;
-        }
+    .content .title {
+      font-size: var(--app-font-size-lg);
+      font-weight: var(--app-font-weight-bold);
+      color: var(--app-color-text);
+      margin: 0;
+    }
 
-        .meta {
-          display: flex;
-          align-items: start;
-          gap: var(--app-spacing-md);
-          font-size: var(--app-font-size-sm);
-          color: var(--app-color-text-secondary);
-          // min-width: 0;
-          width: 100%;
-        }
+    .meta {
+      display: flex;
+      align-items: start;
+      gap: var(--app-spacing-md);
+      font-size: var(--app-font-size-sm);
+      color: var(--app-color-text-secondary);
+      // min-width: 0;
+      width: 100%;
+    }
 
-        .meta-item {
-          display: flex;
-          gap: 4px;
-        }
+    .meta-item {
+      display: flex;
+      gap: 4px;
+    }
 
-        .meta-item.location {
-          flex: 1;
-        }
+    .meta-item.location {
+      flex: 1;
+    }
 
-        .description {
-          transition: height 0.3s ease;
-          min-height: 1lh;
-          overflow: hidden;
-          p {
-            margin: 0;
-          }
-        }
-      }
+    .description {
+      transition: height 0.3s ease;
+      min-height: 1lh;
+      overflow: hidden;
+    }
+    .description > p {
+      margin: 0;
+    }
 
-      .status {
-        width: 100%;
+    .status {
+      width: 100%;
+    }
 
-        attendance-progress-bar {
-          width: 100%;
-          height: 1ex;
-        }
-      }
+    attendance-progress-bar {
+      width: 100%;
+      height: 1ex;
+    }
 
-      .badge {
-        font-size: 0.75rem;
-        font-weight: var(--app-font-weight-bold);
-        padding: 4px 10px;
-        border-radius: var(--app-radius-full);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
+    .badge {
+      font-size: 0.75rem;
+      font-weight: var(--app-font-weight-bold);
+      padding: 4px 10px;
+      border-radius: var(--app-radius-full);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
-      .badge.action {
-        background-color: transparent;
-        color: var(--app-color-red-600);
-        border: 1px solid var(--app-color-red-600);
-        box-shadow: none;
-      }
+    .badge.action {
+      background-color: transparent;
+      color: var(--app-color-red-600);
+      border: 1px solid var(--app-color-red-600);
+      box-shadow: none;
+    }
 
-      .badge.cancelled {
-        background-color: var(--app-color-text-secondary);
-        color: white;
-      }
+    .badge.cancelled {
+      background-color: var(--app-color-text-secondary);
+      color: white;
     }
 
     :host([cancelled]) {
@@ -263,76 +263,74 @@ export class EventView extends LitElement {
       column-gap: var(--app-spacing-md);
       // row-gap: var(--app-spacing-sm);
       align-items: baseline;
+    }
 
-      .section-header {
-        font-weight: var(--app-font-weight-bold);
-        font-size: var(--app-font-size-sm);
-        color: var(--app-color-text-secondary);
-        white-space: nowrap;
-      }
+    .section-header {
+      font-weight: var(--app-font-weight-bold);
+      font-size: var(--app-font-size-sm);
+      color: var(--app-color-text-secondary);
+      white-space: nowrap;
+    }
 
-      .section-roster {
-        min-width: 0;
-      }
+    .section-roster {
+      min-width: 0;
     }
 
     .comments-section {
       margin-top: var(--app-spacing-lg);
-
-      .comment-list {
-        display: grid;
-        grid-template-columns: auto auto 1fr;
-        gap: var(--app-spacing-sm);
-        font-size: var(--app-font-size-sm);
-      }
-
-      .comment-author {
-        font-weight: bold;
-        grid-column: 1;
-      }
-
-      .comment-text {
-        color: var(--app-color-text-secondary);
-        grid-column: 3;
-      }
-
-      .comment-list response-icon {
-        font-size: 16px;
-        grid-column: 2;
-      }
-
-      .comment-list response-icon {
-        font-size: 16px;
-        grid-column: 2;
-      }
     }
 
-    :host([summary]) {
-      a {
-        pointer-events: none;
-        cursor: default;
-        text-decoration: none;
-        color: inherit;
-      }
-      .truncate-in-summary {
-        height: 1lh;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        overflow: hidden;
-        transition: height 0.3s ease;
-      }
+    .comment-list {
+      display: grid;
+      grid-template-columns: auto auto 1fr;
+      gap: var(--app-spacing-sm);
+      font-size: var(--app-font-size-sm);
+    }
 
-      .description {
-        height: 1lh;
-        p {
-          overflow: hidden;
-          white-space: nowrap;
-          text-overflow: ellipsis;
-        }
+    .comment-author {
+      font-weight: bold;
+      grid-column: 1;
+    }
+
+    .comment-text {
+      color: var(--app-color-text-secondary);
+      grid-column: 3;
+    }
+
+    .comment-list response-icon {
+      font-size: 16px;
+      grid-column: 2;
+    }
+
+    .comment-list response-icon {
+      font-size: 16px;
+      grid-column: 2;
+    }
+
+    :host([summary]) a {
+      pointer-events: none;
+      cursor: default;
+      text-decoration: none;
+      color: inherit;
+    }
+    :host([summary]) .truncate-in-summary {
+      height: 1lh;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      transition: height 0.3s ease;
+    }
+
+    :host([summary]) .description {
+      height: 1lh;
+      p {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
       }
-      .roster-section {
-        display: none;
-      }
+    }
+    :host([summary]) .roster-section {
+      display: none;
     }
 
     response-card {
@@ -601,9 +599,7 @@ export class EventView extends LitElement {
                 ? html`
                     ${unsafeHTML(
                       DOMPurify.sanitize(
-                        marked.parse(
-                          this.event.description.split("\n\n")[0],
-                        ) as string,
+                        marked.parse(this.event.description) as string,
                       ),
                     )}
                   `
