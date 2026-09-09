@@ -213,8 +213,11 @@ export class EventView extends LitElement {
       min-height: 1lh;
       overflow: hidden;
     }
-    .description > p {
-      margin: 0;
+    .description > p:first-child {
+      margin-top: 0;
+    }
+    .description > p:last-child {
+      margin-bottom: 0;
     }
 
     .status {
