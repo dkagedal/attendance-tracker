@@ -10,6 +10,7 @@ import { deleteDoc, onSnapshot } from "firebase/firestore";
 import "./app-icon";
 import "./attendance-progress-bar";
 import "./response-icon";
+import "./date-box";
 import { UID } from "../datamodel";
 import { Section } from "../model/band";
 import { AppMenu } from "./app-menu";
@@ -61,7 +62,7 @@ export class EventView extends LitElement {
     if (changedProperties.has("event") && this.event) {
       this.cancelled = !!this.event.cancelled;
       console.log(
-        `[event-summary-card] Event ${this.event.ref.id} updated. Cancelled: ${this.cancelled}`,
+        `[event-summary-card] Event ${this.event.ref.id} updated. Cancelled: ${this.cancelled}`
       );
     }
   }
@@ -85,7 +86,7 @@ export class EventView extends LitElement {
         });
         this.participants = participants;
         this.loading = false;
-      },
+      }
     );
   }
 
@@ -142,35 +143,9 @@ export class EventView extends LitElement {
       align-self: start;
     }
 
-    .content .date-box {
+    .content date-box {
       align-self: start;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background-color: var(--app-color-background);
-      border-radius: var(--app-radius-md);
-      padding: var(--app-spacing-sm);
       width: clamp(40px, 10vw, 60px);
-      height: 3em;
-      text-align: center;
-      border: 1px solid var(--app-color-border);
-    }
-
-    .date-month {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      color: var(--app-color-primary-700);
-      font-weight: var(--app-font-weight-bold);
-      line-height: 1;
-      margin-bottom: 4px;
-    }
-
-    .content .date-day {
-      font-size: 1.5rem;
-      font-weight: var(--app-font-weight-bold);
-      color: var(--app-color-text);
-      line-height: 1;
     }
 
     .info {
@@ -359,7 +334,7 @@ export class EventView extends LitElement {
     }));
 
     const unassignedMembers = this.members.filter(
-      (m) => !m.section_id || !sectionIds.has(m.section_id),
+      (m) => !m.section_id || !sectionIds.has(m.section_id)
     );
     if (unassignedMembers.length > 0) {
       sectionsWithMembers.push({
@@ -371,10 +346,10 @@ export class EventView extends LitElement {
     }
 
     const activeSections = sectionsWithMembers.filter(
-      (s) => s.members.length > 0,
+      (s) => s.members.length > 0
     );
     const responses = Object.fromEntries(
-      Object.entries(this.participants).map(([k, v]) => [k, v.attending]),
+      Object.entries(this.participants).map(([k, v]) => [k, v.attending])
     );
 
     return html`
@@ -389,7 +364,7 @@ export class EventView extends LitElement {
                 .responses=${responses}
               ></mini-roster>
             </div>
-          `,
+          `
         )}
       </div>
     `;
@@ -426,7 +401,7 @@ export class EventView extends LitElement {
               <span class="comment-author">${c.name}</span>
               <response-icon .response=${c.response}></response-icon>
               <span class="comment-text">${c.comment}</span>
-            `,
+            `
           )}
         </div>
       </div>
@@ -436,7 +411,7 @@ export class EventView extends LitElement {
   deleteEvent() {
     if (
       confirm(
-        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.",
+        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra."
       )
     ) {
       deleteDoc(this.event.ref.dbref).then(
@@ -445,7 +420,7 @@ export class EventView extends LitElement {
         },
         (reason) => {
           console.log("Delete failed:", reason);
-        },
+        }
       );
     }
   }
@@ -486,7 +461,7 @@ export class EventView extends LitElement {
                 this.dispatchEvent(
                   new CustomEvent("edit-event", {
                     detail: this.event.clone(),
-                  }),
+                  })
                 );
                 this.actionMenu.close();
               }}
@@ -512,20 +487,10 @@ export class EventView extends LitElement {
   render() {
     if (!this.event) return html``;
 
-    let month = "";
-    let day: number | string = "";
     let time = "";
 
     if (this.event.start) {
-      const [datePart, timePart] = this.event.start.split("T");
-      const [y, m, d] = datePart.split("-").map(Number);
-
-      // Use UTC to prevent local timezone offsets from changing the day
-      const dateObj = new Date(Date.UTC(y, m - 1, d));
-      month = dateObj
-        .toLocaleDateString("sv-SE", { month: "short", timeZone: "UTC" })
-        .replace(".", "");
-      day = dateObj.getUTCDate();
+      const [, timePart] = this.event.start.split("T");
 
       if (timePart) {
         let isZeroTime =
@@ -537,12 +502,6 @@ export class EventView extends LitElement {
           time = `${timeTokens[0]}:${timeTokens[1]}`;
         }
       }
-    } else {
-      const dateObj = new Date();
-      month = dateObj
-        .toLocaleDateString("sv-SE", { month: "short" })
-        .replace(".", "");
-      day = dateObj.getDate();
     }
 
     const total = this.members.length || 1; // Avoid division by zero
@@ -550,18 +509,15 @@ export class EventView extends LitElement {
     return html`
       <div class="content">
         <div class="main">
-          <div
-            class="date-box"
+          <date-box
+            date=${this.event.start}
             @click=${(ev: MouseEvent) => {
               if (!this.summary) {
                 ev.stopPropagation();
                 this.dispatchEvent(new CustomEvent("close-event", {}));
               }
             }}
-          >
-            <span class="date-month">${month}</span>
-            <span class="date-day">${day}</span>
-          </div>
+          ></date-box>
 
           <div class="info">
             <h3 class="title truncate-in-summary">
@@ -602,8 +558,8 @@ export class EventView extends LitElement {
                 ? html`
                     ${unsafeHTML(
                       DOMPurify.sanitize(
-                        marked.parse(this.event.description) as string,
-                      ),
+                        marked.parse(this.event.description) as string
+                      )
                     )}
                   `
                 : ""}

@@ -98,7 +98,7 @@ export class BandSchedule extends LitElement {
     const q = firestoreQuery(
       bandRef.events().dbref,
       where("start", ">=", yesterday),
-      orderBy("start"),
+      orderBy("start")
     );
 
     this._unsubscribeGigs = onSnapshot(q, (snapshot) => {
@@ -296,7 +296,7 @@ export class BandSchedule extends LitElement {
                   </div>
                 </app-card>
               `;
-            },
+            }
           )}
           ${this.loaded && this.events.length === 0
             ? html`
@@ -412,7 +412,7 @@ export class BandSchedule extends LitElement {
   deleteEvent() {
     if (
       confirm(
-        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.",
+        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra."
       )
     ) {
       deleteDoc(this.selected_event.ref.dbref).then(
@@ -422,7 +422,7 @@ export class BandSchedule extends LitElement {
         },
         (reason) => {
           console.log("Delete failed:", reason);
-        },
+        }
       );
     }
   }
@@ -436,7 +436,7 @@ export class BandSchedule extends LitElement {
 
     if (this.selected_event_id) {
       const oldTarget = this.shadowRoot.getElementById(
-        `event-${this.selected_event_id}`,
+        `event-${this.selected_event_id}`
       );
       oldTarget.classList.remove("selected");
     }
