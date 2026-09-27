@@ -106,7 +106,7 @@ export class EventCard extends LitElement {
         });
         this.participants = participants;
         this.loading = false;
-      }
+      },
     );
   }
 
@@ -154,7 +154,7 @@ export class EventCard extends LitElement {
           bubbles: true,
           composed: true,
           detail: this.event,
-        })
+        }),
       );
     }
   };
@@ -163,7 +163,7 @@ export class EventCard extends LitElement {
     if (this.selected) {
       ev.stopPropagation();
       this.dispatchEvent(
-        new CustomEvent("close", { bubbles: true, composed: true })
+        new CustomEvent("close", { bubbles: true, composed: true }),
       );
     }
   };
@@ -171,26 +171,26 @@ export class EventCard extends LitElement {
   private handleClose = (ev: MouseEvent) => {
     ev.stopPropagation();
     this.dispatchEvent(
-      new CustomEvent("close", { bubbles: true, composed: true })
+      new CustomEvent("close", { bubbles: true, composed: true }),
     );
   };
 
   deleteEvent() {
     if (
       confirm(
-        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra."
+        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.",
       )
     ) {
       deleteDoc(this.event!.ref.dbref).then(
         () => {
           this.dispatchEvent(
-            new CustomEvent("close", { bubbles: true, composed: true })
+            new CustomEvent("close", { bubbles: true, composed: true }),
           );
           console.log("Delete successful");
         },
         (reason) => {
           console.log("Delete failed:", reason);
-        }
+        },
       );
     }
   }
@@ -208,7 +208,13 @@ export class EventCard extends LitElement {
   }
 
   static styles = css`
+    :root {
+      interpolate-size: allow-keywords;
+    }
+
     :host {
+      --transition-time: 0.3s;
+
       display: block;
       box-sizing: border-box;
       background-color: var(--app-color-surface);
@@ -216,15 +222,14 @@ export class EventCard extends LitElement {
       box-shadow: var(--app-shadow-sm);
       border: 1px solid var(--app-color-border);
       padding: var(--app-spacing-md);
-      height: 8.5em;
-      transition: height 0.3s ease, box-shadow 0.2s ease-in-out,
-        transform 0.2s ease-in-out;
+      height: 8em;
+      transition: height var(--transition-time) ease,
+        box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
       overflow: hidden;
       cursor: pointer;
     }
 
     :host([cancelled]) {
-      height: 6.5em;
       opacity: 0.6;
       cursor: default;
     }
@@ -242,7 +247,7 @@ export class EventCard extends LitElement {
     :host([selected]) {
       height: fit-content;
       cursor: default;
-      transition: height 0.3s ease;
+      transition: height var(--transition-time) ease;
     }
 
     .content {
@@ -314,7 +319,7 @@ export class EventCard extends LitElement {
     }
 
     .description {
-      transition: height 0.3s ease;
+      transition: height var(--transition-time) ease;
       min-height: 1lh;
       overflow: hidden;
     }
@@ -342,7 +347,6 @@ export class EventCard extends LitElement {
       padding: 4px 10px;
       border-radius: var(--app-radius-full);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
     }
 
     .badge.action {
@@ -358,8 +362,6 @@ export class EventCard extends LitElement {
     }
 
     :host([cancelled]) {
-      .status,
-      .description,
       .roster-section {
         display: none;
       }
@@ -416,15 +418,21 @@ export class EventCard extends LitElement {
       color: inherit;
     }
 
+    .truncate-in-summary {
+      height: fit-content;
+      overflow: hidden;
+      transition: height var(--transition-time) ease;
+    }
+
     :host(:not([selected])) .truncate-in-summary {
       height: 1lh;
       text-overflow: ellipsis;
       white-space: nowrap;
-      overflow: hidden;
-      transition: height 0.3s ease;
+      transition: height var(--transition-time) ease,
+        white-space 0s linear var(--transition-time) allow-discrete;
     }
 
-    :host(:not([selected])) .description {
+    :host(:not([selected]):not([cancelled])) .description {
       height: 1lh;
       p {
         overflow: hidden;
@@ -433,8 +441,14 @@ export class EventCard extends LitElement {
       }
     }
 
+    :host([cancelled]) .description {
+      height: max-content;
+      overflow: visible;
+    }
+
     :host(:not([selected])) .roster-section {
-      display: none;
+      visibility: hidden;
+      transition: visibility 0s linear var(--transition-time);
     }
 
     .footer {
@@ -485,7 +499,7 @@ export class EventCard extends LitElement {
     }));
 
     const unassignedMembers = this.members.filter(
-      (m) => !m.section_id || !sectionIds.has(m.section_id)
+      (m) => !m.section_id || !sectionIds.has(m.section_id),
     );
     if (unassignedMembers.length > 0) {
       sectionsWithMembers.push({
@@ -497,10 +511,10 @@ export class EventCard extends LitElement {
     }
 
     const activeSections = sectionsWithMembers.filter(
-      (s) => s.members.length > 0
+      (s) => s.members.length > 0,
     );
     const responses = Object.fromEntries(
-      Object.entries(this.participants).map(([k, v]) => [k, v.attending])
+      Object.entries(this.participants).map(([k, v]) => [k, v.attending]),
     );
 
     return html`
@@ -515,7 +529,7 @@ export class EventCard extends LitElement {
                 .responses=${responses}
               ></mini-roster>
             </div>
-          `
+          `,
         )}
       </div>
     `;
@@ -544,7 +558,7 @@ export class EventCard extends LitElement {
               <span class="comment-author">${c.name}</span>
               <response-icon .response=${c.response}></response-icon>
               <span class="comment-text">${c.comment}</span>
-            `
+            `,
           )}
         </div>
       </div>
@@ -640,35 +654,20 @@ export class EventCard extends LitElement {
           ></date-box>
 
           <div class="info">
-            <h3 class="title ${!this.selected ? "truncate-in-summary" : ""}">
-              ${this.event.type}
-              ${this.event.cancelled
-                ? html`
-                    <span
-                      class="badge cancelled"
-                      style="margin-left: 8px; vertical-align: middle;"
-                      >Inställt</span
-                    >
-                  `
-                : ""}
-            </h3>
+            <h3 class="title truncate-in-summary">${this.event.type}</h3>
             <div class="meta">
               <div class="meta-item">
                 <app-icon icon="schedule" style="font-size: 16px;"></app-icon>
                 ${time ? html` ${time} ` : "-"}
               </div>
-              <div
-                class="meta-item location ${!this.selected
-                  ? "truncate-in-summary"
-                  : ""}"
-              >
+              <div class="meta-item location truncate-in-summary">
                 <app-icon icon="place" style="font-size: 16px;"></app-icon>
-                <span class="${!this.selected ? "truncate-in-summary" : ""}">
+                <span class="truncate-in-summary">
                   ${this.event.location
                     ? html`
                         <a
                           href="http://maps.google.se/maps?q=${encodeURIComponent(
-                            this.event.location
+                            this.event.location,
                           )}"
                           target="_blank"
                           @click=${(ev: MouseEvent) => {
@@ -683,15 +682,15 @@ export class EventCard extends LitElement {
                 </span>
               </div>
             </div>
-            <div
-              class="description ${!this.selected ? "truncate-in-summary" : ""}"
-            >
-              ${this.event.description
+            <div class="description">
+              ${this.cancelled
+                ? html` <span class="badge cancelled">Inställt</span> `
+                : this.event.description
                 ? html`
                     ${unsafeHTML(
                       DOMPurify.sanitize(
-                        marked.parse(this.event.description) as string
-                      )
+                        marked.parse(this.event.description) as string,
+                      ),
                     )}
                   `
                 : ""}
@@ -700,27 +699,23 @@ export class EventCard extends LitElement {
 
           ${!this.selected && !this.cancelled
             ? this.renderResponseStatus()
-            : !this.selected
-            ? ""
             : this.renderMenu()}
         </div>
 
         <div class="status">
-          <attendance-progress-bar
-            .yes=${this.yesCount}
-            .no=${this.noCount}
-            .sub=${this.subCount}
-            .total=${total}
-          ></attendance-progress-bar>
+          ${!this.cancelled
+            ? html`<attendance-progress-bar
+                .yes=${this.yesCount}
+                .no=${this.noCount}
+                .sub=${this.subCount}
+                .total=${total}
+              ></attendance-progress-bar>`
+            : html``}
         </div>
 
-        ${this.selected && !this.cancelled
-          ? html`
-              <div class="roster-section">
-                ${this.renderSectionRosters()} ${this.renderComments()}
-              </div>
-            `
-          : ""}
+        <div class="roster-section">
+          ${this.renderSectionRosters()} ${this.renderComments()}
+        </div>
       </div>
 
       ${this.selected
