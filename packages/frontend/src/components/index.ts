@@ -17,7 +17,6 @@ export * from "./datetime-input";
 export * from "./event-card";
 export * from "./event-editor";
 export * from "./event-summary-card";
-export * from "./event-view";
 export * from "./login-dialog";
 export * from "./mini-roster";
 export * from "./profile-editor";
