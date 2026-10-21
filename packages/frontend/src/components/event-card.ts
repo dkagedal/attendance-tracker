@@ -106,7 +106,7 @@ export class EventCard extends LitElement {
         });
         this.participants = participants;
         this.loading = false;
-      },
+      }
     );
   }
 
@@ -154,7 +154,7 @@ export class EventCard extends LitElement {
           bubbles: true,
           composed: true,
           detail: this.event,
-        }),
+        })
       );
     }
   };
@@ -163,7 +163,7 @@ export class EventCard extends LitElement {
     if (this.selected) {
       ev.stopPropagation();
       this.dispatchEvent(
-        new CustomEvent("close", { bubbles: true, composed: true }),
+        new CustomEvent("close", { bubbles: true, composed: true })
       );
     }
   };
@@ -171,26 +171,26 @@ export class EventCard extends LitElement {
   private handleClose = (ev: MouseEvent) => {
     ev.stopPropagation();
     this.dispatchEvent(
-      new CustomEvent("close", { bubbles: true, composed: true }),
+      new CustomEvent("close", { bubbles: true, composed: true })
     );
   };
 
   deleteEvent() {
     if (
       confirm(
-        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra.",
+        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra."
       )
     ) {
       deleteDoc(this.event!.ref.dbref).then(
         () => {
           this.dispatchEvent(
-            new CustomEvent("close", { bubbles: true, composed: true }),
+            new CustomEvent("close", { bubbles: true, composed: true })
           );
           console.log("Delete successful");
         },
         (reason) => {
           console.log("Delete failed:", reason);
-        },
+        }
       );
     }
   }
@@ -251,33 +251,38 @@ export class EventCard extends LitElement {
     }
 
     .content {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-areas:
+        "date info actions"
+        "progress progress progress"
+        "roster roster roster";
+      grid-template-columns: clamp(40px, 10vw, 60px) 1fr auto;
       gap: var(--app-spacing-md);
+      align-items: start;
     }
 
-    .content .main {
-      width: 100%;
-      display: flex;
-      flex-grow: 1;
-      flex-direction: row;
-      gap: var(--app-spacing-md);
-      align-items: center;
-      position: relative;
-    }
-
-    .content response-icon {
+    .content > response-icon {
+      grid-area: actions;
+      justify-self: center;
       font-size: 1.5rem;
-      align-self: start;
     }
 
-    .content app-menu {
-      align-self: start;
+    .content > app-menu {
+      grid-area: actions;
+      justify-self: center;
+    }
+
+    :host([selected]) .content > response-icon,
+    :host([cancelled]) .content > response-icon {
+      visibility: hidden;
+    }
+
+    :host(:not([selected]):not([cancelled])) .content > app-menu {
+      visibility: hidden;
     }
 
     .content date-box {
-      align-self: start;
-      width: clamp(40px, 10vw, 60px);
+      grid-area: date;
     }
 
     :host([selected]) date-box {
@@ -285,8 +290,7 @@ export class EventCard extends LitElement {
     }
 
     .info {
-      flex: 1;
-      align-self: start;
+      grid-area: info;
       display: flex;
       flex-direction: column;
       gap: 4px;
@@ -332,13 +336,14 @@ export class EventCard extends LitElement {
       margin-bottom: 0;
     }
 
-    .status {
-      width: 100%;
-    }
-
     attendance-progress-bar {
+      grid-area: progress;
       width: 100%;
       height: 1ex;
+    }
+
+    .roster-section {
+      grid-area: roster;
     }
 
     .badge {
@@ -499,7 +504,7 @@ export class EventCard extends LitElement {
     }));
 
     const unassignedMembers = this.members.filter(
-      (m) => !m.section_id || !sectionIds.has(m.section_id),
+      (m) => !m.section_id || !sectionIds.has(m.section_id)
     );
     if (unassignedMembers.length > 0) {
       sectionsWithMembers.push({
@@ -511,10 +516,10 @@ export class EventCard extends LitElement {
     }
 
     const activeSections = sectionsWithMembers.filter(
-      (s) => s.members.length > 0,
+      (s) => s.members.length > 0
     );
     const responses = Object.fromEntries(
-      Object.entries(this.participants).map(([k, v]) => [k, v.attending]),
+      Object.entries(this.participants).map(([k, v]) => [k, v.attending])
     );
 
     return html`
@@ -529,7 +534,7 @@ export class EventCard extends LitElement {
                 .responses=${responses}
               ></mini-roster>
             </div>
-          `,
+          `
         )}
       </div>
     `;
@@ -558,7 +563,7 @@ export class EventCard extends LitElement {
               <span class="comment-author">${c.name}</span>
               <response-icon .response=${c.response}></response-icon>
               <span class="comment-text">${c.comment}</span>
-            `,
+            `
           )}
         </div>
       </div>
@@ -647,71 +652,64 @@ export class EventCard extends LitElement {
 
     return html`
       <div class="content">
-        <div class="main">
-          <date-box
-            date=${this.event.start}
-            @click=${this.handleDateBoxClick}
-          ></date-box>
+        <date-box
+          date=${this.event.start}
+          @click=${this.handleDateBoxClick}
+        ></date-box>
 
-          <div class="info">
-            <h3 class="title truncate-in-summary">${this.event.type}</h3>
-            <div class="meta">
-              <div class="meta-item">
-                <app-icon icon="schedule" style="font-size: 16px;"></app-icon>
-                ${time ? html` ${time} ` : "-"}
-              </div>
-              <div class="meta-item location truncate-in-summary">
-                <app-icon icon="place" style="font-size: 16px;"></app-icon>
-                <span class="truncate-in-summary">
-                  ${this.event.location
-                    ? html`
-                        <a
-                          href="http://maps.google.se/maps?q=${encodeURIComponent(
-                            this.event.location,
-                          )}"
-                          target="_blank"
-                          @click=${(ev: MouseEvent) => {
-                            if (this.selected) {
-                              ev.stopPropagation();
-                            }
-                          }}
-                          >${this.event.location}</a
-                        >
-                      `
-                    : "-"}
-                </span>
-              </div>
+        <div class="info">
+          <h3 class="title truncate-in-summary">${this.event.type}</h3>
+          <div class="meta">
+            <div class="meta-item">
+              <app-icon icon="schedule" style="font-size: 16px;"></app-icon>
+              ${time ? html` ${time} ` : "-"}
             </div>
-            <div class="description">
-              ${this.cancelled
-                ? html` <span class="badge cancelled">Inställt</span> `
-                : this.event.description
-                ? html`
-                    ${unsafeHTML(
-                      DOMPurify.sanitize(
-                        marked.parse(this.event.description) as string,
-                      ),
-                    )}
-                  `
-                : ""}
+            <div class="meta-item location truncate-in-summary">
+              <app-icon icon="place" style="font-size: 16px;"></app-icon>
+              <span class="truncate-in-summary">
+                ${this.event.location
+                  ? html`
+                      <a
+                        href="http://maps.google.se/maps?q=${encodeURIComponent(
+                          this.event.location
+                        )}"
+                        target="_blank"
+                        @click=${(ev: MouseEvent) => {
+                          if (this.selected) {
+                            ev.stopPropagation();
+                          }
+                        }}
+                        >${this.event.location}</a
+                      >
+                    `
+                  : "-"}
+              </span>
             </div>
           </div>
-
-          ${!this.selected && !this.cancelled
-            ? this.renderResponseStatus()
-            : this.renderMenu()}
+          <div class="description">
+            ${this.cancelled
+              ? html` <span class="badge cancelled">Inställt</span> `
+              : this.event.description
+              ? html`
+                  ${unsafeHTML(
+                    DOMPurify.sanitize(
+                      marked.parse(this.event.description) as string
+                    )
+                  )}
+                `
+              : ""}
+          </div>
         </div>
 
-        <div class="status">
-          ${!this.cancelled
-            ? html`<attendance-progress-bar
-                .yes=${this.yesCount}
-                .no=${this.noCount}
-                .sub=${this.subCount}
-                .total=${total}
-              ></attendance-progress-bar>`
-            : html``}
-        </div>
+        ${this.renderResponseStatus()} ${this.renderMenu()}
+        ${!this.cancelled
+          ? html`<attendance-progress-bar
+              .yes=${this.yesCount}
+              .no=${this.noCount}
+              .sub=${this.subCount}
+              .total=${total}
+            ></attendance-progress-bar>`
+          : html``}
 
         <div class="roster-section">
           ${this.renderSectionRosters()} ${this.renderComments()}
