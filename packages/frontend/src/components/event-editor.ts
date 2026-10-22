@@ -3,7 +3,6 @@ import { AppInput } from "./app-input";
 import { css, html, LitElement } from "lit";
 import { customElement, property, query, state } from "lit/decorators.js";
 import { BandEvent } from "../model/bandevent";
-import { deleteDoc } from "firebase/firestore";
 
 @customElement("event-editor")
 export class EventEditor extends LitElement {
@@ -51,26 +50,6 @@ export class EventEditor extends LitElement {
       this._startTime = startTimePart || "";
       const [, stopTimePart] = (this.data?.stop || "").split("T");
       this._stopTime = this._startTime ? stopTimePart || "" : "";
-    }
-  }
-
-  deleteEvent() {
-    if (
-      confirm(
-        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra."
-      )
-    ) {
-      deleteDoc(this.data.ref.dbref).then(
-        () => {
-          console.log("Delete successful");
-          this.dispatchEvent(
-            new CustomEvent("closed", { bubbles: true, composed: true })
-          );
-        },
-        (reason) => {
-          console.log("Delete failed:", reason);
-        }
-      );
     }
   }
 
