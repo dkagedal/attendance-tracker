@@ -65,8 +65,33 @@ export class EventEditor extends LitElement {
   }
 
   static styles = css`
+    :host {
+      display: block;
+    }
+
     app-input {
       width: 100%;
+    }
+
+    .datetime-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--app-spacing-md);
+    }
+
+    .stop-row {
+      display: flex;
+      align-items: flex-end;
+      gap: var(--app-spacing-xs);
+    }
+
+    .stop-row datetime-input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .notranged {
+      align-self: flex-start;
     }
 
     :host(:not([range])) .ranged {
@@ -113,36 +138,41 @@ export class EventEditor extends LitElement {
           this.data.description = (e.target as AppInput).value;
         }}
       ></app-input>
-      <datetime-input
-        id="start"
-        required
-        ?disabled=${isCancelled}
-        .value="${this.data.start || ""}"
-      ></datetime-input>
-      <span class="ranged">-</span>
-      <datetime-input
-        id="stop"
-        class="ranged"
-        ?disabled=${isCancelled}
-        .value="${this.data.stop || ""}"
-      ></datetime-input>
-      <app-button
-        variant="icon"
-        icon="delete"
-        class="ranged"
-        ?disabled=${isCancelled}
-        @click=${() => {
-          this.range = false;
-        }}
-      ></app-button>
-      <app-button
-        variant="secondary"
-        icon="add"
-        class="notranged"
-        ?disabled=${isCancelled}
-        @click=${this.addStop}
-        >Lägg till sluttid</app-button
-      >
+      <div class="datetime-section">
+        <datetime-input
+          id="start"
+          dateLabel="Startdatum"
+          timeLabel="Starttid"
+          required
+          ?disabled=${isCancelled}
+          .value="${this.data.start || ""}"
+        ></datetime-input>
+        <div class="stop-row ranged">
+          <datetime-input
+            id="stop"
+            dateLabel="Slutdatum"
+            timeLabel="Sluttid"
+            ?disabled=${isCancelled}
+            .value="${this.data.stop || ""}"
+          ></datetime-input>
+          <app-button
+            variant="icon"
+            icon="delete"
+            ?disabled=${isCancelled}
+            @click=${() => {
+              this.range = false;
+            }}
+          ></app-button>
+        </div>
+        <app-button
+          variant="secondary"
+          icon="add"
+          class="notranged"
+          ?disabled=${isCancelled}
+          @click=${this.addStop}
+          >Lägg till sluttid</app-button
+        >
+      </div>
     `;
   }
 

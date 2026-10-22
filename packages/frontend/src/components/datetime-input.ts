@@ -18,6 +18,12 @@ export class DatetimeInput extends LitElement {
   @property({ type: Boolean })
   disabled = false;
 
+  @property({ type: String })
+  dateLabel = "Datum";
+
+  @property({ type: String })
+  timeLabel = "Tid";
+
   @query("#date")
   date: AppInput;
 
@@ -50,18 +56,26 @@ export class DatetimeInput extends LitElement {
 
   static styles = css`
     :host {
-      display: inline-flex;
+      display: flex;
+      width: 100%;
       gap: var(--app-spacing-sm);
     }
     app-input {
       margin-bottom: 0;
+      min-width: 0;
+    }
+    #date {
+      flex: 3;
+    }
+    #time {
+      flex: 2;
     }
   `;
 
   render() {
     return html`
       <app-input
-        label="Datum"
+        label=${this.dateLabel}
         id="date"
         type="date"
         ?disabled=${this.disabled}
@@ -71,7 +85,7 @@ export class DatetimeInput extends LitElement {
         }}
       ></app-input>
       <app-input
-        label="Tid"
+        label=${this.timeLabel}
         id="time"
         type="time"
         ?disabled=${this.disabled}
