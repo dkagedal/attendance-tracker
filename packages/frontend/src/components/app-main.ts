@@ -134,12 +134,14 @@ export class AppMain extends LitElement {
   subscriptions: Map<string, () => void> = new Map();
 
   subscribe(key: string, fn: () => void) {
-    this.subscriptions[key] = fn;
+    this.unsubscribe(key);
+    this.subscriptions.set(key, fn);
   }
 
   unsubscribe(key: string) {
-    if (this.subscriptions.has(key)) {
-      this.subscriptions[key]();
+    const fn = this.subscriptions.get(key);
+    if (fn) {
+      fn();
       this.subscriptions.delete(key);
     }
   }
