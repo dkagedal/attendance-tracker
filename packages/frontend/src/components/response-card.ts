@@ -203,14 +203,13 @@ export class ResponseCard extends LitElement {
     if (this.mode === "view") {
       const { text } = this.getIconAndText();
       return html`
-          <div class="container view-container">
-            <response-icon .response=${this.response}></response-icon>
-            <span class="response-text">${text}</span>
-            <app-icon
-              icon="edit"
-              style="color: var(--app-color-text-secondary);"
-            ></app-icon>
-          </div>
+        <div class="container view-container">
+          <response-icon .response=${this.response}></response-icon>
+          <span class="response-text">${text}</span>
+          <app-icon
+            icon="edit"
+            style="color: var(--app-color-text-secondary);"
+          ></app-icon>
         </div>
       `;
     }

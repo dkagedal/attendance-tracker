@@ -208,10 +208,6 @@ export class EventCard extends LitElement {
   }
 
   static styles = css`
-    :root {
-      interpolate-size: allow-keywords;
-    }
-
     :host {
       --transition-time: 0.3s;
 
