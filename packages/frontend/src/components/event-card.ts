@@ -52,6 +52,9 @@ export class EventCard extends LitElement {
   @state()
   edit_snapshot: BandEvent | null = null;
 
+  @state()
+  confirmDeleteOpen = false;
+
   @query("#action-menu")
   actionMenu!: AppMenu;
 
@@ -176,23 +179,18 @@ export class EventCard extends LitElement {
   };
 
   deleteEvent() {
-    if (
-      confirm(
-        "Är du säker på att du vill ta bort den här händelsen? Detta går inte att ångra."
-      )
-    ) {
-      deleteDoc(this.event!.ref.dbref).then(
-        () => {
-          this.dispatchEvent(
-            new CustomEvent("close", { bubbles: true, composed: true })
-          );
-          console.log("Delete successful");
-        },
-        (reason) => {
-          console.log("Delete failed:", reason);
-        }
-      );
-    }
+    this.confirmDeleteOpen = false;
+    deleteDoc(this.event!.ref.dbref).then(
+      () => {
+        this.dispatchEvent(
+          new CustomEvent("close", { bubbles: true, composed: true })
+        );
+        console.log("Delete successful");
+      },
+      (reason) => {
+        console.log("Delete failed:", reason);
+      }
+    );
   }
 
   async saveAndClose() {
@@ -588,7 +586,7 @@ export class EventCard extends LitElement {
                 class="menu-item delete"
                 @click=${(ev: Event) => {
                   ev.stopPropagation();
-                  this.deleteEvent();
+                  this.confirmDeleteOpen = true;
                   this.actionMenu.close();
                 }}
               >
@@ -764,6 +762,31 @@ export class EventCard extends LitElement {
               >
             `
           : ""}
+      </app-dialog>
+
+      <app-dialog
+        heading="Radera händelse"
+        ?open=${this.confirmDeleteOpen}
+        @closed=${() => {
+          this.confirmDeleteOpen = false;
+        }}
+      >
+        <p>
+          Är du säker på att du vill ta bort den här händelsen? Detta går inte
+          att ångra.
+        </p>
+        <app-button
+          slot="primaryAction"
+          variant="primary"
+          @click=${() => this.deleteEvent()}
+          >Radera</app-button
+        >
+        <app-button
+          slot="secondaryAction"
+          variant="secondary"
+          @click=${() => (this.confirmDeleteOpen = false)}
+          >Avbryt</app-button
+        >
       </app-dialog>
     `;
   }

@@ -7,6 +7,7 @@ import { onSnapshot, updateDoc, writeBatch } from "firebase/firestore";
 import "./app-input";
 import "./app-button";
 import "./app-icon";
+import "./app-dialog";
 
 @customElement("band-overview")
 export class BandOverview extends LitElement {
@@ -54,6 +55,9 @@ export class BandOverview extends LitElement {
   editSectionNameValue = "";
   @state()
   editSectionEmojiValue = "";
+
+  @state()
+  deletingSectionId: string | null = null;
 
   @state()
   draggedMemberId: string | null = null;
@@ -192,7 +196,7 @@ export class BandOverview extends LitElement {
   }
 
   private async deleteSection(sectionId: string) {
-    if (!confirm("Är du säker på att du vill ta bort sektionen?")) return;
+    this.deletingSectionId = null;
 
     const newSections = (this.bandData.sections || []).filter(
       (s) => s.id !== sectionId
@@ -579,7 +583,9 @@ export class BandOverview extends LitElement {
                                 <app-button
                                   variant="icon"
                                   icon="delete"
-                                  @click=${() => this.deleteSection(section.id)}
+                                  @click=${() => {
+                                    this.deletingSectionId = section.id;
+                                  }}
                                 ></app-button>
                               </div>
                             `
@@ -673,6 +679,32 @@ export class BandOverview extends LitElement {
             `
           : nothing}
       </div>
+
+      <app-dialog
+        heading="Ta bort sektion"
+        ?open=${!!this.deletingSectionId}
+        @closed=${() => {
+          this.deletingSectionId = null;
+        }}
+      >
+        <p>Är du säker på att du vill ta bort sektionen?</p>
+        <app-button
+          slot="primaryAction"
+          variant="primary"
+          @click=${() => {
+            if (this.deletingSectionId) {
+              this.deleteSection(this.deletingSectionId);
+            }
+          }}
+          >Ta bort</app-button
+        >
+        <app-button
+          slot="secondaryAction"
+          variant="secondary"
+          @click=${() => (this.deletingSectionId = null)}
+          >Avbryt</app-button
+        >
+      </app-dialog>
     `;
   }
 

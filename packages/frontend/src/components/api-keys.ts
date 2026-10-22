@@ -13,6 +13,7 @@ import {
 import { db } from "../storage";
 import "./app-button";
 import "./app-dialog";
+import "./app-toast";
 
 interface ApiKey {
   id: string;
@@ -34,6 +35,14 @@ export class ApiKeys extends LitElement {
 
   @state()
   newKeyToken = "";
+
+  @state()
+  deletingKeyId: string | null = null;
+
+  @state()
+  copiedToastVisible = false;
+
+  private copyToastTimer: number | null = null;
 
   @query("#key-name")
   keyNameInput: HTMLInputElement;
@@ -68,6 +77,9 @@ export class ApiKeys extends LitElement {
     if (this.unsubscribe) {
       this.unsubscribe();
     }
+    if (this.copyToastTimer !== null) {
+      window.clearTimeout(this.copyToastTimer);
+    }
   }
 
   private generateRandomToken(): string {
@@ -97,18 +109,20 @@ export class ApiKeys extends LitElement {
   }
 
   async deleteKey(tokenId: string) {
-    if (
-      confirm(
-        "Är du säker på att du vill ta bort denna API-nyckel? Eventuella script som använder den kommer sluta fungera."
-      )
-    ) {
-      await deleteDoc(doc(db, "users", this.uid, "apikeys", tokenId));
-    }
+    this.deletingKeyId = null;
+    await deleteDoc(doc(db, "users", this.uid, "apikeys", tokenId));
   }
 
   copyToken(token: string) {
     navigator.clipboard.writeText(token);
-    alert("Nyckeln kopierad till urklipp!");
+    this.copiedToastVisible = true;
+    if (this.copyToastTimer !== null) {
+      window.clearTimeout(this.copyToastTimer);
+    }
+    this.copyToastTimer = window.setTimeout(() => {
+      this.copiedToastVisible = false;
+      this.copyToastTimer = null;
+    }, 3000);
   }
 
   static styles = css`
@@ -215,6 +229,9 @@ export class ApiKeys extends LitElement {
         >
       </div>
 
+      ${this.copiedToastVisible
+        ? html` <app-toast>Nyckeln kopierad till urklipp!</app-toast> `
+        : ""}
       ${this.newKeyToken
         ? html`
             <div class="new-key-alert">
@@ -274,7 +291,7 @@ export class ApiKeys extends LitElement {
                   icon="delete"
                   title="Ta bort"
                   style="color: #c62828; margin-left: auto;"
-                  @click=${() => this.deleteKey(key.id)}
+                  @click=${() => (this.deletingKeyId = key.id)}
                 ></app-button>
               </div>
             </div>
@@ -310,6 +327,33 @@ export class ApiKeys extends LitElement {
           slot="secondaryAction"
           variant="secondary"
           @click=${() => (this.showCreateDialog = false)}
+          >Avbryt</app-button
+        >
+      </app-dialog>
+
+      <app-dialog
+        ?open=${!!this.deletingKeyId}
+        heading="Ta bort API-nyckel"
+        @closed=${() => (this.deletingKeyId = null)}
+      >
+        <p>
+          Är du säker på att du vill ta bort denna API-nyckel? Eventuella script
+          som använder den kommer sluta fungera.
+        </p>
+        <app-button
+          slot="primaryAction"
+          variant="primary"
+          @click=${() => {
+            if (this.deletingKeyId) {
+              this.deleteKey(this.deletingKeyId);
+            }
+          }}
+          >Ta bort</app-button
+        >
+        <app-button
+          slot="secondaryAction"
+          variant="secondary"
+          @click=${() => (this.deletingKeyId = null)}
           >Avbryt</app-button
         >
       </app-dialog>
