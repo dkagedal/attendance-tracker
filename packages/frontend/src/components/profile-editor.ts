@@ -5,7 +5,7 @@ import { AppSwitch } from "./app-switch";
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { auth, db } from "../storage";
-import { classMap } from "lit/directives/class-map";
+import { classMap } from "lit/directives/class-map.js";
 import { Member } from "../model/member";
 import { MemberSettings } from "../model/membersettings";
 import { band } from "../model/band";

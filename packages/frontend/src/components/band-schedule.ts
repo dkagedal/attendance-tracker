@@ -7,7 +7,7 @@ import {
 } from "firebase/firestore";
 import { css, html, LitElement } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { repeat } from "lit/directives/repeat";
+import { repeat } from "lit/directives/repeat.js";
 import { UID } from "../datamodel";
 import { db } from "../storage";
 import { BandEvent } from "../model/bandevent";

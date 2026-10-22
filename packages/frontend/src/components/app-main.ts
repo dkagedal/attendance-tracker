@@ -31,7 +31,7 @@ import "./api-keys";
 import "./app-toast";
 import { AppToast } from "./app-toast";
 import { EventEditor } from "./event-editor";
-import { repeat } from "lit/directives/repeat";
+import { repeat } from "lit/directives/repeat.js";
 import { BandEventFromDb } from "../model/bandevent";
 import { User } from "../datamodel";
 import { band } from "../model/band";

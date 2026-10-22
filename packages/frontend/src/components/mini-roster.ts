@@ -1,7 +1,7 @@
 import "./response-chip";
 import { css, html, LitElement } from "lit";
-import { customElement, property } from "lit/decorators";
-import { repeat } from "lit/directives/repeat";
+import { customElement, property } from "lit/decorators.js";
+import { repeat } from "lit/directives/repeat.js";
 import { BandEvent } from "../model/bandevent";
 import { ParticipantResponse } from "../model/participant";
 import { Member } from "../model/member";
