@@ -1,10 +1,7 @@
 import "./app-input";
-import "./app-button";
 import { AppInput } from "./app-input";
 import { css, html, LitElement } from "lit";
-import "./datetime-input";
-import { DatetimeInput } from "./datetime-input";
-import { customElement, property, query } from "lit/decorators.js";
+import { customElement, property, query, state } from "lit/decorators.js";
 import { BandEvent } from "../model/bandevent";
 import { deleteDoc } from "firebase/firestore";
 
@@ -20,8 +17,14 @@ export class EventEditor extends LitElement {
     clone: () => ({} as any),
   };
 
-  @property({ type: Boolean, reflect: true })
-  range: boolean = false;
+  @state()
+  private _date: string = "";
+
+  @state()
+  private _startTime: string = "";
+
+  @state()
+  private _stopTime: string = "";
 
   @query("#type")
   typeInput: AppInput;
@@ -32,15 +35,22 @@ export class EventEditor extends LitElement {
   @query("#desc")
   descriptionInput: AppInput;
 
-  @query("#start")
-  startInput: DatetimeInput;
+  @query("#date")
+  dateInput: AppInput;
 
-  @query("#stop")
-  stopInput: DatetimeInput;
+  @query("#start-time")
+  startTimeInput: AppInput;
+
+  @query("#stop-time")
+  stopTimeInput: AppInput;
 
   willUpdate(changedProperties: Map<string, any>) {
     if (changedProperties.has("data")) {
-      this.range = this.data.hasStopTime();
+      const [datePart, startTimePart] = (this.data?.start || "").split("T");
+      this._date = datePart || "";
+      this._startTime = startTimePart || "";
+      const [, stopTimePart] = (this.data?.stop || "").split("T");
+      this._stopTime = this._startTime ? stopTimePart || "" : "";
     }
   }
 
@@ -73,33 +83,15 @@ export class EventEditor extends LitElement {
       width: 100%;
     }
 
-    .datetime-section {
+    .time-row {
       display: flex;
-      flex-direction: column;
-      gap: var(--app-spacing-md);
+      gap: var(--app-spacing-sm);
     }
 
-    .stop-row {
-      display: flex;
-      align-items: flex-end;
-      gap: var(--app-spacing-xs);
-    }
-
-    .stop-row datetime-input {
+    .time-row app-input {
       flex: 1;
       min-width: 0;
-    }
-
-    .notranged {
-      align-self: flex-start;
-    }
-
-    :host(:not([range])) .ranged {
-      display: none;
-    }
-
-    :host([range]) .notranged {
-      display: none;
+      margin-bottom: 0;
     }
   `;
 
@@ -138,50 +130,43 @@ export class EventEditor extends LitElement {
           this.data.description = (e.target as AppInput).value;
         }}
       ></app-input>
-      <div class="datetime-section">
-        <datetime-input
-          id="start"
-          dateLabel="Startdatum"
-          timeLabel="Starttid"
-          required
+      <app-input
+        label="Datum"
+        id="date"
+        type="date"
+        required
+        ?disabled=${isCancelled}
+        .value=${this._date}
+        @input=${(e: CustomEvent) => {
+          this._date = (e.target as AppInput).value;
+        }}
+      ></app-input>
+      <div class="time-row">
+        <app-input
+          label="Starttid"
+          id="start-time"
+          type="time"
           ?disabled=${isCancelled}
-          .value="${this.data.start || ""}"
-        ></datetime-input>
-        <div class="stop-row ranged">
-          <datetime-input
-            id="stop"
-            dateLabel="Slutdatum"
-            timeLabel="Sluttid"
-            ?disabled=${isCancelled}
-            .value="${this.data.stop || ""}"
-          ></datetime-input>
-          <app-button
-            variant="icon"
-            icon="delete"
-            ?disabled=${isCancelled}
-            @click=${() => {
-              this.range = false;
-            }}
-          ></app-button>
-        </div>
-        <app-button
-          variant="secondary"
-          icon="add"
-          class="notranged"
-          ?disabled=${isCancelled}
-          @click=${this.addStop}
-          >Lägg till sluttid</app-button
-        >
+          .value=${this._startTime}
+          @input=${(e: CustomEvent) => {
+            this._startTime = (e.target as AppInput).value;
+            if (!this._startTime) {
+              this._stopTime = "";
+            }
+          }}
+        ></app-input>
+        <app-input
+          label="Sluttid"
+          id="stop-time"
+          type="time"
+          ?disabled=${isCancelled || !this._startTime}
+          .value=${this._stopTime}
+          @input=${(e: CustomEvent) => {
+            this._stopTime = (e.target as AppInput).value;
+          }}
+        ></app-input>
       </div>
     `;
-  }
-
-  addStop() {
-    this.range = true;
-    if (!this.stopInput.value) {
-      // Just the date. TODO: set time to +1 hour
-      this.stopInput.value = this.startInput.value.split("T")[0];
-    }
   }
 
   async save() {
@@ -196,15 +181,16 @@ export class EventEditor extends LitElement {
 
     delete this.data.start;
     delete this.data.stop;
-    const start = this.startInput.value;
-    if (start) {
-      this.data.start = start;
-      // Don't even look at stopInput when range is false.
-      if (this.range) {
-        const stop = this.stopInput.value;
-        if (stop && start != stop && start.indexOf("T") == stop.indexOf("T")) {
-          this.data.stop = stop;
-        }
+    if (this._date) {
+      this.data.start = this._startTime
+        ? `${this._date}T${this._startTime}`
+        : this._date;
+      if (
+        this._startTime &&
+        this._stopTime &&
+        this._stopTime !== this._startTime
+      ) {
+        this.data.stop = `${this._date}T${this._stopTime}`;
       }
     }
     // Cancellation state is already updated on this.data via click handlers,
@@ -220,22 +206,18 @@ export class EventEditor extends LitElement {
     if (this.data.cancelled) {
       return true;
     }
-    if (!this.startInput.checkValidity()) {
+    const typeValid = this.typeInput.checkValidity();
+    const dateValid = this.dateInput.checkValidity() && !!this._date;
+    if (!typeValid || !dateValid) {
       return false;
     }
-    if (this.range) {
-      // Check that stop is after start.
-      if (
-        !this.stopInput.checkValidity() ||
-        this.stopInput.value < this.startInput.value
-      ) {
+    if (this._stopTime) {
+      if (!this._startTime || this._stopTime < this._startTime) {
         console.log("Stop time is before start time");
         return false;
       }
     }
-    const startValid = this.startInput.checkValidity();
-    const typeValid = this.typeInput.checkValidity();
-    return startValid && typeValid;
+    return true;
   }
 }
 

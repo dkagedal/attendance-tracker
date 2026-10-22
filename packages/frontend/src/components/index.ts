@@ -13,7 +13,6 @@ export * from "./attendance-progress-bar";
 export * from "./band-overview";
 export * from "./band-schedule";
 export * from "./date-box";
-export * from "./datetime-input";
 export * from "./event-card";
 export * from "./event-editor";
 export * from "./event-summary-card";
