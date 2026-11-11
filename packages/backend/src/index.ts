@@ -32,6 +32,7 @@ import {
   newEventHtml,
   newEventText,
 } from "./email";
+import { exportEventToNextcloud } from "./nextcloud";
 import { Band, BandEvent } from "./types";
 import { onRequest } from "firebase-functions/v2/https";
 import { expressApp } from "./api";
@@ -423,16 +424,24 @@ export const eventCreated = onDocumentCreated(
     if (!snapshot) return;
     const event = snapshot.data() as BandEvent;
     const band = await getBand(bandid);
-    await notify(
-      bandid,
-      "new_event",
-      {
-        subject: `${band.display_name}: ${event.type}`,
-        text: newEventText(band, event),
-        html: newEventHtml(band, event),
-      },
-      eventid
-    );
+    const results = await Promise.allSettled([
+      notify(
+        bandid,
+        "new_event",
+        {
+          subject: `${band.display_name}: ${event.type}`,
+          text: newEventText(band, event),
+          html: newEventHtml(band, event),
+        },
+        eventid
+      ),
+      exportEventToNextcloud(db, bandid, band, event, "event_created"),
+    ]);
+    for (const result of results) {
+      if (result.status === "rejected") {
+        logger.error("Error in eventCreated:", result.reason);
+      }
+    }
   }
 );
 
@@ -446,17 +455,25 @@ export const eventUpdated = onDocumentUpdated(
       if (!snapshot) return;
       const event = snapshot.after.data() as BandEvent;
       const band = await getBand(bandid);
-      await notify(
-        bandid,
-        "new_event",
-        {
-          subject: `${band.display_name}: ${event.type}`,
-          text: changedEventText(band, event),
-          html: changedEventHtml(band, event),
-        },
-        eventid,
-        true
-      );
+      const results = await Promise.allSettled([
+        notify(
+          bandid,
+          "new_event",
+          {
+            subject: `${band.display_name}: ${event.type}`,
+            text: changedEventText(band, event),
+            html: changedEventHtml(band, event),
+          },
+          eventid,
+          true
+        ),
+        exportEventToNextcloud(db, bandid, band, event, "event_updated"),
+      ]);
+      for (const result of results) {
+        if (result.status === "rejected") {
+          logger.error("Error in eventUpdated:", result.reason);
+        }
+      }
     } catch (e: any) {
       logger.error("Error in eventUpdated:", e, e?.stack);
     }

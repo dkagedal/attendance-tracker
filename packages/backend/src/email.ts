@@ -49,7 +49,7 @@ function utcDate(timestring: string): number {
 //   }
 // }
 
-function formatStart(start: string): string {
+export function formatStart(start: string): string {
   const fmt = start.indexOf("T") > 0 ? dateTimeFmt : dateFmt;
   const milliseconds = utcDate(start);
   return fmt.format(milliseconds);
