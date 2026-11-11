@@ -77,7 +77,9 @@ To run the application locally with Firebase emulators:
 1. Ensure you are running **Node 22**.
    - Verify your current Node version with: `node -v`
    - If using **nvm** (Node Version Manager), switch to the correct version by running `nvm use` in the root directory (which reads `.nvmrc`). If Node 22 is not yet installed on your system, run `nvm install` first.
+   - In non-interactive agent commands (where `nvm` is not loaded), prepend `~/.nvm/versions/node/v22.*/bin` to `PATH`.
 2. If you are starting in a new clone or a separate worktree, run `npm ci` first to install dependencies and automatically initialize configuration files.
+   - In an offline sandboxed worktree on macOS, you can instead clone `node_modules`, `packages/backend/node_modules`, and `packages/frontend/node_modules` from the main checkout with `cp -Rc` (preserving relative workspace symlinks) and run `node scripts/select-config.js`.
 3. Run `npm run dev` in the root directory. This will:
    - Run an initial build of both packages.
    - Start `tsc:watch` and `rollup:watch` for both frontend and backend to auto-rebuild on file changes.
