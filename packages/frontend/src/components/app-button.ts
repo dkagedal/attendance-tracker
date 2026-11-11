@@ -1,8 +1,13 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 @customElement("app-button")
 export class AppButton extends LitElement {
+  static shadowRootOptions = {
+    ...LitElement.shadowRootOptions,
+    delegatesFocus: true,
+  };
+
   @property({ type: String })
   variant: "primary" | "secondary" | "text" | "icon" = "primary";
 
@@ -11,6 +16,9 @@ export class AppButton extends LitElement {
 
   @property({ type: String })
   icon = "";
+
+  @property({ type: String })
+  label = "";
 
   static styles = css`
     :host {
@@ -30,7 +38,11 @@ export class AppButton extends LitElement {
       gap: var(--app-spacing-sm);
       padding: var(--app-spacing-sm) var(--app-spacing-md);
       transition: background-color 0.2s, color 0.2s, opacity 0.2s;
-      outline: none;
+    }
+
+    button:focus-visible {
+      outline: 2px solid var(--app-color-primary-600);
+      outline-offset: 2px;
     }
 
     button:disabled {
@@ -103,10 +115,15 @@ export class AppButton extends LitElement {
       <button
         class="${this.variant}"
         ?disabled=${this.disabled}
+        aria-label=${this.label || nothing}
         @click=${this.handleClick}
       >
         ${this.icon
-          ? html` <span class="material-icons">${this.icon}</span> `
+          ? html`
+              <span class="material-icons" aria-hidden="true"
+                >${this.icon}</span
+              >
+            `
           : html` <slot name="icon"></slot> `}
         <slot></slot>
       </button>
