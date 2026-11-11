@@ -14,6 +14,7 @@ import { db } from "../storage";
 import "./app-button";
 import "./app-dialog";
 import "./app-toast";
+import { generateRandomSecret } from "../secret";
 
 interface ApiKey {
   id: string;
@@ -82,20 +83,12 @@ export class ApiKeys extends LitElement {
     }
   }
 
-  private generateRandomToken(): string {
-    const array = new Uint8Array(24);
-    crypto.getRandomValues(array);
-    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join(
-      ""
-    );
-  }
-
   async createKey() {
     const name = this.keyNameInput.value.trim();
     if (!name) return;
 
     const isReadonly = this.keyReadonlyInput.checked;
-    const randomPart = this.generateRandomToken();
+    const randomPart = generateRandomSecret();
     const token = `at_${this.uid}_${randomPart}`;
 
     await setDoc(doc(db, "users", this.uid, "apikeys", token), {
