@@ -60,3 +60,4 @@ The database is structured as follows:
     - `createdAt`: (timestamp) When the key was created.
     - `readonly`: (boolean) If true, this key can only be used for read operations (GET requests).
 - `/hosts/{hostname}`: Represents a custom hostname.
+  - `band`: (string) ID of the band served at the root of this hostname.
