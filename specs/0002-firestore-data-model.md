@@ -39,6 +39,18 @@ The database is structured as follows:
     - `display_name`: (string) The display name of the user requesting to join.
     - `url`: (string) The URL from which the join request was made.
     - `approved`: (boolean) Whether the request has been approved.
+  - `/bands/{bandId}/admin/nextcloud`: Backend-only Nextcloud integration settings for the band (inaccessible to clients).
+    - `base_url`: (string) Base URL of the Nextcloud deployment.
+    - `auth`: (optional, map) HTTP Basic Authentication credentials for Nextcloud OCS APIs.
+      - `username`: (string) Nextcloud username.
+      - `app_password`: (string) Nextcloud app password.
+    - `talk`: (optional, map) Settings for Nextcloud Talk notifications.
+      - `enabled`: (optional, boolean) Whether Talk notifications are active (defaults to `true`).
+      - `room_token`: (string) Conversation token of the target Talk room.
+      - `bot_secret`: (optional, string) Shared secret for the Talk Bot API; falls back to `auth` when omitted.
+      - `events`: (optional, map) Trigger-level toggles.
+        - `event_created`: (optional, boolean) Defaults to `true`.
+        - `event_updated`: (optional, boolean) Defaults to `true`.
 - `/users/{uid}`: Represents a user account.
   - `bands`: (map) A map of band IDs to band information that the user is a member of.
     - `{bandId}`: (map)
