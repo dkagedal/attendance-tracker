@@ -7,7 +7,13 @@ export type Section = {
 export type Band = {
   display_name: string;
   logo?: string;
+  timezone?: string;
   sections?: Section[];
+};
+
+export type MemberCalendar = {
+  secret: string;
+  createdAt: unknown;
 };
 
 export type Member = {

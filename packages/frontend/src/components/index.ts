@@ -11,6 +11,7 @@ export * from "./app-toast";
 export * from "./attendance-progress-bar";
 export * from "./band-overview";
 export * from "./band-schedule";
+export * from "./calendar-subscription";
 export * from "./date-box";
 export * from "./event-card";
 export * from "./event-editor";

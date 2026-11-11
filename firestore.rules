@@ -1,6 +1,74 @@
 rules_version = '2';
+
+// ===============================================================
+// Assumed Data Model (see specs/0002-firestore-data-model.md)
+// ===============================================================
+//
+// Collection: /users/{user}
+//   - bands: map (bandId -> { display_name: string })
+//   Subcollection: /users/{user}/apikeys/{key}
+//     - name: string, createdAt: timestamp, readonly: bool
+//
+// Collection: /hosts/{hostname}
+//   - band: string (custom hostname mapping, publicly readable by get)
+//
+// Collection: /bands/{band}
+//   - display_name: string, logo?: string, timezone?: string, sections?: list
+//   Document: /bands/{band}/admin/nextcloud
+//     - Backend-only (no client access)
+//   Subcollection: /bands/{band}/join_requests/{user}
+//     - display_name: string, url: string, approved: bool
+//   Subcollection: /bands/{band}/members/{uid}
+//     - display_name: string, admin: bool, section_id?: string
+//     Document: /bands/{band}/members/{uid}/private/settings
+//       - email: string, notify: map
+//     Document: /bands/{band}/members/{uid}/private/calendar
+//       - secret: string (required, length 16..256)
+//       - createdAt: timestamp (required)
+//   Subcollection: /bands/{band}/events/{event}
+//     - type: string, start: string, stop?: string, location?: string,
+//       description?: string, cancelled?: bool
+//     Subcollection: /bands/{band}/events/{event}/participants/{participant}
+//       - attending: string, comment?: string
+//
+// ===============================================================
+
 service cloud.firestore {
   match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    // Check if the user is authenticated.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the request is authenticated as uid.
+    function authenticatedAs(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    // Validate required fields exist on a map/document.
+    function hasRequiredFields(data, fields) {
+      return data.keys().hasAll(fields);
+    }
+
+    // Validate that a map/document contains only allowed fields.
+    function hasOnlyAllowedFields(data, fields) {
+      return data.keys().hasOnly(fields);
+    }
+
+    // Validate schema for /bands/{band}/members/{uid}/private/calendar.
+    function isValidCalendarDoc(data) {
+      return hasRequiredFields(data, ['secret', 'createdAt']) &&
+        hasOnlyAllowedFields(data, ['secret', 'createdAt']) &&
+        data.secret is string &&
+        data.secret.size() >= 16 &&
+        data.secret.size() <= 256 &&
+        data.createdAt is timestamp;
+    }
+
     // Is the given user known to this application?
     function isUser(uid) {
         let user = /databases/$(database)/documents/users/$(uid);
@@ -64,6 +132,13 @@ service cloud.firestore {
         match /private/settings {
           allow read: if request.auth.uid == uid;
           allow write: if request.auth.uid == uid;
+        }
+
+        match /private/calendar {
+          allow read: if authenticatedAs(uid) && isMember(request.auth.uid);
+          allow create: if authenticatedAs(uid) && isMember(request.auth.uid) && isValidCalendarDoc(request.resource.data);
+          allow update: if authenticatedAs(uid) && isMember(request.auth.uid) && isValidCalendarDoc(request.resource.data);
+          allow delete: if authenticatedAs(uid) && isMember(request.auth.uid);
         }
       }
 

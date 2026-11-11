@@ -2,7 +2,15 @@ import * as express from "express";
 import * as cors from "cors";
 import { getFirestore } from "firebase-admin/firestore";
 import { getAuth } from "firebase-admin/auth";
-import { BandEvent } from "./types";
+import { Band, BandEvent, MemberCalendar } from "./types";
+import {
+  CalendarEventInput,
+  CalendarParticipant,
+  decodeCalendarToken,
+  generateIcalFeed,
+  secretsMatch,
+  sixMonthsAgoIsoDate,
+} from "./ical";
 
 const app = express();
 app.use(cors({ origin: true }));
@@ -234,5 +242,184 @@ bandRouter.delete("/events/:eventId", async (req, res) => {
 });
 
 app.use("/bands/:bandId", bandRouter);
+
+function parseValidatedHost(
+  rawHeader: string
+): { host: string; hostname: string } | null {
+  const trimmed = rawHeader.trim();
+  if (!trimmed || trimmed.length > 260) {
+    return null;
+  }
+  // IPv6 literal, e.g. [::1] or [::1]:5002
+  const ipv6Match = /^(\[[0-9a-fA-F:]+\])(?::(\d{1,5}))?$/.exec(trimmed);
+  if (ipv6Match) {
+    return { host: trimmed, hostname: ipv6Match[1].toLowerCase() };
+  }
+  const hostMatch = /^([a-zA-Z0-9._-]+)(?::(\d{1,5}))?$/.exec(trimmed);
+  if (
+    !hostMatch ||
+    hostMatch[1] === "." ||
+    hostMatch[1] === ".." ||
+    hostMatch[1].length > 253
+  ) {
+    return null;
+  }
+  return {
+    host: `${hostMatch[1].toLowerCase()}${
+      hostMatch[2] ? `:${hostMatch[2]}` : ""
+    }`,
+    hostname: hostMatch[1].toLowerCase(),
+  };
+}
+
+function resolveHttpProtocol(
+  req: express.Request,
+  hostname: string
+): "http" | "https" {
+  const forwarded = (req.headers["x-forwarded-proto"] as string | undefined)
+    ?.split(",")[0]
+    ?.trim()
+    .toLowerCase();
+  if (forwarded === "https" || forwarded === "http") {
+    return forwarded;
+  }
+  const proto = req.protocol?.toLowerCase();
+  if (proto === "https" || proto === "http") {
+    return proto;
+  }
+  return hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "[::1]"
+    ? "http"
+    : "https";
+}
+
+const handleCalendarFeed = async (
+  req: express.Request,
+  res: express.Response
+) => {
+  const tokenFile = (req.params as any).tokenFile || "";
+  if (!tokenFile.endsWith(".ics")) {
+    res.status(404).send("Not found");
+    return;
+  }
+
+  const decoded = decodeCalendarToken(tokenFile);
+  if (!decoded) {
+    res.status(401).send("Unauthorized: Invalid calendar token");
+    return;
+  }
+
+  const { bandId, uid, secret } = decoded;
+
+  try {
+    const db = getDb();
+    const bandRef = db.collection("bands").doc(bandId);
+    const memberRef = bandRef.collection("members").doc(uid);
+    const calendarRef = memberRef.collection("private").doc("calendar");
+
+    const rawHostHeader =
+      (req.headers["x-forwarded-host"] as string | undefined)?.split(",")[0] ||
+      req.headers.host ||
+      "";
+    const parsedHost = parseValidatedHost(rawHostHeader);
+    const canLookupHostDoc =
+      parsedHost !== null && !parsedHost.hostname.startsWith("[");
+    const refs = canLookupHostDoc
+      ? [
+          bandRef,
+          memberRef,
+          calendarRef,
+          db.collection("hosts").doc(parsedHost.hostname),
+        ]
+      : [bandRef, memberRef, calendarRef];
+
+    const snapshots = await db.getAll(...refs);
+    const [bandSnap, memberSnap, calendarSnap, hostSnap] = snapshots;
+
+    const rawStoredSecret = calendarSnap.exists
+      ? (calendarSnap.data() as Partial<MemberCalendar> | undefined)?.secret
+      : undefined;
+    const storedSecret =
+      typeof rawStoredSecret === "string" ? rawStoredSecret : undefined;
+    if (!storedSecret || !secretsMatch(storedSecret, secret)) {
+      res.status(401).send("Unauthorized: Invalid or revoked calendar token");
+      return;
+    }
+
+    if (!memberSnap.exists || !bandSnap.exists) {
+      res.status(403).send("Forbidden: User is not a member of this band");
+      return;
+    }
+
+    const bandData = bandSnap.data() as Band;
+    const cutoffDate = sixMonthsAgoIsoDate();
+
+    const eventsSnapshot = await bandRef
+      .collection("events")
+      .where("start", ">=", cutoffDate)
+      .orderBy("start")
+      .get();
+
+    const activeEventDocs = eventsSnapshot.docs.filter(
+      (doc) => !(doc.data() as BandEvent).cancelled
+    );
+
+    const participantByEventId = new Map<string, CalendarParticipant>();
+    if (activeEventDocs.length > 0) {
+      const participantRefs = activeEventDocs.map((doc) =>
+        doc.ref.collection("participants").doc(uid)
+      );
+      const participantSnaps = await db.getAll(...participantRefs);
+      activeEventDocs.forEach((doc, idx) => {
+        const snap = participantSnaps[idx];
+        if (snap.exists) {
+          participantByEventId.set(doc.id, snap.data() as CalendarParticipant);
+        }
+      });
+    }
+
+    const events: CalendarEventInput[] = activeEventDocs.map((doc) => ({
+      id: doc.id,
+      event: doc.data() as BandEvent,
+      participant: participantByEventId.get(doc.id),
+    }));
+
+    let bandUrl: string | undefined;
+    if (
+      parsedHost &&
+      !parsedHost.hostname.endsWith(".cloudfunctions.net") &&
+      !parsedHost.hostname.endsWith(".run.app")
+    ) {
+      const proto = resolveHttpProtocol(req, parsedHost.hostname);
+      const isDefaultHostBand =
+        hostSnap?.exists && hostSnap.data()?.band === bandId;
+      bandUrl = isDefaultHostBand
+        ? `${proto}://${parsedHost.host}/`
+        : `${proto}://${parsedHost.host}/${encodeURIComponent(bandId)}`;
+    }
+
+    const icsBody = generateIcalFeed({
+      bandId,
+      band: bandData,
+      events,
+      bandUrl,
+    });
+
+    const safeFilename = bandId.replace(/[^a-zA-Z0-9_-]/g, "_") || "calendar";
+    res.setHeader("Content-Type", "text/calendar; charset=utf-8");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${safeFilename}.ics"`
+    );
+    res.setHeader("Cache-Control", "private, no-cache");
+    res.status(200).send(icsBody);
+  } catch (error) {
+    console.error("Error generating calendar feed:", error);
+    res.status(500).send("Failed to generate calendar feed");
+  }
+};
+
+app.get("/_/calendar/:tokenFile", handleCalendarFeed);
 
 export { app as expressApp };
