@@ -6,6 +6,7 @@ export type Section = {
 
 export type Band = {
   display_name: string;
+  logo?: string;
   sections?: Section[];
 };
 
