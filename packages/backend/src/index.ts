@@ -398,7 +398,10 @@ export const userDeleted = onDocumentDeleted("users/{uid}", async (event) => {
   };
   const bands = await db.collection("bands").listDocuments();
   for (const bandRef of bands) {
-    await deleteDoc(bandRef.collection("members").doc(uid));
+    const memberRef = bandRef.collection("members").doc(uid);
+    await deleteDoc(memberRef.collection("private").doc("settings"));
+    await deleteDoc(memberRef.collection("private").doc("calendar"));
+    await deleteDoc(memberRef);
     await deleteDoc(bandRef.collection("join_requests").doc(uid));
   }
 });

@@ -277,6 +277,193 @@ describe("Access rules", () => {
         .doc("ringo");
       await assertFails(query.set({}));
     });
+
+    describe("Private calendar", () => {
+      const CALENDAR_PATH = "bands/beatles/members/ringo/private/calendar";
+      const VALID_SECRET = "0123456789abcdef0123456789abcdef";
+      const ROTATED_SECRET = "fedcba9876543210fedcba9876543210";
+
+      async function seedBandAndMembers() {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const db = context.firestore();
+          await db.doc("users/ringo").set({ bands: { beatles: {} } });
+          await db.doc("users/paul").set({ bands: { beatles: {} } });
+          await db.doc("users/george").set({ bands: { beatles: {} } });
+          await db.doc("bands/beatles").set({ display_name: "The Beatles" });
+          const ringoMember = db.doc("bands/beatles/members/ringo");
+          await ringoMember.set({ display_name: "Ringo", admin: false });
+          const paulMember = db.doc("bands/beatles/members/paul");
+          await paulMember.set({ display_name: "Paul", admin: true });
+          const georgeMember = db.doc("bands/beatles/members/george");
+          await georgeMember.set({ display_name: "George", admin: false });
+        });
+      }
+
+      async function seedCalendarDoc() {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const doc = context.firestore().doc(CALENDAR_PATH);
+          await doc.set({
+            secret: VALID_SECRET,
+            createdAt: new Date("2026-01-01T00:00:00Z"),
+          });
+        });
+      }
+
+      it("can be read by the member themselves", async () => {
+        await seedBandAndMembers();
+
+        const ringo = testEnv.authenticatedContext("ringo");
+        const doc = ringo.firestore().doc(CALENDAR_PATH);
+        await assertSucceeds(doc.get());
+
+        await seedCalendarDoc();
+        await assertSucceeds(doc.get());
+      });
+
+      it("can be created by the member themselves", async () => {
+        await seedBandAndMembers();
+
+        const ringo = testEnv.authenticatedContext("ringo");
+        const doc = ringo.firestore().doc(CALENDAR_PATH);
+        const payload = { secret: VALID_SECRET, createdAt: new Date() };
+        await assertSucceeds(doc.set(payload));
+      });
+
+      it("can be updated by the member themselves", async () => {
+        await seedBandAndMembers();
+        await seedCalendarDoc();
+
+        const ringo = testEnv.authenticatedContext("ringo");
+        const doc = ringo.firestore().doc(CALENDAR_PATH);
+        const rotated = { secret: ROTATED_SECRET, createdAt: new Date() };
+        await assertSucceeds(doc.set(rotated));
+        await assertSucceeds(doc.update({ secret: VALID_SECRET }));
+      });
+
+      it("can be deleted by the member themselves", async () => {
+        await seedBandAndMembers();
+        await seedCalendarDoc();
+
+        const ringo = testEnv.authenticatedContext("ringo");
+        const doc = ringo.firestore().doc(CALENDAR_PATH);
+        await assertSucceeds(doc.delete());
+      });
+
+      it("is denied for other band members including admins", async () => {
+        await seedBandAndMembers();
+
+        const paulAdmin = testEnv.authenticatedContext("paul");
+        const paulDoc = paulAdmin.firestore().doc(CALENDAR_PATH);
+        const georgeMember = testEnv.authenticatedContext("george");
+        const georgeDoc = georgeMember.firestore().doc(CALENDAR_PATH);
+        const payload = { secret: VALID_SECRET, createdAt: new Date() };
+
+        await assertFails(paulDoc.set(payload));
+        await assertFails(georgeDoc.set(payload));
+
+        await seedCalendarDoc();
+
+        await assertFails(paulDoc.get());
+        await assertFails(georgeDoc.get());
+        const rotated = { secret: ROTATED_SECRET, createdAt: new Date() };
+        await assertFails(paulDoc.set(rotated));
+        await assertFails(georgeDoc.set(rotated));
+        await assertFails(paulDoc.delete());
+        await assertFails(georgeDoc.delete());
+      });
+
+      it("is denied for non-members even with matching uid", async () => {
+        await testEnv.withSecurityRulesDisabled(async (context) => {
+          const db = context.firestore();
+          await db.doc("users/ringo").set({ bands: { beatles: {} } });
+          await db.doc("bands/beatles").set({ display_name: "The Beatles" });
+        });
+
+        const ringo = testEnv.authenticatedContext("ringo");
+        const doc = ringo.firestore().doc(CALENDAR_PATH);
+        const payload = { secret: VALID_SECRET, createdAt: new Date() };
+
+        await assertFails(doc.get());
+        await assertFails(doc.set(payload));
+
+        // Even if an orphaned calendar doc exists, read/update/delete fail
+        await seedCalendarDoc();
+        await assertFails(doc.get());
+        const rotated = { secret: ROTATED_SECRET, createdAt: new Date() };
+        await assertFails(doc.set(rotated));
+        await assertFails(doc.delete());
+      });
+
+      it("is denied for unauthenticated users", async () => {
+        await seedBandAndMembers();
+
+        const anon = testEnv.unauthenticatedContext();
+        const doc = anon.firestore().doc(CALENDAR_PATH);
+        const payload = { secret: VALID_SECRET, createdAt: new Date() };
+
+        await assertFails(doc.get());
+        await assertFails(doc.set(payload));
+
+        await seedCalendarDoc();
+
+        await assertFails(doc.get());
+        const rotated = { secret: ROTATED_SECRET, createdAt: new Date() };
+        await assertFails(doc.set(rotated));
+        await assertFails(doc.delete());
+      });
+
+      it("enforces secret length boundaries (16..256)", async () => {
+        await seedBandAndMembers();
+
+        const ringo = testEnv.authenticatedContext("ringo");
+        const doc = ringo.firestore().doc(CALENDAR_PATH);
+        const now = new Date();
+
+        const tooShort = { secret: "a".repeat(15), createdAt: now };
+        const minValid = { secret: "a".repeat(16), createdAt: now };
+        const maxValid = { secret: "a".repeat(256), createdAt: now };
+        const tooLong = { secret: "a".repeat(257), createdAt: now };
+
+        await assertFails(doc.set(tooShort));
+        await assertSucceeds(doc.set(minValid));
+        await assertSucceeds(doc.set(maxValid));
+        await assertFails(doc.set(tooLong));
+      });
+
+      it("rejects invalid schema on create and update", async () => {
+        await seedBandAndMembers();
+
+        const ringo = testEnv.authenticatedContext("ringo");
+        const doc = ringo.firestore().doc(CALENDAR_PATH);
+        const now = new Date();
+
+        await assertFails(doc.set({}));
+        await assertFails(doc.set({ secret: VALID_SECRET }));
+        await assertFails(doc.set({ createdAt: now }));
+        const withExtra = {
+          secret: VALID_SECRET,
+          createdAt: now,
+          extra: true,
+        };
+        await assertFails(doc.set(withExtra));
+        const numericSecret = { secret: 1234567890123456, createdAt: now };
+        await assertFails(doc.set(numericSecret));
+        const stringDate = {
+          secret: VALID_SECRET,
+          createdAt: "2026-01-01T00:00:00Z",
+        };
+        await assertFails(doc.set(stringDate));
+        await assertFails(doc.set({ secret: VALID_SECRET, createdAt: 12345 }));
+
+        await seedCalendarDoc();
+        await assertFails(doc.update({ secret: "too-short" }));
+        await assertFails(doc.update({ secret: "a".repeat(257) }));
+        await assertFails(doc.update({ secret: 1234567890123456 }));
+        await assertFails(doc.update({ createdAt: "2026-01-01T00:00:00Z" }));
+        await assertFails(doc.update({ extra: "disallowed" }));
+        await assertFails(doc.set({ secret: VALID_SECRET }));
+      });
+    });
   });
 
   describe("Join Requests", () => {

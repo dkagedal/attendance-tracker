@@ -66,6 +66,7 @@ class BandConverter {
     return {
       display_name: band.display_name,
       ...(band.logo && { logo: band.logo }),
+      ...(band.timezone && { timezone: band.timezone }),
       ...(band.sections &&
         band.sections.length > 0 && { sections: band.sections }),
     };
@@ -77,7 +78,8 @@ class BandConverter {
       new BandReference(snapshot.ref),
       data.display_name,
       data.logo,
-      data.sections || []
+      data.sections || [],
+      data.timezone
     );
   }
 }
@@ -87,6 +89,7 @@ export class Band {
     public ref: BandReference,
     public display_name: string,
     public logo?: string,
-    public sections: Section[] = []
+    public sections: Section[] = [],
+    public timezone?: string
   ) {}
 }

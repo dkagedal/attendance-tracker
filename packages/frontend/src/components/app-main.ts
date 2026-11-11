@@ -27,6 +27,7 @@ import { CreateJoinRequest, db, getHostBand } from "../storage";
 import "./login-dialog";
 import "./band-schedule";
 import "./band-overview";
+import "./calendar-subscription";
 import "./api-keys";
 import "./app-toast";
 import { AppToast } from "./app-toast";
@@ -104,7 +105,7 @@ export class AppMain extends LitElement {
   joinRequests: QueryDocumentSnapshot<JoinRequest>[] = [];
 
   @state()
-  currentView: "schedule" | "overview" | "apikeys" = "schedule";
+  currentView: "schedule" | "overview" | "calendar" | "apikeys" = "schedule";
 
   @state()
   membership: Member = null;
@@ -498,6 +499,17 @@ export class AppMain extends LitElement {
         >
           Översikt
         </div>
+        <div
+          class="drawer-item ${this.currentView === "calendar"
+            ? "selected"
+            : ""}"
+          @click=${() => {
+            this.currentView = "calendar";
+            this.drawer.close();
+          }}
+        >
+          Kalenderprenumeration
+        </div>
       </div>
     `;
   }
@@ -809,6 +821,15 @@ export class AppMain extends LitElement {
               .membership=${this.membership}
               @back=${() => (this.currentView = "schedule")}
             ></band-overview>
+          `
+        : this.currentView === "calendar"
+        ? html`
+            <calendar-subscription
+              bandid=${this.bandid}
+              bandName=${this.bands[this.bandid]?.display_name || ""}
+              uid=${this.firebaseUser.uid}
+              @back=${() => (this.currentView = "schedule")}
+            ></calendar-subscription>
           `
         : this.currentView === "apikeys"
         ? html`

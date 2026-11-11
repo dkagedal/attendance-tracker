@@ -6,6 +6,7 @@ import {
   SetOptions,
 } from "firebase/firestore";
 import { UID } from "../datamodel";
+import { MemberCalendarReference } from "./membercalendar";
 import { MemberSettingsReference } from "./membersettings";
 
 export class MemberReference {
@@ -23,6 +24,10 @@ export class MemberReference {
 
   settings(): MemberSettingsReference {
     return new MemberSettingsReference(doc(this.dbref, "private", "settings"));
+  }
+
+  calendar(): MemberCalendarReference {
+    return new MemberCalendarReference(doc(this.dbref, "private", "calendar"));
   }
 }
 

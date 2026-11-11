@@ -18,7 +18,7 @@ https://<region>-<project-id>.cloudfunctions.net/api
 
 ## Authentication
 
-All API endpoints require authentication using either a standard **Firebase Auth ID Token** or a **Custom API Token**. The token must belong to a user who is a registered member of the band they are trying to manage events for.
+All Events REST API endpoints documented below require authentication using either a standard **Firebase Auth ID Token** or a **Custom API Token**. The token must belong to a user who is a registered member of the band they are trying to manage events for. (Note: personalized `.ics` calendar feeds at `GET /_/calendar/:tokenFile` authenticate via their dedicated URL token instead; see `specs/0004-calendar-subscription.md`.)
 
 You must include this token in the `Authorization` header of your requests:
 

@@ -11,6 +11,7 @@ The database is structured as follows:
 - `/bands/{bandId}`: Represents a band.
   - `display_name`: (string) Human-readable name of the band.
   - `logo`: (optional, string) URL to the band's logo.
+  - `timezone`: (optional, string) IANA timezone identifier for the band's events (defaults to `"Europe/Stockholm"` when omitted).
   - `sections`: (optional, array) A list of section objects, each having:
     - `id`: (string) Unique identifier for the section.
     - `name`: (string) The name of the section.
@@ -35,6 +36,9 @@ The database is structured as follows:
         - `new_event`: (boolean)
         - `new_join_request`: (boolean)
         - `new_member`: (boolean)
+    - `/bands/{bandId}/members/{uid}/private/calendar`: Private calendar subscription secret for the member in this band (present while active; deleted when deactivated).
+      - `secret`: (string, length 16..256) Cryptographically random secret used to authenticate the member's `.ics` calendar feed for this band.
+      - `createdAt`: (timestamp) When the secret was generated.
   - `/bands/{bandId}/join_requests/{uid}`: Sub-collection of requests to join the band.
     - `display_name`: (string) The display name of the user requesting to join.
     - `url`: (string) The URL from which the join request was made.
